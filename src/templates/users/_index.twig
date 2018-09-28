@@ -1,0 +1,26 @@
+{% extends "_layouts/cp" %}
+
+{% block sidebar %}
+    <nav>
+        <ul>
+            {% for department in allDepartments %}
+                <li><a href="{{ url('dingtalk/departments/' ~ department.id ~ '/users') }}">{{ department.name ~ department.parentId }}</a></li>
+            {% endfor %}
+        </ul>
+    </nav>
+{% endblock %}
+
+{% set tabs = [
+    {label: "Users", url: ''}
+]  %}
+
+{% block content %}
+    <ul>
+    {% for user in users %}
+        <li>
+            <img src="{{ user.avatar }}" alt="" width="40" height="40">
+            {{ user.name }}
+        </li>
+    {% endfor %}
+    </ul>
+{% endblock %}

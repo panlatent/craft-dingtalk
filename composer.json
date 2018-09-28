@@ -1,0 +1,43 @@
+{
+    "name": "panlatent/craft-dingtalk",
+    "description": "DingTalk plugin for Craft 3",
+    "type": "craft-plugin",
+    "version": "0.1.0",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "alibaba",
+        "dingtalk",
+        "oa"
+    ],
+    "support": {
+        "docs": "https://github.com/panlatent/craft-dingtalk/blob/master/README.md",
+        "issues": "https://github.com/panlatent/craft-dingtalk/issues"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "panlatent@gmail.com",
+            "homepage": "https://panlatent.com/"
+        }
+    ],
+    "require": {
+        "craftcms/cms": "^3.0.0",
+        "mingyoung/dingtalk": "^1.0.4"
+    },
+    "autoload": {
+        "psr-4": {
+          "panlatent\\craft\\dingtalk\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "DingTalk",
+        "handle": "dingtalk",
+        "hasCpSettings": true,
+        "hasCpSection": false,
+        "changelogUrl": "https://raw.githubusercontent.com/panlatent/craft-dingtalk/master/CHANGELOG.md",
+        "class": "panlatent\\craft\\dingtalk\\Plugin"
+    }
+}

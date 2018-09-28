@@ -1,0 +1,21 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.textField({
+    label: "Corp Id"|t('dingtalk'),
+    name: "corpId",
+    value: settings.corpId,
+    required: true
+}) }}
+
+{{ forms.textField({
+    label: "Corp Secret"|t('dingtalk'),
+    name: "corpSecret",
+    value: settings.corpSecret,
+    required: true
+}) }}
+
+{{ forms.lightSwitchField({
+    label: "Show departments in CP"|t('dingtalk'),
+    name: "hasDepartmentsCpSection",
+    on: settings.hasDepartmentsCpSection
+}) }}
