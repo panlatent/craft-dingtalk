@@ -23,5 +23,5 @@ class Settings extends Model
     /**
      * @var bool|null
      */
-    public $hasDepartmentsCpSection;
+    public $showContactsOnCpSection;
 }

@@ -10,7 +10,6 @@ namespace panlatent\craft\dingtalk\widgets;
 
 use Craft;
 use craft\base\Widget;
-use panlatent\craft\dingtalk\Plugin;
 
 class DingTalk extends Widget
 {
@@ -26,8 +25,6 @@ class DingTalk extends Widget
 
     public function getBodyHtml()
     {
-        Plugin::$plugin->getUsers()->getAllUsers();
-
         return Craft::$app->view->renderTemplate('dingtalk/_components/widgets/DingTalk', [
 
         ]);

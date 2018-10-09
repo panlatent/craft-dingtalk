@@ -7,5 +7,12 @@
  */
 
 return [
+    'Show Contacts section on CP' => '在控制面板显示通讯录',
+    'Contacts' => '通讯录',
     'Departments' => '部门',
+    'Sync Contacts' => '同步通讯录',
+    'Name' => '姓名',
+    'Position' => '职位',
+    'Mobile' => '移动电话',
+    'Job Number' => '工号',
 ];

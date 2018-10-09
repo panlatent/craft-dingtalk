@@ -6,11 +6,11 @@
  * @copyright Copyright (c) 2018 panlatent@gmail.com
  */
 
-namespace panlatent\craft\dingtalk\controllers;
+namespace panlatent\craft\dingtalk\errors;
 
-use craft\web\Controller;
+use yii\base\Exception;
 
-class SettingsController extends Controller
+class DepartmentException extends Exception
 {
 
 }

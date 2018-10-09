@@ -8,9 +8,13 @@
 
 namespace panlatent\craft\dingtalk\services;
 
+use Craft;
+use craft\helpers\Json;
+use panlatent\craft\dingtalk\errors\DepartmentException;
 use panlatent\craft\dingtalk\models\Department;
-use panlatent\craft\dingtalk\Plugin;
+use panlatent\craft\dingtalk\records\Department as DepartmentRecord;
 use yii\base\Component;
+use yii\db\Query;
 
 class Departments extends Component
 {
@@ -41,7 +45,8 @@ class Departments extends Component
         $this->_departmentsById = [];
         $this->_departmentsByName = [];
 
-        $results = $this->_createApiQuery()->list()['department'];
+        $results = $this->_createQuery()->all();
+
         foreach ($results as $result) {
             $department = $this->createDepartment($result);
             $this->_departmentsById[$department->id] = $department;
@@ -61,42 +66,16 @@ class Departments extends Component
     {
         $departments = [];
 
-        $results = $this->_createApiQuery()->list($parentId)['department'];
+        $results = $this->_createQuery()
+            ->where([
+                'parentId' => $parentId,
+            ])
+            ->all();
+
         foreach ($results as $result) {
             $department = $this->createDepartment($result);
             $departments[] = $department;
             $this->_departmentsById[$department->id] = $department;
-            $this->_departmentsByName[$department->name] = $department;
-        }
-
-        return $departments;
-    }
-
-    /**
-     * @param int $id
-     * @return int[]
-     */
-    public function getParentDepartmentIdsById(int $id): array
-    {
-        $result = $this->_createApiQuery()->parent($id);
-        if (!empty($result['parentIds']) && $result['parentIds'][0] == $id) {
-            unset($result['parentIds'][0]);
-        }
-
-        return array_reverse($result['parentIds']);
-    }
-
-    /**
-     * @param int $id
-     * @return Department[]
-     */
-    public function getParentDepartmentsById(int $id): array
-    {
-        $departments = [];
-
-        $departmentIds = $this->getParentDepartmentIdsById($id);
-        foreach ($departmentIds as $departmentId) {
-            $departments[] = $this->getDepartmentById($departmentId);
         }
 
         return $departments;
@@ -116,14 +95,32 @@ class Departments extends Component
             return null;
         }
 
-        $result = $this->_createApiQuery()->get($id);
+        $result = $this->_createQuery()
+            ->where(['id' => $id])
+            ->one();
 
         return $this->_departmentsById[$id] = $result ? $this->createDepartment($result) : null;
     }
 
+    /**
+     * @param string $name
+     * @return null|Department
+     */
     public function getDepartmentByName(string $name)
     {
+        if ($this->_fetchedAllDepartments && array_key_exists($name, $this->_departmentsByName)) {
+            return $this->_departmentsByName[$name];
+        }
 
+        if ($this->_fetchedAllDepartments) {
+            return null;
+        }
+
+        $result = $this->_createQuery()
+            ->where(['name' => $name])
+            ->one();
+
+        return $this->_departmentsByName[$name] = $result ? $this->createDepartment($result) : null;
     }
 
     /**
@@ -138,10 +135,54 @@ class Departments extends Component
     }
 
     /**
-     * @return \EasyDingTalk\Department\Client
+     * @param Department $department
+     * @param bool $runValidation
+     * @return bool
      */
-    private function _createApiQuery()
+    public function saveDepartment(Department $department, bool $runValidation = true): bool
     {
-        return Plugin::$plugin->getClient()->department;
+        $isNew = (empty($department->id) || !DepartmentRecord::find()->where(['id' => $department->id])->exists());
+
+        if ($runValidation && !$department->validate()) {
+            return false;
+        }
+
+        $transaction = Craft::$app->db->beginTransaction();
+        try {
+            if ($isNew) {
+                $departmentRecord = new DepartmentRecord();
+            } else {
+                $departmentRecord = DepartmentRecord::findOne(['id' => $department->id]);
+                if (!$departmentRecord) {
+                    throw new DepartmentException("No department exists due ID: “{$department->id}“");
+                }
+            }
+
+            $departmentRecord->id = $department->id;
+            $departmentRecord->name = $department->name;
+            $departmentRecord->parentId = $department->parentId;
+            $departmentRecord->settings = Json::encode($department->settings);
+            $departmentRecord->sortOrder = $department->sortOrder;
+
+            $departmentRecord->save(false);
+
+            $transaction->commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollBack();
+
+            throw $exception;
+        }
+
+        $department->id = $departmentRecord->id;
+
+        return true;
+    }
+
+    private function _createQuery(): Query
+    {
+        return (new Query())
+            ->select(['id', 'name', 'parentId', 'settings'])
+            ->from('{{%dingtalk_departments}}')
+            ->orderBy('sortOrder');
     }
 }

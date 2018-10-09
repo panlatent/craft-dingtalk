@@ -7,7 +7,5 @@
  */
 
 return [
-    'dingtalk/departments' => 'dingtalk/departments',
-    'dingtalk/departments/<departmentId:\d+>' => 'dingtalk/departments',
-    'dingtalk/departments/<departmentId:\d+>/users' => 'dingtalk/users/department-users',
+    'dingtalk/<departmentId:\d+>/users' => 'dingtalk/users',
 ];

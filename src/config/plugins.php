@@ -8,6 +8,9 @@
 
 return [
     'components' => [
+        'api' => [
+            'class' => \panlatent\craft\dingtalk\services\Api::class
+        ],
         'departments' => [
             'class' => \panlatent\craft\dingtalk\services\Departments::class,
         ],

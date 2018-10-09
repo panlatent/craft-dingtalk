@@ -14,12 +14,16 @@ use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\helpers\ArrayHelper;
 use craft\services\Dashboard;
+use craft\services\Elements;
+use craft\services\Utilities;
 use craft\web\twig\variables\Cp;
 use craft\web\UrlManager;
-use EasyDingTalk\Application as DingTalkClient;
+use panlatent\craft\dingtalk\elements\User;
 use panlatent\craft\dingtalk\models\Settings;
+use panlatent\craft\dingtalk\services\Api;
 use panlatent\craft\dingtalk\services\Departments;
 use panlatent\craft\dingtalk\services\Users;
+use panlatent\craft\dingtalk\utilities\SyncContacts;
 use panlatent\craft\dingtalk\widgets\DingTalk as DingTalkWidget;
 use yii\base\Event;
 
@@ -28,8 +32,8 @@ use yii\base\Event;
  *
  * @package panlatent\craft\dingtalk
  * @method Settings getSettings()
+ * @property-read Api $api
  * @property-read Settings $settings
- * @property-read DingTalkClient $client
  * @property-read Departments $departments
  * @property-read Users $users
  * @author Panlatent <panlatent@gmail.com>
@@ -58,11 +62,6 @@ class Plugin extends \craft\base\Plugin
     public $t9nCategory = 'dingtalk';
 
     /**
-     * @var DingTalkClient|null
-     */
-    private $_client;
-
-    /**
      * @inheritdoc
      */
     public function __construct($id, $parent = null, array $config = [])
@@ -82,8 +81,16 @@ class Plugin extends \craft\base\Plugin
 
         Craft::setAlias('@dingtalk', $this->getBasePath());
 
+        Event::on(Elements::class, Elements::EVENT_REGISTER_ELEMENT_TYPES, function(RegisterComponentTypesEvent $event) {
+            $event->types[] = User::class;
+        });
+
         Event::on(Dashboard::class, Dashboard::EVENT_REGISTER_WIDGET_TYPES, function(RegisterComponentTypesEvent $event) {
             $event->types[] = DingTalkWidget::class;
+        });
+
+        Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITY_TYPES, function(RegisterComponentTypesEvent $event) {
+            $event->types[] = SyncContacts::class;
         });
 
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function(RegisterUrlRulesEvent $event) {
@@ -91,10 +98,10 @@ class Plugin extends \craft\base\Plugin
         });
 
         Event::on(Cp::class, Cp::EVENT_REGISTER_CP_NAV_ITEMS, function(RegisterCpNavItemsEvent $event) {
-            if ($this->getSettings()->hasDepartmentsCpSection) {
+            if ($this->getSettings()->showContactsOnCpSection) {
                 $event->navItems[] = [
-                    'label' => Craft::t('dingtalk', 'Departments'),
-                    'url' => 'dingtalk/departments',
+                    'label' => Craft::t('dingtalk', 'Contacts'),
+                    'url' => 'dingtalk/users',
                     'icon' => '@dingtalk/icons/departments.svg',
                 ];
             }
@@ -110,16 +117,13 @@ class Plugin extends \craft\base\Plugin
         );
     }
 
-    public function getClient(): DingTalkClient
+    /**
+     * @return Api
+     */
+    public function getApi(): Api
     {
-        if ($this->_client !== null) {
-            return $this->_client;
-        }
-
-        return new DingTalkClient([
-            'corp_id' => $this->getSettings()->corpId,
-            'corp_secret' => $this->getSettings()->corpSecret,
-        ]);
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->get('api');
     }
 
     /**
