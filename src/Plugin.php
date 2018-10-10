@@ -22,6 +22,7 @@ use panlatent\craft\dingtalk\elements\User;
 use panlatent\craft\dingtalk\models\Settings;
 use panlatent\craft\dingtalk\services\Api;
 use panlatent\craft\dingtalk\services\Departments;
+use panlatent\craft\dingtalk\services\SmartWorks;
 use panlatent\craft\dingtalk\services\Users;
 use panlatent\craft\dingtalk\utilities\SyncContacts;
 use panlatent\craft\dingtalk\widgets\DingTalk as DingTalkWidget;
@@ -36,6 +37,7 @@ use yii\base\Event;
  * @property-read Settings $settings
  * @property-read Departments $departments
  * @property-read Users $users
+ * @property-read SmartWorks $smartWorks
  * @author Panlatent <panlatent@gmail.com>
  */
 class Plugin extends \craft\base\Plugin
@@ -142,6 +144,15 @@ class Plugin extends \craft\base\Plugin
     {
         /** @noinspection PhpIncompatibleReturnTypeInspection */
         return $this->get('users');
+    }
+
+    /**
+     * @return SmartWorks
+     */
+    public function getSmartWorks(): SmartWorks
+    {
+        /** @noinspection PhpIncompatibleReturnTypeInspection */
+        return $this->get('smartWorks');
     }
 
     /**

@@ -11,6 +11,7 @@ namespace panlatent\craft\dingtalk\services;
 use EasyDingTalk\Application as DingTalkClient;
 use panlatent\craft\dingtalk\Plugin;
 use yii\base\Component;
+use yii\helpers\ArrayHelper;
 
 /**
  * Class Api
@@ -128,5 +129,22 @@ class Api extends Component
         $results = $this->client->user->httpGet('user/list', ['department_id' => $departmentId]);
 
         return $results['userlist'];
+    }
+
+    /**
+     * @param array|string $userId
+     * @return array
+     */
+    public function getUserSmartWorkFields($userId): array
+    {
+        if (is_array($userId)) {
+            $userId = implode(',', $userId);
+        }
+
+        $results = $this->client->user->httpPostJson('topapi/smartwork/hrm/employee/list', [
+            'userid_list' => $userId,
+        ]);
+
+        return ArrayHelper::index($results['result'], 'userid');
     }
 }

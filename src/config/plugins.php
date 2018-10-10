@@ -17,5 +17,8 @@ return [
         'users' => [
             'class' => \panlatent\craft\dingtalk\services\Users::class,
         ],
+        'smartWorks' => [
+            'class' => \panlatent\craft\dingtalk\services\SmartWorks::class,
+        ],
     ]
 ];

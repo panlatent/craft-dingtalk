@@ -15,6 +15,7 @@ use DateTime;
 use panlatent\craft\dingtalk\elements\db\UserQuery;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\models\Department;
+use panlatent\craft\dingtalk\models\UserSmartWork;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\records\User as UserRecord;
 use panlatent\craft\dingtalk\records\UserDepartment;
@@ -26,6 +27,7 @@ use yii\helpers\Json;
  * @package panlatent\craft\dingtalk\elements
  * @property DateTime $dateHired
  * @property Department[] $departments
+ * @property UserSmartWork $smartWork
  * @author Panlatent <panlatent@gmail.com>
  */
 class User extends Element
@@ -185,6 +187,11 @@ class User extends Element
      */
     private $_dateHired;
 
+    /**
+     * @var UserSmartWork|null
+     */
+    private $_smartWork;
+
     public function afterSave(bool $isNew)
     {
         if ($isNew) {
@@ -208,12 +215,16 @@ class User extends Element
         $userRecord->orgEmail = $this->orgEmail;
         $userRecord->active = $this->active;
         $userRecord->mobile = $this->mobile;
-        $userRecord->dateHired = $this->dateHired->format('Y-m-d H:i:s');
+        $userRecord->dateHired = $this->dateHired ? $this->dateHired->format('Y-m-d H:i:s') : null;
         $userRecord->settings = Json::encode($this->settings ?? []);
         $userRecord->remark = $this->remark;
         $userRecord->sortOrder = $this->sortOrder;
 
         $userRecord->save(false);
+
+        if ($this->_smartWork) {
+            Plugin::$plugin->getSmartWorks()->saveSmartWork($this->_smartWork);
+        }
 
         parent::afterSave($isNew);
     }
@@ -237,6 +248,26 @@ class User extends Element
             $dateHired = new DateTime($dateHired);
         }
         $this->_dateHired = $dateHired;
+    }
+
+    /**
+     * @return null|UserSmartWork
+     */
+    public function getSmartWork(): UserSmartWork
+    {
+        if ($this->_smartWork !== null) {
+            return $this->_smartWork;
+        }
+
+        return $this->_smartWork = Plugin::$plugin->getSmartWorks()->getSmartWorkByUserId($this->userId);
+    }
+
+    /**
+     * @param null|UserSmartWork $smartWork
+     */
+    public function setSmartWork(UserSmartWork $smartWork)
+    {
+        $this->_smartWork = $smartWork;
     }
 
     /**

@@ -17,14 +17,26 @@ use panlatent\craft\dingtalk\Plugin;
 
 class SyncContactsJob extends BaseJob
 {
+    public $enableDepartments = true;
+
+    public $enableUsers = true;
+
+    public $enableSmartWork = true;
 
     public function execute($queue)
     {
-        $this->syncDepartments();
-        $this->syncUsers();
+        if ($this->enableDepartments) {
+            $this->handleDepartments();
+        }
+        if ($this->enableUsers) {
+            $this->handleUsers();
+        }
+        if ($this->enableSmartWork) {
+            $this->handleSmartWork();
+        }
     }
 
-    protected function syncDepartments()
+    protected function handleDepartments()
     {
         $departments = [];
         $results = Plugin::$plugin->getApi()->getAllDepartments();
@@ -47,7 +59,7 @@ class SyncContactsJob extends BaseJob
         }
     }
 
-    protected function syncUsers()
+    protected function handleUsers()
     {
         $departments = Plugin::$plugin->getDepartments()->getAllDepartments();
         foreach ($departments as $department) {
@@ -80,6 +92,29 @@ class SyncContactsJob extends BaseJob
                 }
 
                 $user->settings = $result;
+
+                Craft::$app->getElements()->saveElement($user);
+            }
+        }
+    }
+
+    protected function handleSmartWork()
+    {
+        foreach (User::find()->batch(20) as $users) {
+            $userIds = ArrayHelper::getColumn($users, 'userId');
+            $results = Plugin::$plugin->getApi()->getUserSmartWorkFields($userIds);
+            /** @var User $user */
+            foreach ($users as $user) {
+                $config = [
+                    'userId' => $user->userId,
+                ];
+                $fields = $results[$user->userId]['field_list'];
+                foreach ($fields as $value) {
+                    $field = substr($value['field_code'], strlen($value['group_id']) + 1);
+                    $config[$field] = $value['value'] ?? '';
+                }
+
+                $user->smartWork = Plugin::$plugin->getSmartWorks()->createSmartWork($config);
 
                 Craft::$app->getElements()->saveElement($user);
             }
