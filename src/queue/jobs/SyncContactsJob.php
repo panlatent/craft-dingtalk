@@ -70,10 +70,15 @@ class SyncContactsJob extends BaseJob
                 $user->orgEmail = ArrayHelper::remove($result, 'orgEmail');
                 $user->active = ArrayHelper::remove($result, 'active');
                 $user->mobile = ArrayHelper::remove($result, 'mobile');
-                $user->dateHired = ArrayHelper::remove($result, 'dateHired');
                 $user->remark = ArrayHelper::remove($result, 'remark');
                 $user->sortOrder = ArrayHelper::remove($result, 'order');
                 $user->departments = ArrayHelper::remove($result, 'department');
+
+                if (!empty($result['hiredDate'])) {
+                    $dateHired = ArrayHelper::remove($result, 'hiredDate');
+                    $user->dateHired = date('Y-m-d H:i:s', (int)($dateHired/1000));
+                }
+
                 $user->settings = $result;
 
                 Craft::$app->getElements()->saveElement($user);

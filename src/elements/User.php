@@ -11,6 +11,7 @@ namespace panlatent\craft\dingtalk\elements;
 use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQueryInterface;
+use DateTime;
 use panlatent\craft\dingtalk\elements\db\UserQuery;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\models\Department;
@@ -23,6 +24,7 @@ use yii\helpers\Json;
  * Class User
  *
  * @package panlatent\craft\dingtalk\elements
+ * @property DateTime $dateHired
  * @property Department[] $departments
  * @author Panlatent <panlatent@gmail.com>
  */
@@ -169,11 +171,6 @@ class User extends Element
     public $orgEmail;
 
     /**
-     * @var int|null 入职时间 (Unix时间戳)
-     */
-    public $dateHired;
-
-    /**
      * @var array|null
      */
     public $settings;
@@ -182,6 +179,11 @@ class User extends Element
      * @var int|null 在对应的部门中的排序
      */
     public $sortOrder;
+
+    /**
+     * @var DateTime|null 入职时间 (Unix时间戳)
+     */
+    private $_dateHired;
 
     public function afterSave(bool $isNew)
     {
@@ -206,7 +208,7 @@ class User extends Element
         $userRecord->orgEmail = $this->orgEmail;
         $userRecord->active = $this->active;
         $userRecord->mobile = $this->mobile;
-        $userRecord->dateHired = $this->dateHired;
+        $userRecord->dateHired = $this->dateHired->format('Y-m-d H:i:s');
         $userRecord->settings = Json::encode($this->settings ?? []);
         $userRecord->remark = $this->remark;
         $userRecord->sortOrder = $this->sortOrder;
@@ -214,6 +216,27 @@ class User extends Element
         $userRecord->save(false);
 
         parent::afterSave($isNew);
+    }
+
+    /**
+     * @return DateTime|null
+     */
+    public function getDateHired()
+    {
+        return $this->_dateHired;
+    }
+
+    /**
+     * @param DateTime|string|int|null $dateHired
+     */
+    public function setDateHired($dateHired)
+    {
+        if (is_int($dateHired)) {
+            $dateHired = new DateTime(date('Y-m-d H:i:s', $dateHired));
+        } elseif (is_string($dateHired)) {
+            $dateHired = new DateTime($dateHired);
+        }
+        $this->_dateHired = $dateHired;
     }
 
     /**
