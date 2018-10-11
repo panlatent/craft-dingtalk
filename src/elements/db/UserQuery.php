@@ -9,7 +9,10 @@
 namespace panlatent\craft\dingtalk\elements\db;
 
 use craft\elements\db\ElementQuery;
+use craft\helpers\ArrayHelper;
 use craft\helpers\Db;
+use panlatent\craft\dingtalk\helpers\DepartmentHelper;
+use panlatent\craft\dingtalk\Plugin;
 
 class UserQuery extends ElementQuery
 {
@@ -60,8 +63,17 @@ class UserQuery extends ElementQuery
         }
 
         if ($this->departmentId) {
+            $allDepartments = Plugin::$plugin->getDepartments()->getAllDepartments();
+            $childrenDepartments = DepartmentHelper::parentSort($allDepartments, $this->departmentId);
+            $departmentIds = ArrayHelper::getColumn($childrenDepartments, 'id');
+            if (empty($departmentIds)) {
+                $departmentIds =  $this->departmentId;
+            } else {
+                $departmentIds[] = $this->departmentId;
+            }
+
             $this->subQuery->innerJoin('dingtalk_userdepartments', 'dingtalk_userdepartments.userId=dingtalk_users.userid');
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_userdepartments.departmentId', $this->departmentId));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_userdepartments.departmentId', $departmentIds));
         }
 
         return parent::beforePrepare();
