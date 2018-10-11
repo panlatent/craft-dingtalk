@@ -8,6 +8,7 @@
 
 return [
     'Show Contacts section on CP' => '在控制面板显示通讯录',
+    'Sync Dingtalk Contacts' => '同步钉钉通讯录',
     'Contacts' => '通讯录',
     'Departments' => '部门',
     'Sync Contacts' => '同步通讯录',

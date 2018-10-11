@@ -120,4 +120,9 @@ class SyncContactsJob extends BaseJob
             }
         }
     }
+
+    protected function defaultDescription()
+    {
+        return Craft::t('dingtalk', 'Sync Dingtalk Contacts');
+    }
 }

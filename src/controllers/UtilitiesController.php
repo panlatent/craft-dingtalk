@@ -11,11 +11,14 @@ namespace panlatent\craft\dingtalk\controllers;
 use Craft;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\queue\jobs\SyncContactsJob;
+use yii\web\Response;
 
 class UtilitiesController extends Controller
 {
-    public function actionSyncContactsAction()
+    public function actionSyncContactsAction(): Response
     {
         Craft::$app->queue->push(new SyncContactsJob());
+
+        return $this->redirectToPostedUrl();
     }
 }
