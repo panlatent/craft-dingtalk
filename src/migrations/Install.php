@@ -8,12 +8,15 @@
 
 namespace panlatent\craft\dingtalk\migrations;
 
+use Craft;
 use craft\db\Migration;
+use panlatent\craft\dingtalk\elements\User;
 
 class Install extends Migration
 {
     public function safeUp()
     {
+        // Create departments
         $this->createTable('{{%dingtalk_departments}}', [
             'id' => $this->primaryKey(),
             'name' => $this->string(255)->notNull(),
@@ -28,6 +31,7 @@ class Install extends Migration
         $this->createIndex(null, '{{%dingtalk_departments}}', ['name']);
         $this->addForeignKey(null, '{{%dingtalk_departments}}', 'parentId', '{{%dingtalk_departments}}', 'id');
 
+        // Create users
         $this->createTable('{{%dingtalk_users}}', [
             'id' => $this->primaryKey(),
             'userId' => $this->string(32)->notNull(),
@@ -56,9 +60,9 @@ class Install extends Migration
         $this->createIndex(null, '{{%dingtalk_users}}', ['userId'], true);
         $this->createIndex(null, '{{%dingtalk_users}}', ['name']);
         $this->createIndex(null, '{{%dingtalk_users}}', ['mobile']);
-
         $this->addForeignKey(null, '{{%dingtalk_users}}', 'id', '{{%elements}}', 'id', 'CASCADE', null);
 
+        // Create user departments
         $this->createTable('{{%dingtalk_userdepartments}}', [
             'id' => $this->primaryKey(),
             'userId' => $this->string(32)->notNull(),
@@ -71,12 +75,29 @@ class Install extends Migration
         $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['userId']);
         $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['departmentId']);
         $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['userId', 'departmentId'], true);
-        $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'userId', '{{%dingtalk_users}}', 'userId');
-        $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'departmentId', '{{%departments}}', 'id');
+        $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'userId', '{{%dingtalk_users}}', 'userId', 'CASCADE');
+        $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'departmentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
+
+        // Create user smart works
+        $this->createTable('{{%dingtalk_usersmartworks}}', [
+            'id' => $this->primaryKey(),
+            'userId' => $this->string(32)->notNull(),
+            'settings' => $this->text(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
+        $this->createIndex(null, '{{%dingtalk_usersmartworks}}', ['userId'], true);
+        $this->addForeignKey(null, '{{%dingtalk_usersmartworks}}', 'userId', '{{%dingtalk_users}}', 'userId', 'CASCADE');
     }
 
     public function safeDown()
     {
+        foreach (User::find()->select('elementsId')->column() as $id) {
+            Craft::$app->elements->deleteElementById($id);
+        }
+        $this->dropTableIfExists('{{%dingtalk_usersmartworks}}');
         $this->dropTableIfExists('{{%dingtalk_userdepartments}}');
         $this->dropTableIfExists('{{%dingtalk_users}}');
         $this->dropTableIfExists('{{%dingtalk_departments}}');

@@ -13,12 +13,15 @@ use craft\base\Element;
 use craft\elements\db\ElementQueryInterface;
 use DateTime;
 use panlatent\craft\dingtalk\elements\db\UserQuery;
+use panlatent\craft\dingtalk\errors\DepartmentException;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\models\Department;
 use panlatent\craft\dingtalk\models\UserSmartWork;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\records\User as UserRecord;
-use panlatent\craft\dingtalk\records\UserDepartment;
+use panlatent\craft\dingtalk\records\UserDepartment as UserDepartmentRecord;
+use yii\db\Query;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 
 /**
@@ -73,7 +76,7 @@ class User extends Element
     protected static function defineSortOptions(): array
     {
         return [
-            'name' => Craft::t('app', 'Name'),
+            'name' => Craft::t('dingtalk', 'Name'),
         ];
     }
 
@@ -188,6 +191,11 @@ class User extends Element
     private $_dateHired;
 
     /**
+     * @var Department[]|null
+     */
+    private $_departments;
+
+    /**
      * @var UserSmartWork|null
      */
     private $_smartWork;
@@ -221,6 +229,36 @@ class User extends Element
         $userRecord->sortOrder = $this->sortOrder;
 
         $userRecord->save(false);
+
+        // Save user relation departments...
+        if ($this->_departments !== null) {
+            if (empty($this->_departments)) {
+                UserDepartmentRecord::deleteAll(['userId' => $this->userId]);
+            } else {
+                /** @var UserDepartmentRecord[] $departmentRecords */
+                $departmentRecords = UserDepartmentRecord::find()->where(['userId' => $this->userId])->all();
+                $departmentRecords = ArrayHelper::index($departmentRecords, 'departmentId');
+
+                Craft::info($departmentRecords, 'debugxx');
+                foreach ($this->_departments as $department) {
+                    if (isset($departmentRecords[$department->id])) {
+                        $departmentRecord = $departmentRecords[$department->id];
+                        unset($departmentRecords[$department->id]);
+                    } else {
+                        $departmentRecord = new UserDepartmentRecord();
+                    }
+
+                    $departmentRecord->userId = $this->userId;
+                    $departmentRecord->departmentId = $department->id;
+                    $departmentRecord->save(false);
+                }
+
+                foreach ($departmentRecords as $departmentRecord) {
+                    $departmentRecord->delete();
+                }
+            }
+        }
+
 
         if ($this->_smartWork) {
             Plugin::$plugin->getSmartWorks()->saveSmartWork($this->_smartWork);
@@ -271,47 +309,46 @@ class User extends Element
     }
 
     /**
-     * @param array $departments
+     * @return Department[]
+     */
+    public function getDepartments()
+    {
+        if ($this->_departments !== null) {
+            return $this->_departments;
+        }
+
+        $results = (new Query())
+            ->select('id')
+            ->from('{{%dingtalk_userdepartment}}')
+            ->where(['userId' => $this->userId])
+            ->column();
+
+        $departments = [];
+        foreach ($results as $result) {
+            $departments[] = Plugin::$plugin->getDepartments()->getDepartmentById($result);
+        }
+        $this->setDepartments($departments);
+
+        return $this->_departments;
+    }
+
+    /**
+     * @param Department[]|int[]|null $departments
      */
     public function setDepartments($departments)
     {
-        if ($departments === null) {
-            UserDepartment::deleteAll(['userId' => $this->userId]);
-            return;
-        }
-
-        $userDepartments = UserDepartment::find()
-            ->where(['userId' => $this->userId])
-            ->indexBy('departmentId')
-            ->all();
-
-        $transaction = Craft::$app->db->beginTransaction();
-        try {
+        $this->_departments = [];
+        if ($departments !== null) {
             foreach ($departments as $department) {
                 if (is_int($department)) {
                     $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
                 }
 
-                if ($department && isset($userDepartments[$department->id])) {
-                    unset($userDepartments[$department->id]);
-                    continue;
+                if (!$department instanceof Department) {
+                    throw new DepartmentException('User department must be a Department instance');
                 }
-
-                $userDepartment = new UserDepartment();
-                $userDepartment->userId = $this->userId;
-                $userDepartment->departmentId = $department->id;
-                $userDepartment->save(false);
+                $this->_departments[] = $department;
             }
-
-            foreach ($userDepartments as $department) {
-                $department->delete();
-            }
-
-            $transaction->commit();
-        } catch (\Throwable $exception) {
-            $transaction->rollBack();
-
-            throw $exception;
         }
     }
 

@@ -11,6 +11,7 @@ return [
     'Contacts' => '通讯录',
     'Departments' => '部门',
     'Sync Contacts' => '同步通讯录',
+    'All users' => '所有用户',
     'Name' => '姓名',
     'Position' => '职位',
     'Mobile' => '移动电话',
