@@ -16,10 +16,25 @@ use panlatent\craft\dingtalk\Plugin;
 
 class UserQuery extends ElementQuery
 {
+    /**
+     * @var string[]|string|null
+     */
     public $userId;
 
+    /**
+     * @var string[]|string|null
+     */
     public $departmentId;
 
+    /**
+     * @var string[]|string|null
+     */
+    public $name;
+
+    /**
+     * @param string[]|string|null $value
+     * @return $this
+     */
     public function userId($value)
     {
         $this->userId = $value;
@@ -27,9 +42,24 @@ class UserQuery extends ElementQuery
         return $this;
     }
 
+    /**
+     * @param string[]|string|null $value
+     * @return $this
+     */
     public function departmentId($value)
     {
         $this->departmentId = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string[]|string|null $value
+     * @return $this
+     */
+    public function name($value)
+    {
+        $this->name = $value;
 
         return $this;
     }
@@ -74,6 +104,10 @@ class UserQuery extends ElementQuery
 
             $this->subQuery->innerJoin('dingtalk_userdepartments', 'dingtalk_userdepartments.userId=dingtalk_users.userid');
             $this->subQuery->andWhere(Db::parseParam('dingtalk_userdepartments.departmentId', $departmentIds));
+        }
+
+        if ($this->name) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.name', $this->name));
         }
 
         return parent::beforePrepare();
