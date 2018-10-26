@@ -1,16 +1,3 @@
 {% extends "_layouts/elementindex" %}
 {% set title = "Users"|t('app') %}
 {% set elementType = 'panlatent\\craft\\dingtalk\\elements\\User' %}
-
-{#{% block sidebar %}#}
-    {#<nav>#}
-        {#<ul>#}
-            {#{% set deparentId = deparentId is defined ? deparentId : null %}#}
-            {#{% for department in craft.app.getModule('dingtalk').departments.getAllDepartments() %}#}
-                {#{% if department.parentId == deparentId %}#}
-                    {#<li><a href="{{ url('dingtalk/departments/' ~ department.id) }}">{{ department.name }}</a></li>#}
-                {#{% endif %}#}
-            {#{% endfor %}x#}
-        {#</ul>#}
-    {#</nav>#}
-{#{% endblock %}#}
