@@ -8,9 +8,7 @@
 
 namespace panlatent\craft\dingtalk\migrations;
 
-use Craft;
 use craft\db\Migration;
-use panlatent\craft\dingtalk\elements\User;
 
 class Install extends Migration
 {
@@ -94,9 +92,6 @@ class Install extends Migration
 
     public function safeDown()
     {
-        foreach (User::find()->select('elementsId')->column() as $id) {
-            Craft::$app->elements->deleteElementById($id);
-        }
         $this->dropTableIfExists('{{%dingtalk_usersmartworks}}');
         $this->dropTableIfExists('{{%dingtalk_userdepartments}}');
         $this->dropTableIfExists('{{%dingtalk_users}}');
