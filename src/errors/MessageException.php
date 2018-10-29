@@ -6,11 +6,11 @@
  * @copyright Copyright (c) 2018 panlatent@gmail.com
  */
 
-namespace panlatent\craft\dingtalk\services;
+namespace panlatent\craft\dingtalk\errors;
 
-use yii\base\Component;
+use yii\base\Exception;
 
-class Callbacks extends Component
+class MessageException extends Exception
 {
 
 }

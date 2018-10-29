@@ -68,7 +68,7 @@ class User extends Element
                 'criteria' => [],
             ],
         ];
-        $allDepartments = Plugin::$plugin->getDepartments()->getAllDepartments();
+        $allDepartments = Plugin::$plugin->departments->getAllDepartments();
 
         return array_merge($sources, DepartmentHelper::sourceTree($allDepartments, 1));
     }
@@ -261,7 +261,7 @@ class User extends Element
 
 
         if ($this->_smartWork) {
-            Plugin::$plugin->getSmartWorks()->saveSmartWork($this->_smartWork);
+            Plugin::$plugin->smartWorks->saveSmartWork($this->_smartWork);
         }
 
         parent::afterSave($isNew);
@@ -297,7 +297,7 @@ class User extends Element
             return $this->_smartWork;
         }
 
-        return $this->_smartWork = Plugin::$plugin->getSmartWorks()->getSmartWorkByUserId($this->userId);
+        return $this->_smartWork = Plugin::$plugin->smartWorks->getSmartWorkByUserId($this->userId);
     }
 
     /**
@@ -325,7 +325,7 @@ class User extends Element
 
         $departments = [];
         foreach ($results as $result) {
-            $departments[] = Plugin::$plugin->getDepartments()->getDepartmentById($result);
+            $departments[] = Plugin::$plugin->departments->getDepartmentById($result);
         }
         $this->setDepartments($departments);
 
@@ -341,7 +341,7 @@ class User extends Element
         if ($departments !== null) {
             foreach ($departments as $department) {
                 if (is_int($department)) {
-                    $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
+                    $department = Plugin::$plugin->departments->getDepartmentById($department);
                 }
 
                 if (!$department instanceof Department) {

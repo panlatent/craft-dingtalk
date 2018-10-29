@@ -22,8 +22,11 @@ use panlatent\craft\dingtalk\elements\User;
 use panlatent\craft\dingtalk\models\Settings;
 use panlatent\craft\dingtalk\services\Api;
 use panlatent\craft\dingtalk\services\Departments;
+use panlatent\craft\dingtalk\services\Messages;
+use panlatent\craft\dingtalk\services\Robots;
 use panlatent\craft\dingtalk\services\SmartWorks;
 use panlatent\craft\dingtalk\services\Users;
+use panlatent\craft\dingtalk\utilities\RobotMessages;
 use panlatent\craft\dingtalk\utilities\SyncContacts;
 use panlatent\craft\dingtalk\widgets\DingTalk as DingTalkWidget;
 use yii\base\Event;
@@ -36,6 +39,8 @@ use yii\base\Event;
  * @property-read Api $api
  * @property-read Settings $settings
  * @property-read Departments $departments
+ * @property-read Messages $messages
+ * @property-read Robots $robots
  * @property-read Users $users
  * @property-read SmartWorks $smartWorks
  * @author Panlatent <panlatent@gmail.com>
@@ -56,7 +61,7 @@ class Plugin extends \craft\base\Plugin
     /**
      * @var string
      */
-    public $schemaVersion = '0.1.0';
+    public $schemaVersion = '0.1.1';
 
     /**
      * @var string
@@ -93,6 +98,7 @@ class Plugin extends \craft\base\Plugin
 
         Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITY_TYPES, function(RegisterComponentTypesEvent $event) {
             $event->types[] = SyncContacts::class;
+            $event->types[] = RobotMessages::class;
         });
 
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function(RegisterUrlRulesEvent $event) {
@@ -117,42 +123,6 @@ class Plugin extends \craft\base\Plugin
             ),
             __METHOD__
         );
-    }
-
-    /**
-     * @return Api
-     */
-    public function getApi(): Api
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->get('api');
-    }
-
-    /**
-     * @return Departments
-     */
-    public function getDepartments(): Departments
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->get('departments');
-    }
-
-    /**
-     * @return Users
-     */
-    public function getUsers(): Users
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->get('users');
-    }
-
-    /**
-     * @return SmartWorks
-     */
-    public function getSmartWorks(): SmartWorks
-    {
-        /** @noinspection PhpIncompatibleReturnTypeInspection */
-        return $this->get('smartWorks');
     }
 
     /**

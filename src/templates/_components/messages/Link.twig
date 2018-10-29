@@ -1,0 +1,25 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.textField({
+    label: 'Title'|t('app'),
+    name: 'title',
+    value: message.title
+}) }}
+
+{{ forms.textareaField({
+    label: 'Content'|t('app'),
+    name: 'content',
+    value: message.content
+}) }}
+
+{{ forms.textField({
+    label: 'Message URL'|t('app'),
+    name: 'messageUrl',
+    value: message.messageUrl
+}) }}
+
+{{ forms.textField({
+    label: 'Picture URL'|t('app'),
+    name: 'pictureUrl',
+    value: message.pictureUrl
+}) }}

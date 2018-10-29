@@ -1,0 +1,38 @@
+{% import "_includes/forms" as forms %}
+
+{% set linkRows = [] %}
+{% for linkId,link in message.links %}
+    {% set linkRows = linkRows|merge([
+        {
+            title: link['title'],
+            messageUrl: {
+                value: link['messageUrl'] ?? '',
+            },
+            pictureUrl: {
+                value: link['pictureUrl'] ?? '',
+            }
+        }
+    ]) %}
+{% endfor %}
+
+{{ forms.editableTable({
+    id: 'links',
+    name: 'links',
+    cols: {
+        name: {
+            type: 'singleline',
+            heading: 'Title'|t('app'),
+        },
+        messageUrl: {
+            type: 'singleline',
+            heading: 'Message URL'|t('dingtalk'),
+            code: true,
+        },
+        pictureUrl: {
+            type: 'singleline',
+            heading: 'Picture URL'|t('dingtalk'),
+            code: true,
+        }
+    },
+    rows: linkRows,
+}) }}

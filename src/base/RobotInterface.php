@@ -17,5 +17,5 @@ interface RobotInterface extends SavableComponentInterface
 
     public function handle(Response $response);
 
-    public function send(Message $message);
+    public function send(MessageInterface $message): bool;
 }

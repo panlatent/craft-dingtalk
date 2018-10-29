@@ -39,9 +39,9 @@ class SyncContactsJob extends BaseJob
     protected function handleDepartments()
     {
         $departments = [];
-        $results = Plugin::$plugin->getApi()->getAllDepartments();
+        $results = Plugin::$plugin->api->getAllDepartments();
         foreach ($results as $result) {
-            $department = Plugin::$plugin->getDepartments()->createDepartment([
+            $department = Plugin::$plugin->departments->createDepartment([
                 'id' => ArrayHelper::remove($result, 'id'),
                 'name' => ArrayHelper::remove($result, 'name'),
                 'parentId' => ArrayHelper::remove($result, 'parentid'),
@@ -55,15 +55,15 @@ class SyncContactsJob extends BaseJob
         $departments = DepartmentHelper::parentSort($departments);
 
         foreach ($departments as $department) {
-            Plugin::$plugin->getDepartments()->saveDepartment($department);
+            Plugin::$plugin->departments->saveDepartment($department);
         }
     }
 
     protected function handleUsers()
     {
-        $departments = Plugin::$plugin->getDepartments()->getAllDepartments();
+        $departments = Plugin::$plugin->departments->getAllDepartments();
         foreach ($departments as $department) {
-            $results = Plugin::$plugin->getApi()->getUsersByDepartmentId($department->id);
+            $results = Plugin::$plugin->api->getUsersByDepartmentId($department->id);
             foreach ($results as $result) {
                 if (!($user = User::find()->userId($result['userid'])->one())) {
                     $user = new User();
@@ -102,7 +102,7 @@ class SyncContactsJob extends BaseJob
     {
         foreach (User::find()->batch(20) as $users) {
             $userIds = ArrayHelper::getColumn($users, 'userId');
-            $results = Plugin::$plugin->getApi()->getUserSmartWorkFields($userIds);
+            $results = Plugin::$plugin->api->getUserSmartWorkFields($userIds);
             /** @var User $user */
             foreach ($users as $user) {
                 $config = [
@@ -114,7 +114,7 @@ class SyncContactsJob extends BaseJob
                     $config[$field] = $value['value'] ?? '';
                 }
 
-                $user->smartWork = Plugin::$plugin->getSmartWorks()->createSmartWork($config);
+                $user->smartWork = Plugin::$plugin->smartWorks->createSmartWork($config);
 
                 Craft::$app->getElements()->saveElement($user);
             }

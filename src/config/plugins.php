@@ -14,6 +14,12 @@ return [
         'departments' => [
             'class' => \panlatent\craft\dingtalk\services\Departments::class,
         ],
+        'messages' => [
+            'class' => \panlatent\craft\dingtalk\services\Messages::class,
+        ],
+        'robots' => [
+            'class' => \panlatent\craft\dingtalk\services\Robots::class,
+        ],
         'users' => [
             'class' => \panlatent\craft\dingtalk\services\Users::class,
         ],

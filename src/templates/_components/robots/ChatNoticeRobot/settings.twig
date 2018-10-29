@@ -1,0 +1,37 @@
+{% import "_includes/forms" as forms %}
+
+{% set webhookRows = [] %}
+{% for webhookId,webhook in webhooks %}
+    {% set webhookRows = webhookRows|merge([
+        {
+            name: webhook['name'] ?? '',
+            url: {
+                value: webhook['url'] ?? '',
+                hasErrors: robot.hasErrors('webhooks['~webhookId~'][url]'),
+            },
+            enabled: webhook['enabled'] ?? 0,
+        }
+    ]) %}
+{% endfor %}
+
+{{ forms.editableTable({
+    id: 'webhooks',
+    name: 'webhooks',
+    cols: {
+        name: {
+            type: 'singleline',
+            heading: 'Name'|t('app'),
+        },
+        url: {
+            type: 'singleline',
+            heading: 'URL'|t('app'),
+            code: true,
+        },
+        enabled: {
+            type: 'lightswitch',
+            heading: "Status"|t('app'),
+            class: 'thin type-channel'
+        }
+    },
+    rows: webhookRows,
+}) }}

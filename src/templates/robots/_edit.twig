@@ -1,0 +1,58 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% set fullPageForm = true %}
+
+{% block actionButton %}
+    <button class="btn submit">{{ 'Save'|t('app') }}</button>
+{% endblock %}
+
+{% block content %}
+    <form method="post" accept-charset="UTF-8">
+        <input type="hidden" name="action" value="dingtalk/robots/save-robot">
+        <input type="hidden" name="robotId" value="{{ robot.id }}">
+        {{ csrfInput() }}
+
+        {{ forms.textField({
+            label: "Name"|t('app'),
+            required: true,
+            name: 'name',
+            value: robot.name,
+            errors: robot.getErrors('name'),
+        }) }}
+
+        {{ forms.textField({
+            label: "Handle"|t('app'),
+            required: true,
+            name: 'handle',
+            value: robot.handle,
+            errors: robot.getErrors('handle'),
+        }) }}
+
+        <hr>
+
+        {{ forms.selectField({
+            label: "Robot Type"|t('dingtalk'),
+            id: 'type',
+            name: 'type',
+            options: robotTypeOptions,
+            value: className(robot),
+            toggle: true
+        }) }}
+
+        {% for robotType in robotTypes %}
+            {% set isCurrent = (robotType == className(robot)) %}
+
+            <div id="{{ robotType|id }}"{% if not isCurrent %} class="hidden"{% endif %}>
+                {% namespace 'types['~robotType~']' %}
+                    {% if isCurrent %}
+                        {{ robot.getSettingsHtml()|raw }}
+                    {% else %}
+                        {{ robotInstances[robotType].getSettingsHtml()|raw }}
+                    {% endif %}
+                {% endnamespace %}
+            </div>
+        {% endfor %}
+
+    </form>
+{% endblock %}

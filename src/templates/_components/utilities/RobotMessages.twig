@@ -1,0 +1,45 @@
+{% import "_includes/forms" as forms %}
+
+<form method="post" accept-charset="UTF-8">
+    <input type="hidden" name="action" value="dingtalk/utilities/send-robot-message-action">
+    {{ csrfInput() }}
+
+    {{ forms.selectField({
+        label: 'Robot'|t('dingtalk'),
+        name: 'robotId',
+        options: robotOptions
+    }) }}
+
+    <hr>
+
+    {{ forms.selectField({
+        label: 'Message Type'|t('dingtalk'),
+        id: 'messageType',
+        name: 'messageType',
+        options: messageTypeOptions,
+        value: className(message),
+        toggle: true
+    }) }}
+
+    {% for messageType in messageTypes %}
+        {% set isCurrent = (messageType == className(message)) %}
+
+        <div id="{{ messageType|id }}"{% if not isCurrent %} class="hidden"{% endif %}>
+            {% namespace 'types['~messageType~']' %}
+                {% if false %}
+                    {{ robot.getSettingsHtml()|raw }}
+                {% else %}
+                    {{ messageInstances[messageType].getSettingsHtml()|raw }}
+                {% endif %}
+            {% endnamespace %}
+        </div>
+    {% endfor %}
+
+    <div class="buttons">
+        <input type="submit" class="btn submit" value="{{ 'Send'|t('app') }}">
+        <div class="utility-status"></div>
+    </div>
+</form>
+
+
+

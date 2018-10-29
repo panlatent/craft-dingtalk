@@ -8,4 +8,7 @@
 
 return [
     'dingtalk/<departmentId:\d+>/users' => 'dingtalk/users',
+    'dingtalk/robots' => 'dingtalk/robots',
+    'dingtalk/robots/new' => 'dingtalk/robots/edit-robot',
+    'dingtalk/robots/<robotId:\d+>' => 'dingtalk/robots/edit-robot',
 ];

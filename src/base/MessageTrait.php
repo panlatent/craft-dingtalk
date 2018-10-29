@@ -8,20 +8,25 @@
 
 namespace panlatent\craft\dingtalk\base;
 
-trait RobotTrait
+trait MessageTrait
 {
     /**
-     * @var int|null
+     * @var string|null
      */
-    public $id;
+    public $title;
 
     /**
      * @var string|null
      */
-    public $handle;
+    public $content;
 
     /**
-     * @var string|null
+     * @var bool
      */
-    public $name;
+    public $isAtAll = false;
+
+    /**
+     * @var string[]
+     */
+    public $atMobiles = [];
 }
