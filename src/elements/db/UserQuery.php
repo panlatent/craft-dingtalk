@@ -93,7 +93,7 @@ class UserQuery extends ElementQuery
         }
 
         if ($this->departmentId) {
-            $allDepartments = Plugin::$plugin->getDepartments()->getAllDepartments();
+            $allDepartments = Plugin::$plugin->departments->getAllDepartments();
             $childrenDepartments = DepartmentHelper::parentSort($allDepartments, $this->departmentId);
             $departmentIds = ArrayHelper::getColumn($childrenDepartments, 'id');
             if (empty($departmentIds)) {
