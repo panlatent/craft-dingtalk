@@ -51,6 +51,8 @@ class RobotsController extends Controller
             }
         }
 
+        $isNewRobot = $robot->getIsNew();
+
         $allRobotTypes = $robots->getAllRobotTypes();
 
         $robotTypeOptions = [];
@@ -75,6 +77,7 @@ class RobotsController extends Controller
         ];
 
         return $this->renderTemplate('dingtalk/robots/_edit', [
+            'isNewRobot' => $isNewRobot,
             'robot' => $robot,
             'robotTypes' => $allRobotTypes,
             'robotTypeOptions' => $robotTypeOptions,
@@ -119,6 +122,20 @@ class RobotsController extends Controller
 
         $session->setNotice(Craft::t('dingtalk', 'Robot saved.'));
 
-        return $this->redirectToPostedUrl();
+        return $this->redirect('dingtalk/robots');
+    }
+
+    public function actionDeleteRobot()
+    {
+        $this->requirePostRequest();
+        $this->requireAcceptsJson();
+
+        $robots = Plugin::$plugin->robots;
+        $robotId = Craft::$app->request->getBodyParam('id');
+        if (!($robot = $robots->getRobotById($robotId))) {
+            return $this->asJson(['success' => false]);
+        }
+
+        return $this->asJson(['success' => $robots->deleteRobot($robot)]);
     }
 }

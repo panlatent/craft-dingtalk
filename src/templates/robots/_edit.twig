@@ -10,7 +10,7 @@
 {% block content %}
     <form method="post" accept-charset="UTF-8">
         <input type="hidden" name="action" value="dingtalk/robots/save-robot">
-        <input type="hidden" name="robotId" value="{{ robot.id }}">
+        {% if not isNewRobot%}<input type="hidden" name="robotId" value="{{ robot.id }}">{% endif %}
         {{ csrfInput() }}
 
         {{ forms.textField({

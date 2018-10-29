@@ -244,7 +244,7 @@ class Robots extends Component
             $robotRecord = RobotRecord::findOne(['id' => $robotId]);
 
             if (!$robotRecord) {
-                throw new RobotException(Craft::t('dingtalk', 'No volume exists with the ID “{id}”.', ['id' => $robotId]));
+                throw new RobotException(Craft::t('dingtalk', 'No robot exists with the ID “{id}”.', ['id' => $robotId]));
             }
         } else {
             $robotRecord = new RobotRecord();

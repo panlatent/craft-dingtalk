@@ -31,6 +31,7 @@ return [
     'Robot' => '机器人',
     'Robots' => '机器人',
     'Robot Type' => '机器人类型',
+    'Create a new robot' => '创建新机器人',
     'Couldn’t save robot.' => '不能保存机器人。',
     'Robot saved.' => '机器人已保存。',
     'Chat Notice Robot' => '聊天通知机器人',
