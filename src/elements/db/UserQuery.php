@@ -32,6 +32,21 @@ class UserQuery extends ElementQuery
     public $name;
 
     /**
+     * @var string[]|string|null
+     */
+    public $position;
+
+    /**
+     * @var int[]|int|null
+     */
+    public $tel;
+
+    /**
+     * @var string[]|string|null
+     */
+    public $mobile;
+
+    /**
      * @param string[]|string|null $value
      * @return $this
      */
@@ -60,6 +75,39 @@ class UserQuery extends ElementQuery
     public function name($value)
     {
         $this->name = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string[]|string|null $value
+     * @return $this
+     */
+    public function position($value)
+    {
+        $this->position = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param int[]|int|null $value
+     * @return $this
+     */
+    public function tel($value)
+    {
+        $this->tel = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string[]|string|null $value
+     * @return $this
+     */
+    public function mobile($value)
+    {
+        $this->mobile = $value;
 
         return $this;
     }
@@ -108,6 +156,18 @@ class UserQuery extends ElementQuery
 
         if ($this->name) {
             $this->subQuery->andWhere(Db::parseParam('dingtalk_users.name', $this->name));
+        }
+
+        if ($this->position) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.position', $this->position));
+        }
+
+        if ($this->tel) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.tel', $this->tel));
+        }
+
+        if ($this->mobile) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.mobile', $this->mobile));
         }
 
         return parent::beforePrepare();
