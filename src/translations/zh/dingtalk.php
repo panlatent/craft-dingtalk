@@ -37,4 +37,8 @@ return [
     'Chat Notice Robot' => '聊天通知机器人',
     'Robot Messages' => '机器人消息',
     'Robots Settings' => '机器人设置',
+    'View Contacts' => '查看通讯录',
+    'View Robots' => '查看机器人',
+    'Manage Robots' => '管理机器人',
+    'Send Robot Messages' => '发送机器人消息',
 ];

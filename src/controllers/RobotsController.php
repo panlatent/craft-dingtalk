@@ -22,6 +22,8 @@ class RobotsController extends Controller
 {
     public function actionIndex(): Response
     {
+        $this->requirePermission('viewDingTalkRobots');
+
         $crumbs = [
             ['label' => Craft::t('dingtalk', 'DingTalk'), 'url' => UrlHelper::url('settings/plugins/dingtalk')],
         ];
@@ -36,6 +38,8 @@ class RobotsController extends Controller
 
     public function actionEditRobot(int $robotId = null, RobotInterface $robot = null): Response
     {
+        $this->requirePermission('manageDingTalkRobots');
+
         $robots = Plugin::$plugin->robots;
 
         /** @var Robot $robot */
@@ -93,6 +97,7 @@ class RobotsController extends Controller
     public function actionSaveRobot()
     {
         $this->requirePostRequest();
+        $this->requirePermission('manageDingTalkRobots');
 
         $request = Craft::$app->getRequest();
         $robots = Plugin::$plugin->robots;
@@ -129,6 +134,7 @@ class RobotsController extends Controller
     {
         $this->requirePostRequest();
         $this->requireAcceptsJson();
+        $this->requirePermission('manageDingTalkRobots');
 
         $robots = Plugin::$plugin->robots;
         $robotId = Craft::$app->request->getBodyParam('id');

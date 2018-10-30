@@ -1,3 +1,4 @@
 {% extends "_layouts/elementindex" %}
+{% requirePermission 'viewDingTalkContacts' %}
 {% set title = "Users"|t('app') %}
 {% set elementType = 'panlatent\\craft\\dingtalk\\elements\\User' %}

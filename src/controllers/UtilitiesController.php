@@ -10,7 +10,6 @@ namespace panlatent\craft\dingtalk\controllers;
 
 use Craft;
 use craft\web\Controller;
-use panlatent\craft\dingtalk\errors\RobotException;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\queue\jobs\SyncContactsJob;
 use yii\web\Response;
@@ -20,6 +19,8 @@ class UtilitiesController extends Controller
     public function actionSendRobotMessageAction()
     {
         $this->requirePostRequest();
+        $this->requirePermission('sendDingTalkRobotMessages');
+
 
         $request = Craft::$app->getRequest();
         $messages = Plugin::$plugin->messages;
@@ -50,6 +51,8 @@ class UtilitiesController extends Controller
 
     public function actionSyncContactsAction(): Response
     {
+        $this->requirePermission('syncDingTalkContacts');
+
         Craft::$app->queue->push(new SyncContactsJob());
 
         return $this->redirectToPostedUrl();

@@ -12,9 +12,11 @@ use Craft;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterUrlRulesEvent;
+use craft\events\RegisterUserPermissionsEvent;
 use craft\helpers\ArrayHelper;
 use craft\services\Dashboard;
 use craft\services\Elements;
+use craft\services\UserPermissions;
 use craft\services\Utilities;
 use craft\web\twig\variables\Cp;
 use craft\web\UrlManager;
@@ -88,31 +90,56 @@ class Plugin extends \craft\base\Plugin
 
         Craft::setAlias('@dingtalk', $this->getBasePath());
 
-        Event::on(Elements::class, Elements::EVENT_REGISTER_ELEMENT_TYPES, function(RegisterComponentTypesEvent $event) {
+        Event::on(Elements::class, Elements::EVENT_REGISTER_ELEMENT_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = User::class;
         });
 
-        Event::on(Dashboard::class, Dashboard::EVENT_REGISTER_WIDGET_TYPES, function(RegisterComponentTypesEvent $event) {
+        Event::on(Dashboard::class, Dashboard::EVENT_REGISTER_WIDGET_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = DingTalkWidget::class;
         });
 
-        Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITY_TYPES, function(RegisterComponentTypesEvent $event) {
+        Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITY_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = SyncContacts::class;
             $event->types[] = RobotMessages::class;
         });
 
-        Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function(RegisterUrlRulesEvent $event) {
+        Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function (RegisterUrlRulesEvent $event) {
             $event->rules = array_merge($event->rules, require __DIR__ . '/config/routes.php');
         });
 
-        Event::on(Cp::class, Cp::EVENT_REGISTER_CP_NAV_ITEMS, function(RegisterCpNavItemsEvent $event) {
-            if ($this->getSettings()->showContactsOnCpSection) {
+        Event::on(Cp::class, Cp::EVENT_REGISTER_CP_NAV_ITEMS, function (RegisterCpNavItemsEvent $event) {
+            if ($this->getSettings()->showContactsOnCpSection && Craft::$app->user->can('viewContacts')) {
                 $event->navItems[] = [
                     'label' => Craft::t('dingtalk', 'Contacts'),
                     'url' => 'dingtalk/users',
                     'icon' => '@dingtalk/icons/departments.svg',
                 ];
             }
+        });
+
+        Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function (RegisterUserPermissionsEvent $event) {
+            $event->permissions[Craft::t('dingtalk', 'DingTalk')] = [
+                'viewDingTalkContacts' => [
+                    'label' => Craft::t('dingtalk', 'View Contacts'),
+                    'nested' => [
+                        'syncDingTalkContacts' => [
+                            'label' => Craft::t('dingtalk', 'Sync Contacts'),
+                        ],
+                    ],
+                ],
+                'viewDingTalkRobots' => [
+                    'label' => Craft::t('dingtalk', 'View Robots'),
+                    'nested' => [
+                        'manageDingTalkRobots' => [
+                            'label' => Craft::t('dingtalk', 'Manage Robots'),
+                        ],
+                        'sendDingTalkRobotMessages' => [
+                            'label' => Craft::t('dingtalk', 'Send Robot Messages'),
+                        ],
+                    ],
+                ],
+
+            ];
         });
 
         Craft::info(
