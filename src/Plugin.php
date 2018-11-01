@@ -108,7 +108,7 @@ class Plugin extends \craft\base\Plugin
         });
 
         Event::on(Cp::class, Cp::EVENT_REGISTER_CP_NAV_ITEMS, function (RegisterCpNavItemsEvent $event) {
-            if ($this->getSettings()->showContactsOnCpSection && Craft::$app->user->can('viewContacts')) {
+            if ($this->getSettings()->showContactsOnCpSection && Craft::$app->user->checkPermission('viewContacts')) {
                 $event->navItems[] = [
                     'label' => Craft::t('dingtalk', 'Contacts'),
                     'url' => 'dingtalk/users',
