@@ -117,7 +117,7 @@ class RobotsController extends Controller
         if (!$robots->saveRobot($robot)) {
             $session->setError(Craft::t('dingtalk', 'Couldn’t save robot.'));
 
-            // Send the volume back to the template
+            // Send the robot back to the template
             Craft::$app->getUrlManager()->setRouteParams([
                 'robot' => $robot
             ]);
