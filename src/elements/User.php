@@ -92,7 +92,7 @@ class User extends Element
 
     protected static function defineSearchableAttributes(): array
     {
-        return ['name', 'mobile'];
+        return ['name', 'mobile', 'tel', 'position'];
     }
 
     /**
