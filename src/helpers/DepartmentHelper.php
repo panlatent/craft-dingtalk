@@ -13,25 +13,41 @@ use panlatent\craft\dingtalk\models\Department;
 class DepartmentHelper
 {
     /**
+     * e.g.
+     *
+     * ```php
+     * [
+     *     [
+     *         'department' => $department,
+     *         'nested' => [
+     *              [
+     *                  'department' => $department,
+     *                  'nested' => [
+     *                  ]
+     *              ]
+     *         ]
+     *     ]
+     * ]
+     * ```
+     *
      * @param Department[] $departments
      * @param int|null $parentId
      * @return array
      */
     public static function tree(array $departments, int $parentId = null): array
     {
-        $results = [];
+        $roots = [];
 
         foreach ($departments as $department) {
             if ($department->parentId == $parentId) {
-                $result = $department->toArray();
-                if ($department->id == null) {
-                    $result['children'] = static::tree($departments, 1);
-                }
-                $results[$result['id']] = $result;
+                $roots[] = [
+                    'department' => $department,
+                    'nested' => static::tree($departments, $department->id),
+                ];
             }
         }
 
-        return $results;
+        return $roots;
     }
 
     public static function sourceTree(array $departments, int $parentId = null): array
