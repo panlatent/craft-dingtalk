@@ -9,7 +9,6 @@
 namespace panlatent\craft\dingtalk\elements\db;
 
 use craft\elements\db\ElementQuery;
-use craft\helpers\ArrayHelper;
 use craft\helpers\Db;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\Plugin;
@@ -45,6 +44,11 @@ class UserQuery extends ElementQuery
      * @var string[]|string|null
      */
     public $mobile;
+
+    /**
+     * @var bool|int|null
+     */
+    public $active;
 
     /**
      * @param string[]|string|null $value
@@ -112,6 +116,17 @@ class UserQuery extends ElementQuery
         return $this;
     }
 
+    /**
+     * @param bool|int|null $value
+     * @return $this
+     */
+    public function active($value)
+    {
+        $this->active = $value;
+
+        return $this;
+    }
+
     public function beforePrepare(): bool
     {
         $this->joinElementTable('dingtalk_users');
@@ -142,12 +157,15 @@ class UserQuery extends ElementQuery
 
         if ($this->departmentId) {
             $allDepartments = Plugin::$plugin->departments->getAllDepartments();
-            $childrenDepartments = DepartmentHelper::parentSort($allDepartments, $this->departmentId);
-            $departmentIds = ArrayHelper::getColumn($childrenDepartments, 'id');
-            if (empty($departmentIds)) {
-                $departmentIds =  $this->departmentId;
-            } else {
-                $departmentIds[] = $this->departmentId;
+
+            $departmentIds = (array)$this->departmentId;
+            foreach ($departmentIds as $departmentId) {
+                $childrenDepartments = DepartmentHelper::parentSort($allDepartments, $departmentId);
+                foreach ($childrenDepartments as $childrenDepartment) {
+                    if (!isset($departmentIds[$childrenDepartment->id])) {
+                        $departmentIds[] = $childrenDepartment->id;
+                    }
+                }
             }
 
             $this->subQuery->innerJoin('dingtalk_userdepartments', 'dingtalk_userdepartments.userId=dingtalk_users.userid');
@@ -168,6 +186,10 @@ class UserQuery extends ElementQuery
 
         if ($this->mobile) {
             $this->subQuery->andWhere(Db::parseParam('dingtalk_users.mobile', $this->mobile));
+        }
+
+        if ($this->active !== null) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.active', $this->active ? 1 : 0));
         }
 
         return parent::beforePrepare();
