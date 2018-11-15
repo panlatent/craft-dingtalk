@@ -38,30 +38,44 @@ class SyncContactsJob extends BaseJob
 
     protected function handleDepartments()
     {
+        $allDepartments = Plugin::$plugin->departments->getAllDepartments();
+        $allDepartments = ArrayHelper::index($allDepartments, 'id');
+
         $departments = [];
         $results = Plugin::$plugin->api->getAllDepartments();
         foreach ($results as $result) {
+            $id = ArrayHelper::remove($result, 'id');
             $department = Plugin::$plugin->departments->createDepartment([
-                'id' => ArrayHelper::remove($result, 'id'),
+                'id' => $id,
                 'name' => ArrayHelper::remove($result, 'name'),
                 'parentId' => ArrayHelper::remove($result, 'parentid'),
                 'sortOrder' => ArrayHelper::remove($result, 'order'),
                 'settings' => $result,
             ]);
-
             $departments[] = $department;
+
+            if (isset($allDepartments[$id])) {
+                unset($allDepartments[$id]);
+            }
         }
 
         $departments = DepartmentHelper::parentSort($departments);
-
         foreach ($departments as $department) {
             Plugin::$plugin->departments->saveDepartment($department);
+        }
+
+        foreach ($allDepartments as $department) {
+            Plugin::$plugin->departments->deleteDepartment($department);
         }
     }
 
     protected function handleUsers()
     {
+        $elements = Craft::$app->getElements();
+
+        $activeUserIds = [];
         $departments = Plugin::$plugin->departments->getAllDepartments();
+
         foreach ($departments as $department) {
             $results = Plugin::$plugin->api->getUsersByDepartmentId($department->id);
             foreach ($results as $result) {
@@ -93,8 +107,19 @@ class SyncContactsJob extends BaseJob
 
                 $user->settings = $result;
 
-                Craft::$app->getElements()->saveElement($user);
+                $elements->saveElement($user);
+
+                $activeUserIds[] = $user->userId;
             }
+        }
+
+        // Remove abandoned users.
+        $abandonedElements = User::find()
+            ->where(['not in', 'userId', $activeUserIds])
+            ->all();
+
+        foreach ($abandonedElements as $abandonedElement) {
+            $elements->deleteElement($abandonedElement);
         }
     }
 

@@ -178,6 +178,27 @@ class Departments extends Component
         return true;
     }
 
+    public function deleteDepartment(Department $department): bool
+    {
+        $db = Craft::$app->getDb();
+
+        $transaction = $db->beginTransaction();
+        try {
+            $db->createCommand()
+                ->delete('{{%dingtalk_departments}}', [
+                    'id' => $department->id,
+                ])->execute();
+
+            $transaction->commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollBack();
+
+            throw $exception;
+        }
+
+        return true;
+    }
+
     private function _createQuery(): Query
     {
         return (new Query())
