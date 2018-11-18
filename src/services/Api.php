@@ -132,6 +132,50 @@ class Api extends Component
     }
 
     /**
+     * @param string $userId
+     * @return mixed
+     */
+    public function getUserById(string $userId)
+    {
+        $results = $this->client->user->get($userId);
+
+        return $results['userlist'];
+    }
+
+    /**
+     * @param string $operateUserId
+     * @return array
+     */
+    public function getDimissionUserIds(string $operateUserId)
+    {
+        return array_keys($this->getDimissionUsers($operateUserId));
+    }
+
+    /**
+     * @param string $operateUserId
+     * @return array
+     */
+    public function getDimissionUsers(string $operateUserId)
+    {
+        $users = [];
+
+        $pageCount = 1;
+        for ($page = 1; $page <= $pageCount; ++$page) {
+            $results = $this->client->user->httpPostJson('topapi/hrm/employee/getdismissionlist', [
+                'current' => $page,
+                'page_size' => 50,
+                'op_userid' => $operateUserId,
+            ]);
+
+            $page = $results['page']['current'];
+            $pageCount = $results['page']['total_page'];
+            $users = array_merge($users, $results['page']['data_list']);
+        }
+
+        return ArrayHelper::index($users, 'userid');
+    }
+
+    /**
      * @param array|string $userId
      * @return array
      */

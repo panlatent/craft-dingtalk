@@ -15,24 +15,63 @@ use panlatent\craft\dingtalk\elements\User;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\Plugin;
 
+/**
+ * Class SyncContactsJob
+ *
+ * @package panlatent\craft\dingtalk\queue\jobs
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class SyncContactsJob extends BaseJob
 {
+    /**
+     * @var bool
+     */
     public $enableDepartments = true;
 
+    /**
+     * @var bool
+     */
     public $enableUsers = true;
 
+    /**
+     * @var bool
+     */
     public $enableSmartWork = true;
 
+
+    /**
+     * @var bool
+     */
+    public $withLeavedUsers = true;
+
+    /**
+     * @var string|null
+     */
+    public $operateUserId;
+
+    /**
+     * @inheritdoc
+     */
     public function execute($queue)
     {
-        if ($this->enableDepartments) {
-            $this->handleDepartments();
-        }
-        if ($this->enableUsers) {
-            $this->handleUsers();
-        }
-        if ($this->enableSmartWork) {
-            $this->handleSmartWork();
+        $transaction = Craft::$app->db->beginTransaction();
+
+        try {
+            if ($this->enableDepartments) {
+                $this->handleDepartments();
+            }
+            if ($this->enableUsers) {
+                $this->handleUsers();
+            }
+            if ($this->enableSmartWork) {
+                $this->handleSmartWork();
+            }
+
+            $transaction->commit();
+        } catch (\Throwable $exception) {
+            $transaction->rollBack();
+
+            throw $exception;
         }
     }
 
@@ -72,12 +111,13 @@ class SyncContactsJob extends BaseJob
     protected function handleUsers()
     {
         $elements = Craft::$app->getElements();
-
-        $activeUserIds = [];
+        $api = Plugin::$plugin->api;
         $departments = Plugin::$plugin->departments->getAllDepartments();
 
+        $activatedIds = [];
+
         foreach ($departments as $department) {
-            $results = Plugin::$plugin->api->getUsersByDepartmentId($department->id);
+            $results = $api->getUsersByDepartmentId($department->id);
             foreach ($results as $result) {
                 if (!($user = User::find()->userId($result['userid'])->one())) {
                     $user = new User();
@@ -109,23 +149,55 @@ class SyncContactsJob extends BaseJob
 
                 $elements->saveElement($user);
 
-                $activeUserIds[] = $user->userId;
+                $activatedIds[] = $user->id;
+            }
+        }
+
+        if ($this->withLeavedUsers) {
+            $results = $api->getDimissionUsers($this->operateUserId);
+            foreach ($results as $result) {
+                if (!($user = User::find()->userId($result['userid'])->one())) {
+                    $user = new User();
+                }
+                $user->userId = ArrayHelper::remove($result, 'userid');
+                $user->name = ArrayHelper::remove($result, 'name');
+                $user->email = ArrayHelper::remove($result, 'email');
+                $user->remark = ArrayHelper::remove($result, 'dismission_memo', '');
+                $user->isLeaved = true;
+
+                 if (empty($user->position) && !empty($result['position'])) {
+                     $user->position = ArrayHelper::remove($result, 'position');
+                 }
+                if (empty($user->dateHired) && !empty($result['confirm_join_time'])) {
+                    $user->dateHired = ArrayHelper::remove($result, 'confirm_join_time');
+                }
+                if (!empty($result['last_work_date'])) {
+                    $user->dateLeaved = ArrayHelper::remove($result, 'last_work_date');
+                }
+                $user->settings = $result;
+
+                $elements->saveElement($user);
+
+                $activatedIds[] = $user->id;
             }
         }
 
         // Remove abandoned users.
-        $abandonedElements = User::find()
-            ->where(['not in', 'userId', $activeUserIds])
+        /** @var User[] $abandonedUsers */
+        $abandonedUsers = User::find()
+            ->where(['not in', 'dingtalk_users.id', $activatedIds])
             ->all();
 
-        foreach ($abandonedElements as $abandonedElement) {
-            $elements->deleteElement($abandonedElement);
+        foreach ($abandonedUsers as $abandonedUser) {
+            $abandonedUser->isLeaved = true;
+
+            $elements->saveElement($abandonedUser);
         }
     }
 
     protected function handleSmartWork()
     {
-        foreach (User::find()->batch(20) as $users) {
+        foreach (User::find()->isLeaved(false)->batch(20) as $users) {
             $userIds = ArrayHelper::getColumn($users, 'userId');
             $results = Plugin::$plugin->api->getUserSmartWorkFields($userIds);
             /** @var User $user */

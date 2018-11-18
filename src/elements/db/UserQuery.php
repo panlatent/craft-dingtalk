@@ -51,6 +51,31 @@ class UserQuery extends ElementQuery
     public $active;
 
     /**
+     * @var bool|null
+     */
+    public $isAdmin;
+
+    /**
+     * @var bool|null
+     */
+    public $isBoss;
+
+    /**
+     * @var bool|null
+     */
+    public $isLeader;
+
+    /**
+     * @var bool|null
+     */
+    public $isHide;
+
+    /**
+     * @var bool|null
+     */
+    public $isLeaved;
+
+    /**
      * @param string[]|string|null $value
      * @return $this
      */
@@ -120,9 +145,64 @@ class UserQuery extends ElementQuery
      * @param bool|int|null $value
      * @return $this
      */
-    public function active($value)
+    public function active($value = true)
     {
         $this->active = $value;
+
+        return $this;
+    }
+
+    /**
+     * @var bool|null
+     * @return $this
+     */
+    public function isAdmin($value = true)
+    {
+        $this->isAdmin = $value;
+
+        return $this;
+    }
+
+    /**
+     * @var bool|null
+     * @return $this
+     */
+    public function isBoss($value = true)
+    {
+        $this->isBoss = $value;
+
+        return $this;
+    }
+
+    /**
+     * @var bool|null
+     * @return $this
+     */
+    public function isLeader($value = true)
+    {
+        $this->isLeader = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param bool|null $value
+     * @return $this
+     */
+    public function isHide($value = true)
+    {
+        $this->isHide = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param bool|null $value
+     * @return $this
+     */
+    public function isLeaved($value = true)
+    {
+        $this->isLeaved = $value;
 
         return $this;
     }
@@ -146,7 +226,7 @@ class UserQuery extends ElementQuery
             'dingtalk_users.mobile',
             'dingtalk_users.isHide',
             'dingtalk_users.orgEmail',
-            'dingtalk_users.dateHired' ,
+            'dingtalk_users.dateHired',
             'dingtalk_users.settings',
             'dingtalk_users.remark',
         ]);
@@ -188,10 +268,38 @@ class UserQuery extends ElementQuery
             $this->subQuery->andWhere(Db::parseParam('dingtalk_users.mobile', $this->mobile));
         }
 
+        $this->_prepareStatusConditions();
+
+        return parent::beforePrepare();
+    }
+
+    /**
+     * Prepare status conditions
+     */
+    private function _prepareStatusConditions()
+    {
         if ($this->active !== null) {
             $this->subQuery->andWhere(Db::parseParam('dingtalk_users.active', $this->active ? 1 : 0));
         }
 
-        return parent::beforePrepare();
+        if ($this->isAdmin !== null) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isAdmin', $this->isAdmin ? 1 : 0));
+        }
+
+        if ($this->isBoss !== null) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isBoss', $this->isBoss ? 1 : 0));
+        }
+
+        if ($this->isLeader !== null) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isLeader', $this->isLeader ? 1 : 0));
+        }
+
+        if ($this->isHide !== null) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isHide', $this->isHide ? 1 : 0));
+        }
+
+        if ($this->isLeaved !== null) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isLeaved', $this->isLeaved ? 1 : 0));
+        }
     }
 }

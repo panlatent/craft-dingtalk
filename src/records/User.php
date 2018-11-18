@@ -22,14 +22,16 @@ use craft\db\ActiveRecord;
  * @property bool $isAdmin
  * @property bool $isBoss
  * @property bool $isLeader
+ * @property bool $isHide
+ * @property bool $isLeaved
  * @property string $avatar
  * @property string $jobNumber
  * @property string $email
  * @property bool $active
  * @property string $mobile
- * @property bool $isHide
  * @property string $orgEmail
  * @property string $dateHired
+ * @property string $dateLeaved
  * @property string $settings
  * @property string $remark
  * @property int $sortOrder

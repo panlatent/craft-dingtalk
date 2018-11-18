@@ -5,10 +5,25 @@
     {{ csrfInput() }}
 
     {{ forms.checkboxSelect({
-        name: 'caches',
+        name: 'all',
         options: [],
         showAllOption: true,
         values: '*',
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'With leaved users'|t('dingtalk'),
+        name: 'withLeavedUsers',
+        on: true,
+        toggle: 'dimission',
+    }) }}
+
+    <hr>
+
+    {{ forms.selectField({
+        label: "Leaved operate user"|t('dingtalk'),
+        name: 'operateUserId',
+        options: userOptions,
     }) }}
 
     <div class="buttons">

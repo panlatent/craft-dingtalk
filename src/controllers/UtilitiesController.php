@@ -14,13 +14,18 @@ use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\queue\jobs\SyncContactsJob;
 use yii\web\Response;
 
+/**
+ * Class UtilitiesController
+ *
+ * @package panlatent\craft\dingtalk\controllers
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class UtilitiesController extends Controller
 {
     public function actionSendRobotMessageAction()
     {
         $this->requirePostRequest();
         $this->requirePermission('sendDingTalkRobotMessages');
-
 
         $request = Craft::$app->getRequest();
         $messages = Plugin::$plugin->messages;
@@ -52,8 +57,14 @@ class UtilitiesController extends Controller
     public function actionSyncContactsAction(): Response
     {
         $this->requirePermission('syncDingTalkContacts');
+        $this->requirePostRequest();
 
-        Craft::$app->queue->push(new SyncContactsJob());
+        $request = Craft::$app->getRequest();
+
+        Craft::$app->queue->push(new SyncContactsJob([
+            'withLeavedUsers' => $request->getBodyParam('withLeavedUsers'),
+            'operateUserId' => $request->getBodyParam('operateUserId'),
+        ]));
 
         return $this->redirectToPostedUrl();
     }

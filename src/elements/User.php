@@ -29,6 +29,7 @@ use yii\helpers\Json;
  *
  * @package panlatent\craft\dingtalk\elements
  * @property DateTime $dateHired
+ * @property DateTime $dateLeaved
  * @property Department[] $departments
  * @property UserSmartWork $smartWork
  * @author Panlatent <panlatent@gmail.com>
@@ -59,20 +60,37 @@ class User extends Element
         return 'user';
     }
 
+    /**
+     * @inheritdoc
+     */
     protected static function defineSources(string $context = null): array
     {
         $sources = [
             [
                 'key' => '*',
                 'label' => Craft::t('dingtalk', 'All users'),
-                'criteria' => [],
+                'criteria' => [
+                ],
             ],
         ];
         $allDepartments = Plugin::$plugin->departments->getAllDepartments();
 
-        return array_merge($sources, DepartmentHelper::sourceTree($allDepartments, 1));
+        $sources = array_merge($sources, DepartmentHelper::sourceTree($allDepartments, 1));
+        $sources[] = ['heading' => Craft::t('dingtalk', 'Leaved users')];
+        $sources[] = [
+            'key' => 'isLeaved:*',
+            'label' => Craft::t('dingtalk', 'Leaved users'),
+            'criteria' => [
+                'isLeaved' => true,
+            ],
+        ];
+
+        return $sources;
     }
 
+    /**
+     * @inheritdoc
+     */
     protected static function defineSortOptions(): array
     {
         return [
@@ -80,6 +98,9 @@ class User extends Element
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
     protected static function defineTableAttributes(): array
     {
         return [
@@ -90,6 +111,9 @@ class User extends Element
         ];
     }
 
+    /**
+     * @inheritdoc
+     */
     protected static function defineSearchableAttributes(): array
     {
         return ['name', 'mobile', 'tel', 'position'];
@@ -139,6 +163,11 @@ class User extends Element
      * @var bool|null 是否号码隐藏
      */
     public $isHide;
+
+    /**
+     * @var bool|null 是否离职
+     */
+    public $isLeaved;
 
     /**
      * @var string|null 头像 URL
@@ -191,6 +220,11 @@ class User extends Element
     private $_dateHired;
 
     /**
+     * @var DateTime|null 离职时间 (Unix时间戳)
+     */
+    private $_dateLeaved;
+
+    /**
      * @var Department[]|null
      */
     private $_departments;
@@ -199,6 +233,17 @@ class User extends Element
      * @var UserSmartWork|null
      */
     private $_smartWork;
+
+    public function rules()
+    {
+        $rules = parent::rules();
+
+        $rules = array_merge($rules, [
+            [['userId', 'name'], 'required'],
+        ]);
+
+        return $rules;
+    }
 
     public function afterSave(bool $isNew)
     {
@@ -213,10 +258,11 @@ class User extends Element
         $userRecord->name = $this->name;
         $userRecord->position = $this->position;
         $userRecord->tel = $this->tel;
-        $userRecord->isAdmin = $this->isAdmin;
-        $userRecord->isBoss = $this->isBoss;
-        $userRecord->isLeader = $this->isLeader;
-        $userRecord->isHide = $this->isHide;
+        $userRecord->isAdmin = (bool)$this->isAdmin;
+        $userRecord->isBoss = (bool)$this->isBoss;
+        $userRecord->isLeader = (bool)$this->isLeader;
+        $userRecord->isHide = (bool)$this->isHide;
+        $userRecord->isLeaved = (bool)$this->isLeaved;
         $userRecord->avatar = $this->avatar;
         $userRecord->jobNumber = $this->jobNumber;
         $userRecord->email = $this->email;
@@ -224,6 +270,7 @@ class User extends Element
         $userRecord->active = $this->active;
         $userRecord->mobile = $this->mobile;
         $userRecord->dateHired = $this->dateHired ? $this->dateHired->format('Y-m-d H:i:s') : null;
+        $userRecord->dateLeaved = $this->dateLeaved ? $this->dateLeaved->format('Y-m-d H:i:s') : null;
         $userRecord->settings = Json::encode($this->settings ?? []);
         $userRecord->remark = $this->remark;
         $userRecord->sortOrder = $this->sortOrder;
@@ -286,6 +333,27 @@ class User extends Element
             $dateHired = new DateTime($dateHired);
         }
         $this->_dateHired = $dateHired;
+    }
+
+    /**
+     * @return DateTime|null
+     */
+    public function getDateLeaved()
+    {
+        return $this->_dateLeaved;
+    }
+
+    /**
+     * @param DateTime|string|int|null $dateLeaved
+     */
+    public function setDateLeaved($dateLeaved)
+    {
+        if (is_int($dateLeaved)) {
+            $dateLeaved = new DateTime(date('Y-m-d H:i:s', $dateLeaved));
+        } elseif (is_string($dateLeaved)) {
+            $dateLeaved = new DateTime($dateLeaved);
+        }
+        $this->_dateLeaved = $dateLeaved;
     }
 
     /**
