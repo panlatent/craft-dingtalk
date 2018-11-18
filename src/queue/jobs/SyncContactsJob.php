@@ -197,7 +197,7 @@ class SyncContactsJob extends BaseJob
 
     protected function handleSmartWork()
     {
-        foreach (User::find()->isLeaved(false)->batch(20) as $users) {
+        foreach (User::find()->batch(20) as $users) {
             $userIds = ArrayHelper::getColumn($users, 'userId');
             $results = Plugin::$plugin->api->getUserSmartWorkFields($userIds);
             /** @var User $user */
