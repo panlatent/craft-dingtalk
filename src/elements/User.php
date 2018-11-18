@@ -69,14 +69,16 @@ class User extends Element
             [
                 'key' => '*',
                 'label' => Craft::t('dingtalk', 'All users'),
-                'criteria' => [
-                ],
+                'criteria' => [],
             ],
+
         ];
         $allDepartments = Plugin::$plugin->departments->getAllDepartments();
 
+        $sources[] = ['heading' => Craft::t('dingtalk', 'Serving staffs')];
         $sources = array_merge($sources, DepartmentHelper::sourceTree($allDepartments, 1));
-        $sources[] = ['heading' => Craft::t('dingtalk', 'Leaved users')];
+
+        $sources[] = ['heading' => Craft::t('dingtalk', 'Leaved staffs')];
         $sources[] = [
             'key' => 'isLeaved:*',
             'label' => Craft::t('dingtalk', 'Leaved users'),
@@ -108,7 +110,29 @@ class User extends Element
             'position' => ['label' => Craft::t('dingtalk', 'Position')],
             'mobile' => ['label' => Craft::t('dingtalk', 'Mobile')],
             'jobNumber' => ['label' => Craft::t('dingtalk', 'Job Number')],
+            'email' => ['label' => Craft::t('dingtalk', 'Email')],
+            'dateHired' => ['label' => Craft::t('dingtalk', 'Hired Date')],
+            'dateLeaved' => ['label' => Craft::t('dingtalk', 'Leaved Date')],
+            'remark' => ['label' => Craft::t('dingtalk', 'Remark')],
         ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected static function defineDefaultTableAttributes(string $source): array
+    {
+        if ($source === '*') {
+            return parent::defineDefaultTableAttributes($source);
+        }
+
+        if (strncmp($source, 'department:', 11) === 0) {
+            return ['title', 'position', 'mobile', 'jobNumber', 'dateHired', 'remark'];
+        } elseif ($source === 'isLeaved:*') {
+            return ['title', 'position', 'dateHired', 'dateLeaved', 'remark'];
+        }
+
+        return parent::defineDefaultTableAttributes($source);
     }
 
     /**
@@ -286,7 +310,6 @@ class User extends Element
                 $departmentRecords = UserDepartmentRecord::find()->where(['userId' => $this->userId])->all();
                 $departmentRecords = ArrayHelper::index($departmentRecords, 'departmentId');
 
-                Craft::info($departmentRecords, 'debugxx');
                 foreach ($this->_departments as $department) {
                     if (isset($departmentRecords[$department->id])) {
                         $departmentRecord = $departmentRecords[$department->id];

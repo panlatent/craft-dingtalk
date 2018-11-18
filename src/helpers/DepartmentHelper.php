@@ -57,7 +57,7 @@ class DepartmentHelper
         foreach ($departments as $department) {
             if ($department->parentId == $parentId) {
                 $source = [
-                    'key' => $department->id,
+                    'key' => 'department:' . $department->id,
                     'label' => $department->name,
                     'criteria' => [
                         'departmentId' => $department->id

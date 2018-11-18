@@ -225,8 +225,10 @@ class UserQuery extends ElementQuery
             'dingtalk_users.active',
             'dingtalk_users.mobile',
             'dingtalk_users.isHide',
+            'dingtalk_users.isLeaved',
             'dingtalk_users.orgEmail',
             'dingtalk_users.dateHired',
+            'dingtalk_users.dateLeaved',
             'dingtalk_users.settings',
             'dingtalk_users.remark',
         ]);
