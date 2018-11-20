@@ -81,4 +81,12 @@ class Department extends Model
 
         return $parents;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return $this->name ?? '';
+    }
 }
