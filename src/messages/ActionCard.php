@@ -68,8 +68,6 @@ class ActionCard extends Message
             'text' => $this->content,
             'hideAvatar' => $this->hideAvatar ? 1 : 0,
             'btnOrientation' => $this->btnOrientation,
-            'singleTitle' => $this->_singleTitle,
-            'singleURL' => $this->_singleUrl,
         ];
 
         if ($this->getIsSingle()) {
