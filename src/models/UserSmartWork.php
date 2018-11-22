@@ -12,9 +12,6 @@ use craft\base\Model;
 
 class UserSmartWork extends Model
 {
-    public $id;
-    public $userId;
-
     public $name;
     public $email;
     public $dept;
@@ -27,7 +24,6 @@ class UserSmartWork extends Model
     public $tel;
     public $workPlace;
     public $remark;
-
     public $confirmJoinTime;
     public $employeeType;
     public $employeeStatus;

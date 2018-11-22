@@ -15,11 +15,12 @@ use craft\db\ActiveRecord;
  *
  * @package panlatent\craft\dingtalk\records
  * @property int $id
- * @property string userId
- * @property string settings
+ * @property string $userId
+ * @property string $key
+ * @property string $value
  * @author Panlatent <panlatent@gmail.com>
  */
-class UserSmartWork extends ActiveRecord
+class UserProperty extends ActiveRecord
 {
     public static function tableName()
     {

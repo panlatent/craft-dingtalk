@@ -26,7 +26,6 @@ use panlatent\craft\dingtalk\services\Api;
 use panlatent\craft\dingtalk\services\Departments;
 use panlatent\craft\dingtalk\services\Messages;
 use panlatent\craft\dingtalk\services\Robots;
-use panlatent\craft\dingtalk\services\SmartWorks;
 use panlatent\craft\dingtalk\services\Users;
 use panlatent\craft\dingtalk\utilities\RobotMessages;
 use panlatent\craft\dingtalk\utilities\SyncContacts;
@@ -44,7 +43,6 @@ use yii\base\Event;
  * @property-read Messages $messages
  * @property-read Robots $robots
  * @property-read Users $users
- * @property-read SmartWorks $smartWorks
  * @author Panlatent <panlatent@gmail.com>
  */
 class Plugin extends \craft\base\Plugin
@@ -63,7 +61,7 @@ class Plugin extends \craft\base\Plugin
     /**
      * @var string
      */
-    public $schemaVersion = '0.1.8';
+    public $schemaVersion = '0.1.9';
 
     /**
      * @var string

@@ -12,6 +12,7 @@ use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQueryInterface;
 use DateTime;
+use InvalidArgumentException;
 use panlatent\craft\dingtalk\elements\db\UserQuery;
 use panlatent\craft\dingtalk\errors\DepartmentException;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
@@ -329,9 +330,8 @@ class User extends Element
             }
         }
 
-
         if ($this->_smartWork) {
-            Plugin::$plugin->smartWorks->saveSmartWork($this->_smartWork);
+            Plugin::$plugin->users->saveProperties($this->userId, $this->_smartWork->toArray());
         }
 
         parent::afterSave($isNew);
@@ -380,7 +380,7 @@ class User extends Element
     }
 
     /**
-     * @return null|UserSmartWork
+     * @return UserSmartWork
      */
     public function getSmartWork(): UserSmartWork
     {
@@ -388,15 +388,32 @@ class User extends Element
             return $this->_smartWork;
         }
 
-        return $this->_smartWork = Plugin::$plugin->smartWorks->getSmartWorkByUserId($this->userId);
+        $properties = $this->userId ? Plugin::$plugin->users->getPropertiesByUserId($this->userId) : [];
+
+        return $this->_smartWork = new UserSmartWork($properties);
     }
 
     /**
-     * @param null|UserSmartWork $smartWork
+     * @param UserSmartWork|array|null $value
      */
-    public function setSmartWork(UserSmartWork $smartWork)
+    public function setSmartWork($value)
     {
-        $this->_smartWork = $smartWork;
+        if ($value === null) {
+            $this->_smartWork = null;
+            return;
+        }
+
+        if (is_array($value)) {
+            if (empty($this->dateHired) && !empty($value['confirmJoinTime'])) {
+                $this->dateHired = $value['confirmJoinTime'];
+            }
+
+            $value = new UserSmartWork($value);
+        } elseif (!$value instanceof UserSmartWork) {
+            throw new InvalidArgumentException();
+        }
+
+        $this->_smartWork = $value;
     }
 
     /**

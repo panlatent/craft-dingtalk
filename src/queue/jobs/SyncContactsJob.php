@@ -202,16 +202,13 @@ class SyncContactsJob extends BaseJob
             $results = Plugin::$plugin->api->getUserSmartWorkFields($userIds);
             /** @var User $user */
             foreach ($users as $user) {
-                $config = [
-                    'userId' => $user->userId,
-                ];
+                $properties = [];
                 $fields = $results[$user->userId]['field_list'];
                 foreach ($fields as $value) {
                     $field = substr($value['field_code'], strlen($value['group_id']) + 1);
-                    $config[$field] = $value['value'] ?? '';
+                    $properties[$field] = $value['value'] ?? '';
                 }
-
-                $user->smartWork = Plugin::$plugin->smartWorks->createSmartWork($config);
+                $user->smartWork = $properties;
 
                 Craft::$app->getElements()->saveElement($user);
             }
