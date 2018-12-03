@@ -241,7 +241,7 @@ class User extends Element
     /**
      * @var bool|null 表示该用户是否激活了钉钉
      */
-    public $active;
+    public $isActive;
 
     /**
      * @var string|null 用户在当前应用内的唯一标识（不可修改）
@@ -342,11 +342,11 @@ class User extends Element
         $userRecord->isLeader = (bool)$this->isLeader;
         $userRecord->isHide = (bool)$this->isHide;
         $userRecord->isLeaved = (bool)$this->isLeaved;
+        $userRecord->isActive = (bool)$this->isActive;
         $userRecord->avatar = $this->avatar;
         $userRecord->jobNumber = $this->jobNumber;
         $userRecord->email = $this->email;
         $userRecord->orgEmail = $this->orgEmail;
-        $userRecord->active = $this->active;
         $userRecord->mobile = $this->mobile;
         $userRecord->hiredDate = $this->hiredDate;
         $userRecord->leavedDate = $this->leavedDate;

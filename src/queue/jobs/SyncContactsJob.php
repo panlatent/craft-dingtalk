@@ -48,7 +48,6 @@ class SyncContactsJob extends BaseJob
                 Plugin::$plugin->getDepartments()->pullAllDepartments();
             }
 
-
             if ($this->enableUsers) {
                 Plugin::$plugin->getUsers()->pullIncumbentUsers();
             }

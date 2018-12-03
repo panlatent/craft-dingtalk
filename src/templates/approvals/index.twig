@@ -1,3 +1,11 @@
 {% extends "_layouts/elementindex" %}
 {% set elementType = 'panlatent\\craft\\dingtalk\\elements\\Approval' %}
 {% set title = "Approvals"|t('dingtalk') %}
+
+{% block sidebar %}
+    {{ parent() }}
+
+    <div class="buttons">
+        <a class="btn add icon" tabindex="0" href="{{ url('dingtalk/processes/new') }}">{{ 'New process'|t('dingtalk') }}</a>
+    </div>
+{% endblock %}

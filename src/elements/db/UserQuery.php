@@ -57,7 +57,7 @@ class UserQuery extends ElementQuery
     /**
      * @var bool|int|null
      */
-    public $active;
+    public $isActive;
 
     /**
      * @var bool|null
@@ -154,9 +154,9 @@ class UserQuery extends ElementQuery
      * @param bool|int|null $value
      * @return $this
      */
-    public function active($value = true)
+    public function isActive($value = true)
     {
-        $this->active = $value;
+        $this->isActive = $value;
 
         return $this;
     }
@@ -228,10 +228,10 @@ class UserQuery extends ElementQuery
             'dingtalk_users.isAdmin',
             'dingtalk_users.isBoss',
             'dingtalk_users.isLeader',
+            'dingtalk_users.isActive',
             'dingtalk_users.avatar',
             'dingtalk_users.jobNumber',
             'dingtalk_users.email',
-            'dingtalk_users.active',
             'dingtalk_users.mobile',
             'dingtalk_users.isHide',
             'dingtalk_users.isLeaved',
@@ -288,8 +288,8 @@ class UserQuery extends ElementQuery
      */
     private function _prepareStatusConditions()
     {
-        if ($this->active !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.active', $this->active));
+        if ($this->isActive !== null) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isActive', $this->isActive));
         }
 
         if ($this->isAdmin !== null) {

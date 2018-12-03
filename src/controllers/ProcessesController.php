@@ -65,7 +65,11 @@ class ProcessesController extends Controller
             ];
         }
 
-        $title = Craft::t('dingtalk', 'New a process');
+        if ($isNewProcess) {
+            $title = Craft::t('dingtalk', 'New process');
+        } else {
+            $title = Craft::t('dingtalk', 'Edit process');
+        }
 
         return $this->renderTemplate('dingtalk/processes/_edit', [
             'isNewProcess' => $isNewProcess,

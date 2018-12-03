@@ -13,13 +13,15 @@ use craft\helpers\DateTimeHelper;
 use craft\queue\BaseJob;
 use DateTime;
 use panlatent\craft\dingtalk\base\Process;
+use panlatent\craft\dingtalk\base\ProcessInterface;
 use panlatent\craft\dingtalk\elements\Approval;
 use panlatent\craft\dingtalk\Plugin;
+use yii\base\InvalidConfigException;
 
 class SyncApprovalsJob extends BaseJob
 {
     /**
-     * @var Process
+     * @var Process|string|int
      */
     public $process;
 
@@ -41,9 +43,21 @@ class SyncApprovalsJob extends BaseJob
         $api = Plugin::$plugin->api;
         $approvals = Plugin::$plugin->approvals;
         $elements = Craft::$app->getElements();
+        $processes = Plugin::$plugin->processes;
 
         $startTime = DateTimeHelper::toDateTime($this->startTime) ?: new DateTime('1970-01-01');
         $endTime = DateTimeHelper::toDateTime($this->endTime) ?: new DateTime();
+
+        $process = $this->process;
+        if (is_string($process)) {
+            $process = $processes->getProcessByHandle($process);
+        } elseif (is_int($this->process)) {
+            $process = $processes->getProcessById($process);
+        }
+
+        if (!$process instanceof ProcessInterface) {
+            throw new InvalidConfigException("No a valid process exists");
+        }
 
         $ids = $api->getProcessInstanceIds($this->process->code, $startTime->getTimestamp(), $endTime->getTimestamp());
 

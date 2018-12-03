@@ -27,28 +27,29 @@ class Install extends Migration
         ]);
 
         $this->createIndex(null, '{{%dingtalk_departments}}', ['name']);
-        $this->addForeignKey(null, '{{%dingtalk_departments}}', 'parentId', '{{%dingtalk_departments}}', 'id');
+        $this->addForeignKey(null, '{{%dingtalk_departments}}', 'parentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
 
         // Create users
         $this->createTable('{{%dingtalk_users}}', [
             'id' => $this->primaryKey(),
             'userId' => $this->string(32)->notNull(),
-            'name' => $this->string(64),
+            'name' => $this->string(64)->notNull(),
             'position' => $this->string(64),
             'tel' => $this->string(64),
-            'isAdmin' => $this->boolean(),
-            'isBoss' => $this->boolean(),
-            'isLeader' => $this->boolean(),
             'avatar' => $this->string(255),
             'jobNumber' => $this->string(255),
             'email' => $this->string(255),
-            'active' => $this->boolean(),
             'mobile' => $this->string(255),
-            'isHide' => $this->boolean(),
+            'isActive' => $this->boolean()->notNull()->defaultValue(true),
+            'isAdmin' => $this->boolean()->notNull()->defaultValue(false),
+            'isBoss' => $this->boolean()->notNull()->defaultValue(false),
+            'isLeader' => $this->boolean()->notNull()->defaultValue(false),
+            'isHide' => $this->boolean()->notNull()->defaultValue(false),
+            'isLeaved' => $this->boolean()->notNull()->defaultValue(false),
             'orgEmail' => $this->string(255),
-            'dateHired' => $this->dateTime(),
-            'settings' => $this->text(),
             'remark' => $this->string(1000),
+            'hiredDate' => $this->dateTime(),
+            'leavedDate' => $this->dateTime(),
             'sortOrder' => $this->string(64),
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
@@ -63,8 +64,9 @@ class Install extends Migration
         // Create user departments
         $this->createTable('{{%dingtalk_userdepartments}}', [
             'id' => $this->primaryKey(),
-            'userId' => $this->string(32)->notNull(),
+            'userId' => $this->integer()->notNull(),
             'departmentId' => $this->integer()->notNull(),
+            'primary' => $this->boolean()->notNull()->defaultValue(false),
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
             'uid' => $this->uid(),
@@ -73,26 +75,13 @@ class Install extends Migration
         $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['userId']);
         $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['departmentId']);
         $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['userId', 'departmentId'], true);
-        $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'userId', '{{%dingtalk_users}}', 'userId', 'CASCADE');
+        $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['primary']);
+        $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'userId', '{{%dingtalk_users}}', 'id', 'CASCADE');
         $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'departmentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
-
-        // Create user smart works
-        $this->createTable('{{%dingtalk_usersmartworks}}', [
-            'id' => $this->primaryKey(),
-            'userId' => $this->string(32)->notNull(),
-            'settings' => $this->text(),
-            'dateCreated' => $this->dateTime()->notNull(),
-            'dateUpdated' => $this->dateTime()->notNull(),
-            'uid' => $this->uid(),
-        ]);
-
-        $this->createIndex(null, '{{%dingtalk_usersmartworks}}', ['userId'], true);
-        $this->addForeignKey(null, '{{%dingtalk_usersmartworks}}', 'userId', '{{%dingtalk_users}}', 'userId', 'CASCADE');
     }
 
     public function safeDown()
     {
-        $this->dropTableIfExists('{{%dingtalk_usersmartworks}}');
         $this->dropTableIfExists('{{%dingtalk_userdepartments}}');
         $this->dropTableIfExists('{{%dingtalk_users}}');
         $this->dropTableIfExists('{{%dingtalk_departments}}');

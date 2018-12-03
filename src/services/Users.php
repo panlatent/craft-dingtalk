@@ -16,6 +16,12 @@ use panlatent\craft\dingtalk\Plugin;
 use yii\base\Component;
 use yii\base\InvalidArgumentException;
 
+/**
+ * Class Users
+ *
+ * @package panlatent\craft\dingtalk\services
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class Users extends Component
 {
     /**
@@ -53,7 +59,7 @@ class Users extends Component
         }
 
         if (isset($data['active'])) {
-            $user->active = ArrayHelper::remove($data, 'active');
+            $user->isActive = ArrayHelper::remove($data, 'active');
         }
 
         if (!empty($data['mainDeptId'])) {

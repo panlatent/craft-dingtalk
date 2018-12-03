@@ -27,7 +27,7 @@ use craft\db\ActiveRecord;
  * @property string $avatar
  * @property string $jobNumber
  * @property string $email
- * @property bool $active
+ * @property bool $isActive
  * @property string $mobile
  * @property string $orgEmail
  * @property \DateTime $hiredDate

@@ -131,10 +131,7 @@ class Departments extends Component
      */
     public function pullAllDepartments(): bool
     {
-        if (!$this->_fetchedAllDepartments) {
-            $this->getAllDepartments();
-        }
-        $allLocalDepartments = $this->_departmentsById;
+        $allLocalDepartments = $this->_createQuery()->all();
 
         $departments = [];
 
