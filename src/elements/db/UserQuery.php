@@ -10,9 +10,18 @@ namespace panlatent\craft\dingtalk\elements\db;
 
 use craft\elements\db\ElementQuery;
 use craft\helpers\Db;
+use panlatent\craft\dingtalk\elements\User;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\Plugin;
 
+/**
+ * Class UserQuery
+ *
+ * @package panlatent\craft\dingtalk\elements\db
+ * @method User|null one($db = null)
+ * @method User[] all($db = null)
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class UserQuery extends ElementQuery
 {
     /**
@@ -227,9 +236,8 @@ class UserQuery extends ElementQuery
             'dingtalk_users.isHide',
             'dingtalk_users.isLeaved',
             'dingtalk_users.orgEmail',
-            'dingtalk_users.dateHired',
-            'dingtalk_users.dateLeaved',
-            'dingtalk_users.settings',
+            'dingtalk_users.hiredDate',
+            'dingtalk_users.leavedDate',
             'dingtalk_users.remark',
         ]);
 
@@ -250,7 +258,7 @@ class UserQuery extends ElementQuery
                 }
             }
 
-            $this->subQuery->innerJoin('dingtalk_userdepartments', 'dingtalk_userdepartments.userId=dingtalk_users.userid');
+            $this->subQuery->innerJoin('dingtalk_userdepartments', 'dingtalk_userdepartments.userId=dingtalk_users.id');
             $this->subQuery->andWhere(Db::parseParam('dingtalk_userdepartments.departmentId', $departmentIds));
         }
 
@@ -281,27 +289,27 @@ class UserQuery extends ElementQuery
     private function _prepareStatusConditions()
     {
         if ($this->active !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.active', $this->active ? 1 : 0));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.active', $this->active));
         }
 
         if ($this->isAdmin !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isAdmin', $this->isAdmin ? 1 : 0));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isAdmin', $this->isAdmin));
         }
 
         if ($this->isBoss !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isBoss', $this->isBoss ? 1 : 0));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isBoss', $this->isBoss));
         }
 
         if ($this->isLeader !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isLeader', $this->isLeader ? 1 : 0));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isLeader', $this->isLeader));
         }
 
         if ($this->isHide !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isHide', $this->isHide ? 1 : 0));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isHide', $this->isHide));
         }
 
         if ($this->isLeaved !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isLeaved', $this->isLeaved ? 1 : 0));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.isLeaved', $this->isLeaved));
         }
     }
 }

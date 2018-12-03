@@ -1,0 +1,9 @@
+{% extends "_layouts/cp" %}
+
+{% set basecrumbs = [
+    {label: 'Settings'|t('app'), url: url('settings')},
+    {label: 'Plugins'|t('app'), url: url('settings/plugins')},
+    {label: 'DingTalk'|t('dingtalk'), url: url('settings/plugins/dingtalk')}
+] %}
+
+{% set crumbs = crumbs is defined ? (basecrumbs|merge(crumbs)) : basecrumbs %}

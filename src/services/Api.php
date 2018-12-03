@@ -139,7 +139,7 @@ class Api extends Component
     {
         $results = $this->client->user->get($userId);
 
-        return $results['userlist'];
+        return $results;
     }
 
     /**
@@ -176,6 +176,8 @@ class Api extends Component
     }
 
     /**
+     * 获取用户智能办公字段
+     *
      * @param array|string $userId
      * @return array
      */
@@ -190,5 +192,48 @@ class Api extends Component
         ]);
 
         return ArrayHelper::index($results['result'], 'userid');
+    }
+
+    /**
+     * 批量获取审批实例 ID
+     *
+     * @param string $processCode
+     * @param int $startTime
+     * @param int $endTime
+     * @param int $limit
+     * @return array
+     */
+    public function getProcessInstanceIds(string $processCode, int $startTime, int $endTime = 0, int $limit = 100): array
+    {
+        $ids = [];
+        for ($cursor = 0; $cursor !== null && count($ids) < $limit;) {
+            $result = $this->client->process->httpPostJson('topapi/processinstance/listids', array_filter([
+                'process_code' => $processCode,
+                'start_time' => $startTime  * 1000,
+                'end_time' => $endTime * 1000,
+                'cursor' => $cursor,
+            ]));
+            $result = $result['result'];
+            $ids = array_merge($ids, $result['list']);
+            $cursor = $result['next_cursor'] ?? null;
+        }
+        $ids = array_unique($ids);
+
+        return $ids;
+    }
+
+    /**
+     * 获取审批实例
+     *
+     * @param string $instanceId
+     * @return array
+     */
+    public function getProcessInstanceById(string $instanceId): array
+    {
+        $results = $this->client->process->httpPostJson('topapi/processinstance/get', [
+            'process_instance_id' => $instanceId,
+        ]);
+
+        return $results['process_instance'];
     }
 }

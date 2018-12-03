@@ -6,9 +6,11 @@
  * @copyright Copyright (c) 2018 panlatent@gmail.com
  */
 
-namespace panlatent\craft\dingtalk\fields;
+namespace panlatent\craft\dingtalk\models;
 
-class UserSelectField
+use craft\base\Model;
+
+class ApprovalOperation extends Model
 {
 
 }

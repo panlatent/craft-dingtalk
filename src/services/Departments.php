@@ -9,9 +9,12 @@
 namespace panlatent\craft\dingtalk\services;
 
 use Craft;
+use craft\helpers\ArrayHelper;
 use craft\helpers\Json;
 use panlatent\craft\dingtalk\errors\DepartmentException;
+use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\models\Department;
+use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\records\Department as DepartmentRecord;
 use yii\base\Component;
 use yii\db\Query;
@@ -121,6 +124,47 @@ class Departments extends Component
             ->one();
 
         return $this->_departmentsByName[$name] = $result ? $this->createDepartment($result) : null;
+    }
+
+    /**
+     * @return bool
+     */
+    public function pullAllDepartments(): bool
+    {
+        if (!$this->_fetchedAllDepartments) {
+            $this->getAllDepartments();
+        }
+        $allLocalDepartments = $this->_departmentsById;
+
+        $departments = [];
+
+        $results = Plugin::$plugin->getApi()->getAllDepartments();
+        foreach ($results as $result) {
+            $id = ArrayHelper::remove($result, 'id');
+            $department = Plugin::$plugin->departments->createDepartment([
+                'id' => $id,
+                'name' => ArrayHelper::remove($result, 'name'),
+                'parentId' => ArrayHelper::remove($result, 'parentid'),
+                'sortOrder' => ArrayHelper::remove($result, 'order'),
+                'settings' => $result,
+            ]);
+            $departments[] = $department;
+
+            if (isset($allLocalDepartments[$id])) {
+                unset($allLocalDepartments[$id]);
+            }
+        }
+
+        $departments = DepartmentHelper::parentSort($departments);
+        foreach ($departments as $department) {
+            $this->saveDepartment($department);
+        }
+
+        foreach ($allLocalDepartments as $department) {
+            $this->deleteDepartment($department);
+        }
+
+        return true;
     }
 
     /**

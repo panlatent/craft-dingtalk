@@ -17,10 +17,14 @@ use craft\db\ActiveRecord;
  * @property int $id
  * @property int $userId
  * @property int $departmentId
+ * @property bool $primary
  * @author Panlatent <panlatent@gmail.com>
  */
 class UserDepartment extends ActiveRecord
 {
+    /**
+     * @return string
+     */
     public static function tableName()
     {
         return '{{%dingtalk_userdepartments}}';

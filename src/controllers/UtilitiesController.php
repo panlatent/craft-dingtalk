@@ -63,7 +63,6 @@ class UtilitiesController extends Controller
 
         Craft::$app->queue->push(new SyncContactsJob([
             'withLeavedUsers' => $request->getBodyParam('withLeavedUsers'),
-            'operateUserId' => $request->getBodyParam('operateUserId'),
         ]));
 
         return $this->redirectToPostedUrl();

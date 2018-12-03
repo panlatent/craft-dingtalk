@@ -1,0 +1,23 @@
+{% extends "dingtalk/_layouts/settingscp" %}
+{% set title = 'Smart Works'|t('dingtalk') %}
+{% set fullPageForm = true %}
+
+{% block sidebar %}
+    <nav>
+        <ul>
+            <li><a href="{{ url('settings/plugins/dingtalk/users') }}">{{ 'Fields'|t('app') }}</a></li>
+            <li><a class="sel" href="#">{{ 'Smart Works'|t('dingtalk') }}</a></li>
+        </ul>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <input type="hidden" name="action" value="dingtalk/users/save-user-field-layout">
+    {{ csrfInput() }}
+
+    {%  for field,label in craft.app.getModule('dingtalk').smartWorks.getAllFields() %}
+        {{ forms.checkboxField({
+            label
+        }) }}
+    {% endfor %}
+{% endblock %}

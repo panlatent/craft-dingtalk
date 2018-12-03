@@ -30,15 +30,17 @@ use craft\db\ActiveRecord;
  * @property bool $active
  * @property string $mobile
  * @property string $orgEmail
- * @property string $dateHired
- * @property string $dateLeaved
- * @property string $settings
+ * @property \DateTime $hiredDate
+ * @property \DateTime $leavedDate
  * @property string $remark
  * @property int $sortOrder
  * @author Panlatent <panlatent@gmail.com>
  */
 class User extends ActiveRecord
 {
+    /**
+     * @return string
+     */
     public static function tableName()
     {
         return '{{%dingtalk_users}}';

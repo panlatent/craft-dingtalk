@@ -1,0 +1,29 @@
+{% extends "dingtalk/_layouts/settingscp" %}
+{% import "_includes/forms" as forms %}
+
+{% set title = 'Sync Process Approvals'|t('dingtalk') %}
+{% set crumbs = [
+    {label: 'Processes'|t('dingtalk'), url: url('dingtalk/processes')}
+] %}
+
+{% block content %}
+    <h3>{{ process.name }}</h3>
+    <form method="post" accept-charset="UTF-8">
+        <input type="hidden" name="action" value="dingtalk/processes/sync-process-action">
+        <input type="hidden" name="processId" value="{{ process.id }}">
+        {{ csrfInput() }}
+
+        {{ forms.datetimeField({
+            label: 'Start Time'|t('dingtalk'),
+            name: 'startTime',
+        }) }}
+
+        {{ forms.datetimeField({
+            label: 'End Time'|t('dingtalk'),
+            name: 'endtTime',
+        }) }}
+
+        <button class="btn submit">{{ 'Submit'|t('app') }}</button>
+    </form>
+
+{% endblock %}

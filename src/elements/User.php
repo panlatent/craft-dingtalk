@@ -11,32 +11,30 @@ namespace panlatent\craft\dingtalk\elements;
 use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQueryInterface;
+use craft\validators\DateTimeValidator;
 use DateTime;
-use InvalidArgumentException;
 use panlatent\craft\dingtalk\elements\db\UserQuery;
 use panlatent\craft\dingtalk\errors\DepartmentException;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\models\Department;
-use panlatent\craft\dingtalk\models\UserSmartWork;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\records\User as UserRecord;
 use panlatent\craft\dingtalk\records\UserDepartment as UserDepartmentRecord;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
-use yii\helpers\Json;
 
 /**
  * Class User
  *
  * @package panlatent\craft\dingtalk\elements
- * @property DateTime $dateHired
- * @property DateTime $dateLeaved
+ * @property Department|null $primaryDepartment
  * @property Department[] $departments
- * @property UserSmartWork $smartWork
  * @author Panlatent <panlatent@gmail.com>
  */
 class User extends Element
 {
+    const STATUS_LEAVED = 'leaved';
+
     /**
      * @return string
      */
@@ -54,11 +52,39 @@ class User extends Element
     }
 
     /**
-     * @return null|string
+     * @inheritdoc
      */
     public static function refHandle()
     {
-        return 'user';
+        return 'dingtalk-user';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function hasContent(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function hasStatuses(): bool
+    {
+        return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function statuses(): array
+    {
+        return [
+            static::STATUS_ENABLED => Craft::t('app', 'Enabled'),
+            static::STATUS_LEAVED => Craft::t('dingtalk', 'Leaved'),
+            static::STATUS_DISABLED => ['label' => Craft::t('app', 'Disabled'), 'color' => 'red'],
+        ];
     }
 
     /**
@@ -71,10 +97,11 @@ class User extends Element
                 'key' => '*',
                 'label' => Craft::t('dingtalk', 'All users'),
                 'criteria' => [],
+                'hasThumbs' => true,
             ],
 
         ];
-        $allDepartments = Plugin::$plugin->departments->getAllDepartments();
+        $allDepartments = Plugin::$plugin->getDepartments()->getAllDepartments();
 
         $sources[] = ['heading' => Craft::t('dingtalk', 'Serving staffs')];
         $sources = array_merge($sources, DepartmentHelper::sourceTree($allDepartments, 1));
@@ -86,6 +113,7 @@ class User extends Element
             'criteria' => [
                 'isLeaved' => true,
             ],
+            'hasThumbs' => true,
         ];
 
         return $sources;
@@ -107,13 +135,14 @@ class User extends Element
     protected static function defineTableAttributes(): array
     {
         return [
-            'title' => ['label' => Craft::t('dingtalk', 'Name')],
+            'name' => ['label' => Craft::t('dingtalk', 'Name')],
             'position' => ['label' => Craft::t('dingtalk', 'Position')],
+            'primaryDepartment' =>  ['label' => Craft::t('dingtalk', 'Primary Department')],
             'mobile' => ['label' => Craft::t('dingtalk', 'Mobile')],
             'jobNumber' => ['label' => Craft::t('dingtalk', 'Job Number')],
             'email' => ['label' => Craft::t('dingtalk', 'Email')],
-            'dateHired' => ['label' => Craft::t('dingtalk', 'Hired Date')],
-            'dateLeaved' => ['label' => Craft::t('dingtalk', 'Leaved Date')],
+            'hiredDate' => ['label' => Craft::t('dingtalk', 'Hired Date')],
+            'leavedDate' => ['label' => Craft::t('dingtalk', 'Leaved Date')],
             'remark' => ['label' => Craft::t('dingtalk', 'Remark')],
         ];
     }
@@ -124,13 +153,13 @@ class User extends Element
     protected static function defineDefaultTableAttributes(string $source): array
     {
         if ($source === '*') {
-            return parent::defineDefaultTableAttributes($source);
+            return ['name', 'position', 'primaryDepartment', 'mobile', 'jobNumber'];
         }
 
         if (strncmp($source, 'department:', 11) === 0) {
-            return ['title', 'position', 'mobile', 'jobNumber', 'dateHired', 'remark'];
+            return ['name', 'position', 'mobile', 'jobNumber', 'hiredDate', 'remark'];
         } elseif ($source === 'isLeaved:*') {
-            return ['title', 'position', 'dateHired', 'dateLeaved', 'remark'];
+            return ['name', 'position', 'hiredDate', 'leavedDate', 'remark'];
         }
 
         return parent::defineDefaultTableAttributes($source);
@@ -230,11 +259,6 @@ class User extends Element
     public $orgEmail;
 
     /**
-     * @var array|null
-     */
-    public $settings;
-
-    /**
      * @var int|null 在对应的部门中的排序
      */
     public $sortOrder;
@@ -242,12 +266,17 @@ class User extends Element
     /**
      * @var DateTime|null 入职时间 (Unix时间戳)
      */
-    private $_dateHired;
+    public $hiredDate;
 
     /**
      * @var DateTime|null 离职时间 (Unix时间戳)
      */
-    private $_dateLeaved;
+    public $leavedDate;
+
+    /**
+     * @var  Department|null 主部门
+     */
+    private $_primaryDepartment;
 
     /**
      * @var Department[]|null
@@ -255,21 +284,46 @@ class User extends Element
     private $_departments;
 
     /**
-     * @var UserSmartWork|null
+     * @inheritdoc
      */
-    private $_smartWork;
-
     public function rules()
     {
         $rules = parent::rules();
 
         $rules = array_merge($rules, [
             [['userId', 'name'], 'required'],
+            [['hiredDate', 'leavedDate'], DateTimeValidator::class],
         ]);
 
         return $rules;
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function attributes()
+    {
+        $attributes = parent::attributes();
+        $attributes[] = 'primaryDepartment';
+
+        return $attributes;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function datetimeAttributes(): array
+    {
+        $attributes = parent::datetimeAttributes();
+        $attributes[] = 'hiredDate';
+        $attributes[] = 'leavedDate';
+
+        return $attributes;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function afterSave(bool $isNew)
     {
         if ($isNew) {
@@ -294,24 +348,34 @@ class User extends Element
         $userRecord->orgEmail = $this->orgEmail;
         $userRecord->active = $this->active;
         $userRecord->mobile = $this->mobile;
-        $userRecord->dateHired = $this->dateHired ? $this->dateHired->format('Y-m-d H:i:s') : null;
-        $userRecord->dateLeaved = $this->dateLeaved ? $this->dateLeaved->format('Y-m-d H:i:s') : null;
-        $userRecord->settings = Json::encode($this->settings ?? []);
+        $userRecord->hiredDate = $this->hiredDate;
+        $userRecord->leavedDate = $this->leavedDate;
         $userRecord->remark = $this->remark;
         $userRecord->sortOrder = $this->sortOrder;
 
         $userRecord->save(false);
 
+        if ($this->_primaryDepartment) {
+            if (empty($this->_departments)) {
+                $this->_departments = [$this->_primaryDepartment];
+            } else {
+                if (!in_array($this->_primaryDepartment, $this->_departments)) {
+                    $this->_departments[] = $this->_primaryDepartment;
+                }
+            }
+        }
+
         // Save user relation departments...
         if ($this->_departments !== null) {
-            if (empty($this->_departments)) {
-                UserDepartmentRecord::deleteAll(['userId' => $this->userId]);
-            } else {
+            if (!empty($this->_departments)) {
                 /** @var UserDepartmentRecord[] $departmentRecords */
-                $departmentRecords = UserDepartmentRecord::find()->where(['userId' => $this->userId])->all();
+                $departmentRecords = UserDepartmentRecord::find()->where(['userId' => $this->id])->all();
                 $departmentRecords = ArrayHelper::index($departmentRecords, 'departmentId');
 
                 foreach ($this->_departments as $department) {
+                    if (!is_object($department)) {
+                        Craft::warning($department,__METHOD__);
+                    }
                     if (isset($departmentRecords[$department->id])) {
                         $departmentRecord = $departmentRecords[$department->id];
                         unset($departmentRecords[$department->id]);
@@ -319,101 +383,82 @@ class User extends Element
                         $departmentRecord = new UserDepartmentRecord();
                     }
 
-                    $departmentRecord->userId = $this->userId;
+                    $departmentRecord->userId = $this->id;
                     $departmentRecord->departmentId = $department->id;
+
+                    if ($this->_primaryDepartment) {
+                        $departmentRecord->primary = $department === $this->_primaryDepartment;
+                    }
+
                     $departmentRecord->save(false);
                 }
 
                 foreach ($departmentRecords as $departmentRecord) {
                     $departmentRecord->delete();
                 }
+            } else {
+                UserDepartmentRecord::deleteAll(['userId' => $this->id]);
             }
-        }
-
-        if ($this->_smartWork) {
-            Plugin::$plugin->users->saveProperties($this->userId, $this->_smartWork->toArray());
         }
 
         parent::afterSave($isNew);
     }
 
     /**
-     * @return DateTime|null
+     * @inheritdoc
      */
-    public function getDateHired()
+    public function getStatus()
     {
-        return $this->_dateHired;
+        if ($this->archived) {
+            return static::STATUS_ARCHIVED;
+        }
+
+        if (!$this->enabled || !$this->enabledForSite) {
+            return static::STATUS_DISABLED;
+        }
+
+        return $this->isLeaved ? static::STATUS_LEAVED : static::STATUS_ENABLED;
     }
 
     /**
-     * @param DateTime|string|int|null $dateHired
+     * @return Department|null
      */
-    public function setDateHired($dateHired)
+    public function getPrimaryDepartment()
     {
-        if (is_int($dateHired)) {
-            $dateHired = new DateTime(date('Y-m-d H:i:s', $dateHired));
-        } elseif (is_string($dateHired)) {
-            $dateHired = new DateTime($dateHired);
+        if ($this->_primaryDepartment !== null) {
+            return $this->_primaryDepartment;
         }
-        $this->_dateHired = $dateHired;
+
+        $departmentId = (new Query())
+            ->select('departmentId')
+            ->from('{{%dingtalk_userdepartments}}')
+            ->where([
+                'userId' => $this->id,
+                'primary' => true,
+            ])
+            ->scalar();
+
+        if (!$departmentId) {
+            return null;
+        }
+
+        return $this->_primaryDepartment = Plugin::$plugin->getDepartments()->getDepartmentById($departmentId);
     }
 
     /**
-     * @return DateTime|null
+     * @param Department|int|null $department
      */
-    public function getDateLeaved()
+    public function setPrimaryDepartment($department = null)
     {
-        return $this->_dateLeaved;
-    }
-
-    /**
-     * @param DateTime|string|int|null $dateLeaved
-     */
-    public function setDateLeaved($dateLeaved)
-    {
-        if (is_int($dateLeaved)) {
-            $dateLeaved = new DateTime(date('Y-m-d H:i:s', $dateLeaved));
-        } elseif (is_string($dateLeaved)) {
-            $dateLeaved = new DateTime($dateLeaved);
-        }
-        $this->_dateLeaved = $dateLeaved;
-    }
-
-    /**
-     * @return UserSmartWork
-     */
-    public function getSmartWork(): UserSmartWork
-    {
-        if ($this->_smartWork !== null) {
-            return $this->_smartWork;
+        if (is_int($department) || ctype_digit($department)) {
+            $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
         }
 
-        $properties = $this->userId ? Plugin::$plugin->users->getPropertiesByUserId($this->userId) : [];
-
-        return $this->_smartWork = new UserSmartWork($properties);
-    }
-
-    /**
-     * @param UserSmartWork|array|null $value
-     */
-    public function setSmartWork($value)
-    {
-        if ($value === null) {
-            $this->_smartWork = null;
-            return;
+        if (!$department instanceof Department && $department !== null) {
+            throw new DepartmentException('Primary department must be a department instance');
         }
 
-        if (is_array($value)) {
-            if (empty($this->dateHired) && !empty($value['confirmJoinTime'])) {
-                $this->dateHired = $value['confirmJoinTime'];
-            }
-
-            $value = new UserSmartWork($value);
-        } elseif (!$value instanceof UserSmartWork) {
-            throw new InvalidArgumentException();
-        }
-
-        $this->_smartWork = $value;
+        $this->_primaryDepartment = $department;
     }
 
     /**
@@ -425,17 +470,13 @@ class User extends Element
             return $this->_departments;
         }
 
-        $results = (new Query())
-            ->select('id')
+        $departmentIds = (new Query())
+            ->select('departmentId')
             ->from('{{%dingtalk_userdepartment}}')
-            ->where(['userId' => $this->userId])
+            ->where(['userId' => $this->id])
             ->column();
 
-        $departments = [];
-        foreach ($results as $result) {
-            $departments[] = Plugin::$plugin->departments->getDepartmentById($result);
-        }
-        $this->setDepartments($departments);
+        $this->setDepartments($departmentIds);
 
         return $this->_departments;
     }
@@ -445,23 +486,71 @@ class User extends Element
      */
     public function setDepartments($departments)
     {
-        $this->_departments = [];
-        if ($departments !== null) {
-            foreach ($departments as $department) {
-                if (is_int($department)) {
-                    $department = Plugin::$plugin->departments->getDepartmentById($department);
-                }
+        if ($departments === null) {
+            $this->_departments = null;
+            return;
+        }
 
-                if (!$department instanceof Department) {
-                    throw new DepartmentException('User department must be a Department instance');
-                }
-                $this->_departments[] = $department;
+        $this->_departments = [];
+
+        foreach ($departments as $department) {
+            if (is_int($department) || ctype_digit($department)) {
+                $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
             }
+
+            if (!$department instanceof Department) {
+                throw new DepartmentException('User department must be a department instance');
+            }
+
+            $this->_departments[] = $department;
         }
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function getFieldLayout()
+    {
+        return Craft::$app->getFields()->getLayoutByType(static::class);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getIsEditable(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getCpEditUrl()
+    {
+        return 'plugin-handle/products/'.$this->id;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getThumbUrl(int $size)
+    {
+        return $this->avatar ?: null;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function __toString()
     {
-        return $this->name;
+        return (string)$this->name;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function tableAttributeHtml(string $attribute): string
+    {
+        return parent::tableAttributeHtml($attribute);
     }
 }

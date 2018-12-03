@@ -11,19 +11,25 @@ namespace panlatent\craft\dingtalk\records;
 use craft\db\ActiveRecord;
 
 /**
- * Class UserSmartWork
+ * Class Process
  *
  * @package panlatent\craft\dingtalk\records
  * @property int $id
- * @property string $userId
- * @property string $key
- * @property string $value
+ * @property string $name
+ * @property string $handle
+ * @property string $code
+ * @property string $type
+ * @property string $settings
+ * @property int $sortOrder
  * @author Panlatent <panlatent@gmail.com>
  */
-class UserProperty extends ActiveRecord
+class Process extends ActiveRecord
 {
+    /**
+     * @return string
+     */
     public static function tableName()
     {
-        return '{{%dingtalk_usersmartworks}}';
+        return '{{%dingtalk_processes}}';
     }
 }

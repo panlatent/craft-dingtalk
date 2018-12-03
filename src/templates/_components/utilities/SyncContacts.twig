@@ -20,12 +20,6 @@
 
     <hr>
 
-    {{ forms.selectField({
-        label: "Leaved operate user"|t('dingtalk'),
-        name: 'operateUserId',
-        options: userOptions,
-    }) }}
-
     <div class="buttons">
         <input type="submit" class="btn submit" value="{{ 'Sync Contacts'|t('dingtalk') }}" />
         <div class="utility-status"></div>

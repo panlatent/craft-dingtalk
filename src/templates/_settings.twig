@@ -20,4 +20,14 @@
     on: settings.showContactsOnCpSection
 }) }}
 
-<a href="{{ url('dingtalk/robots') }}">{{ 'Robots Settings'|t('dingtalk') }}</a>
+{{ forms.lightSwitchField({
+    label: "Show Approvals section on CP"|t('dingtalk'),
+    name: "showApprovalsOnCpSection",
+    on: settings.showApprovalsOnCpSection
+}) }}
+
+<hr>
+
+<a class="btn icon settings" href="{{ url('settings/plugins/dingtalk/users') }}">{{ 'Users Settings'|t('dingtalk') }}</a>
+<a class="btn icon settings" href="{{ url('dingtalk/robots') }}">{{ 'Robots Settings'|t('dingtalk') }}</a>
+<a class="btn icon settings" href="{{ url('dingtalk/processes') }}">{{ 'Processes Settings'|t('dingtalk') }}</a>

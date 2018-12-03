@@ -6,29 +6,32 @@
  * @copyright Copyright (c) 2018 panlatent@gmail.com
  */
 
-namespace panlatent\craft\dingtalk\models;
+namespace panlatent\craft\dingtalk\base;
 
-use craft\base\Model;
-
-class Settings extends Model
+trait ProcessTrait
 {
     /**
-     * @var string|null
+     * @var int|null
      */
-    public $corpId;
+    public $fieldLayoutId;
 
     /**
      * @var string|null
      */
-    public $corpSecret;
+    public $name;
 
     /**
-     * @var bool|null
+     * @var string|null
      */
-    public $showContactsOnCpSection;
+    public $handle;
 
     /**
-     * @var bool|null
+     * @var string|null
      */
-    public $showApprovalsOnCpSection;
+    public $code;
+
+    /**
+     * @var int|null
+     */
+    public $sortOrder;
 }

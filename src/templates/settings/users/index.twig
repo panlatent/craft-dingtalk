@@ -1,0 +1,21 @@
+{% extends "dingtalk/_layouts/settingscp" %}
+{% set title = 'Users Settings'|t('dingtalk') %}
+{% set fullPageForm = true %}
+
+{% block sidebar %}
+    <nav>
+        <ul>
+            <li><a class="sel" href="#">{{ 'Fields'|t('app') }}</a></li>
+            <li><a href="{{ url('settings/plugins/dingtalk/users/smartworks') }}">{{ 'Smart Works'|t('dingtalk') }}</a></li>
+        </ul>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <input type="hidden" name="action" value="dingtalk/users/save-user-field-layout">
+    {{ csrfInput() }}
+
+    {% include "_includes/fieldlayoutdesigner" with {
+        fieldLayout: craft.app.fields.getLayoutByType('panlatent\\craft\\dingtalk\\elements\\User')
+    } only %}
+{% endblock %}

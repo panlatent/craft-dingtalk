@@ -1,4 +1,4 @@
-{% extends "_layouts/cp" %}
+{% extends "dingtalk/_layouts/settingscp" %}
 {% set title = "Robots"|t('dingtalk') %}
 
 {% block actionButton %}
@@ -46,7 +46,6 @@
         reorderAction: 'dingtalk/robots/reorder-robots',
         deleteAction: 'dingtalk/robots/delete-robot',
         onDeleteItem: function() {
-            // Hide the Assets tab if that was the last one
             if (adminTable.totalItems == 0) {
                 $('#nav-assets').remove();
             }

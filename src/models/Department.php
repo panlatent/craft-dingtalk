@@ -17,6 +17,7 @@ use panlatent\craft\dingtalk\Plugin;
  * @package panlatent\craft\dingtalk\models
  * @property-read Department $parent
  * @property-read Department[] $parents
+ * @property-read string fullName
  * @author Panlatent <panlatent@gmail.com>
  */
 class Department extends Model
@@ -52,6 +53,11 @@ class Department extends Model
     private $_parent;
 
     /**
+     * @var string|null
+     */
+    private $_fullName;
+
+    /**
      * @return null|Department
      */
     public function getParent()
@@ -79,7 +85,26 @@ class Department extends Model
             $department = $parent;
         }
 
-        return $parents;
+        return array_reverse($parents);
+    }
+
+    /**
+     * @param string $glue
+     * @return string
+     */
+    public function getFullName(string $glue = '/'): string
+    {
+        if ($this->_fullName !== null) {
+            return $this->_fullName;
+        }
+
+        $prefix = [];
+        foreach ($this->getParents() as $parent) {
+            $prefix[] = $parent->name;
+        }
+        $prefix[] = $this->name;
+
+        return implode($glue, $prefix);
     }
 
     /**

@@ -9,7 +9,6 @@
 namespace panlatent\craft\dingtalk\controllers;
 
 use Craft;
-use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\base\Robot;
 use panlatent\craft\dingtalk\base\RobotInterface;
@@ -22,17 +21,10 @@ class RobotsController extends Controller
 {
     public function actionIndex(): Response
     {
-        $this->requirePermission('viewDingTalkRobots');
-
-        $crumbs = [
-            ['label' => Craft::t('dingtalk', 'DingTalk'), 'url' => UrlHelper::url('settings/plugins/dingtalk')],
-        ];
-
         $allRobots = Plugin::$plugin->robots->getAllRobots();
 
         return $this->renderTemplate('dingtalk/robots/_index', [
             'robots' => $allRobots,
-            'crumbs' => $crumbs,
         ]);
     }
 
@@ -75,11 +67,6 @@ class RobotsController extends Controller
             $title = 'Create a new robot';
         }
 
-        $crumbs = [
-            ['label' => Craft::t('dingtalk', 'DingTalk'), 'url' => UrlHelper::url('settings/plugins/dingtalk')],
-            ['label' => Craft::t('dingtalk', 'Robots'), 'url' => UrlHelper::url('dingtalk/robots')],
-        ];
-
         return $this->renderTemplate('dingtalk/robots/_edit', [
             'isNewRobot' => $isNewRobot,
             'robot' => $robot,
@@ -87,7 +74,6 @@ class RobotsController extends Controller
             'robotTypeOptions' => $robotTypeOptions,
             'robotInstances' => $robotInstances,
             'title' => Craft::t('dingtalk', $title),
-            'crumbs' => $crumbs,
         ]);
     }
 

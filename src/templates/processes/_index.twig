@@ -1,0 +1,56 @@
+{% extends "dingtalk/_layouts/settingscp" %}
+{% set title = 'Processes'|t('dingtalk') %}
+
+{% block actionButton %}
+    <a href="{{ url('dingtalk/processes/new') }}" class="btn submit">{{ 'New'|t('app') }}</a>
+{% endblock %}
+
+{% block content %}
+    {% if processes|length %}
+        {% set sortable  = (processes|length > 1) %}
+
+        <table id="processes" class="data fullwidth collapsible">
+            <thead>
+            <th scope="col">{{ "Name"|t('app') }}</th>
+            <th scope="col">{{ "Handle"|t('app') }}</th>
+            <th scope="col">{{ "Type"|t('app') }}</th>
+            <th scope="col">{{ "Sync"|t('dingtalk') }}</th>
+            {% if sortable %}<td class="thin"></td>{% endif %}
+            <td class="thin"></td>
+            </thead>
+            <tbody>
+            {% for process in processes %}
+                <tr data-id="{{ process.id }}" data-name="{{ process.name }}">
+                    <th scope="row" data-title="{{ 'Name'|t('app') }}"><a href="{{ url('dingtalk/processes/' ~ process.id) }}">{{ process.name }}</a></th>
+                    <td scope="row" data-title="{{ 'Handle'|t('app') }}" class="code">{{ process.handle }}</td>
+                    <td data-title="{{ 'Type'|t('app') }}">
+                        {% if process is missing %}
+                            <span class="error">{{ process.expectedType }}</span>
+                        {% else %}
+                            {{ process.displayName() }}
+                        {% endif %}
+                    </td>
+                    <td><a href="{{ url('dingtalk/processes/' ~ process.id ~ '/sync') }}"><span data-icon="plus"></span></a></td>
+                    {% if sortable %}<td class="thin"><a class="move icon" title="{{ 'Reorder'|t('app') }}" role="button"></a></td>{% endif %}
+                    <td class="thin"><a class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}
+
+{% js %}
+    var adminTable = new Craft.AdminTable({
+        tableSelector: '#processes',
+        noItemsSelector: '#noprocesses',
+        sortable: true,
+        reorderAction: 'dingtalk/processes/reorder-processes',
+        deleteAction: 'dingtalk/processes/delete-process',
+        onDeleteItem: function() {
+            if (adminTable.totalItems == 0) {
+                $('#nav-assets').remove();
+            }
+        }
+    });
+{% endjs %}

@@ -1,7 +1,10 @@
-{% extends "_layouts/cp" %}
+{% extends "dingtalk/_layouts/settingscp" %}
 {% import "_includes/forms" as forms %}
 
 {% set fullPageForm = true %}
+{% set crumbs = [
+    {label: 'Robots'|t('dingtalk'), url: url('dingtalk/robots')}
+] %}
 
 {% block actionButton %}
     <button class="btn submit">{{ 'Save'|t('app') }}</button>
@@ -10,7 +13,7 @@
 {% block content %}
     <form method="post" accept-charset="UTF-8">
         <input type="hidden" name="action" value="dingtalk/robots/save-robot">
-        {% if not isNewRobot%}<input type="hidden" name="robotId" value="{{ robot.id }}">{% endif %}
+        {% if not isNewRobot %}<input type="hidden" name="robotId" value="{{ robot.id }}">{% endif %}
         {{ csrfInput() }}
 
         {{ forms.textField({

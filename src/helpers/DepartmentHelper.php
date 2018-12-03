@@ -62,6 +62,7 @@ class DepartmentHelper
                     'criteria' => [
                         'departmentId' => $department->id
                     ],
+                    'hasThumbs' => true,
                 ];
                 if (!empty($children = static::sourceTree($departments, $department->id))) {
                     $source['nested'] = $children;
