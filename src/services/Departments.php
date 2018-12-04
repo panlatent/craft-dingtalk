@@ -138,6 +138,7 @@ class Departments extends Component
         $departments = [];
 
         $results = Plugin::$plugin->getApi()->getAllDepartments();
+
         foreach ($results as $result) {
             $id = ArrayHelper::remove($result, 'id');
             $department = Plugin::$plugin->departments->createDepartment([
@@ -154,13 +155,14 @@ class Departments extends Component
             }
         }
 
-        $departments = DepartmentHelper::parentSort($departments);
-        foreach ($departments as $department) {
-            $this->saveDepartment($department);
-        }
-
         foreach ($allLocalDepartments as $department) {
             $department->archived = true;
+            $departments[] = $department;
+        }
+
+        $departments = DepartmentHelper::parentSort($departments);
+        foreach ($departments as $sortOrder => $department) {
+            $department->sortOrder = $sortOrder;
             $this->saveDepartment($department);
         }
 
