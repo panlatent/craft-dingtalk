@@ -20,6 +20,7 @@ use craft\db\ActiveRecord;
  * @property int $parentId
  * @property string $settings
  * @property int $sortOrder
+ * @property bool $archived
  * @author Panlatent <panlatent@gmail.com>
  */
 class Department extends ActiveRecord

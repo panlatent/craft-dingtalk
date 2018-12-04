@@ -48,6 +48,11 @@ class Department extends Model
     public $sortOrder;
 
     /**
+     * @var bool|null 部门是否归档（在钉钉中删除）
+     */
+    public $archived;
+
+    /**
      * @var Department|null
      */
     private $_parent;

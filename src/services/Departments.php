@@ -131,7 +131,10 @@ class Departments extends Component
      */
     public function pullAllDepartments(): bool
     {
-        $allLocalDepartments = $this->_createQuery()->all();
+        $allLocalDepartments = [];
+        foreach ($this->_createQuery()->all() as $result) {
+            $allLocalDepartments[] = $this->createDepartment($result);
+        }
 
         $departments = [];
 
@@ -158,7 +161,8 @@ class Departments extends Component
         }
 
         foreach ($allLocalDepartments as $department) {
-            $this->deleteDepartment($department);
+            $department->archived = true;
+            $this->saveDepartment($department);
         }
 
         return true;
@@ -204,6 +208,7 @@ class Departments extends Component
             $departmentRecord->parentId = $department->parentId;
             $departmentRecord->settings = Json::encode($department->settings);
             $departmentRecord->sortOrder = $department->sortOrder;
+            $departmentRecord->archived = (bool)$department->archived;
 
             $departmentRecord->save(false);
 
