@@ -130,4 +130,5 @@ return [
     'Diploma Certificate' => '学位证书',
     'Release Letter' => '前公司离职证明',
     'Personal Photo' => '员工照片',
+    'Use environment variables storage {Corp Id} and {Corp Secret}' => '使用环境变量存储 {Corp Id} 和 {Corp Secret}'
 ];

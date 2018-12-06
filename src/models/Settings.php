@@ -8,7 +8,6 @@
 
 namespace panlatent\craft\dingtalk\models;
 
-use Craft;
 use craft\base\Model;
 
 /**
@@ -22,6 +21,11 @@ use craft\base\Model;
 class Settings extends Model
 {
     /**
+     * @var bool|null Use .env file save corpId and corpSecret
+     */
+    public $useDotEnv;
+
+    /**
      * @var bool|null
      */
     public $showContactsOnCpSection;
@@ -30,6 +34,16 @@ class Settings extends Model
      * @var bool|null
      */
     public $showApprovalsOnCpSection;
+
+    /**
+     * @var string|null
+     */
+    private $_corpId;
+
+    /**
+     * @var string|null
+     */
+    private $_corpSecret;
 
     public function attributes()
     {
@@ -40,35 +54,54 @@ class Settings extends Model
         return $attributes;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getCorpId(): string
+    public function fields()
     {
-        return getenv('DINGTALK_CORP_ID');
+        $fields = parent::fields();
+
+        if ($this->useDotEnv) {
+            unset($fields['corpId'], $fields['corpSecret']);
+        }
+
+        return $fields;
     }
 
     /**
-     * @param null|string $corpId
+     * @return string|null
+     */
+    public function getCorpId()
+    {
+        if ($this->_corpId !== null) {
+            return $this->_corpId;
+        }
+
+        return$this->_corpId = $this->useDotEnv ? getenv('DINGTALK_CORP_ID') : $this->_corpId;
+    }
+
+    /**
+     * @param string|null $corpId
      */
     public function setCorpId(string $corpId)
     {
-        Craft::$app->getConfig()->setDotEnvVar('DINGTALK_CORP_ID', $corpId);
+        $this->_corpId = $corpId;
     }
 
     /**
-     * @return null|string
+     * @return string|null
      */
-    public function getCorpSecret(): string
+    public function getCorpSecret()
     {
-        return getenv('DINGTALK_CORP_SECRET');
+        if ($this->_corpSecret !== null) {
+            return $this->_corpSecret;
+        }
+
+        return $this->_corpSecret = $this->useDotEnv ? getenv('DINGTALK_CORP_SECRET') : $this->_corpSecret;
     }
 
     /**
-     * @param null|string $corpSecret
+     * @param string|null $corpSecret
      */
     public function setCorpSecret(string $corpSecret)
     {
-        Craft::$app->getConfig()->setDotEnvVar('DINGTALK_CORP_SECRET', $corpSecret);
+        $this->_corpSecret = $corpSecret;
     }
 }

@@ -7,11 +7,21 @@
     required: true
 }) }}
 
-{{ forms.textField({
+{{ forms.passwordField({
     label: "Corp Secret"|t('dingtalk'),
+    id: 'corpSecret',
     name: "corpSecret",
     value: settings.corpSecret,
     required: true
+}) }}
+
+{{ forms.checkboxField({
+    label: "Use environment variables storage {Corp Id} and {Corp Secret}"|t('dingtalk', {
+        'Corp Id': '<b>' ~ 'Corp Id'|t('dingtalk') ~ '</b>',
+        'Corp Secret': '<b>' ~ 'Corp Secret'|t('dingtalk') ~ '</b>',
+    }),
+    name: "useDotEnv",
+    checked: settings.useDotEnv,
 }) }}
 
 {{ forms.lightSwitchField({
@@ -28,6 +38,20 @@
 
 <hr>
 
-<a class="btn icon settings" href="{{ url('settings/plugins/dingtalk/users') }}">{{ 'Users Settings'|t('dingtalk') }}</a>
+<a class="btn icon settings"
+   href="{{ url('settings/plugins/dingtalk/users') }}">{{ 'Users Settings'|t('dingtalk') }}</a>
 <a class="btn icon settings" href="{{ url('dingtalk/robots') }}">{{ 'Robots Settings'|t('dingtalk') }}</a>
 <a class="btn icon settings" href="{{ url('dingtalk/processes') }}">{{ 'Processes Settings'|t('dingtalk') }}</a>
+
+{% js %}
+    //Craft.PasswordInput('#corpSecret');
+
+    $corpSecretInput = $('#settings-corpSecret');
+    new Craft.PasswordInput($corpSecretInput, {
+        onToggleInput: $.proxy(function($newPasswordInput) {
+            this.removeListener($corpSecretInput, 'textchange');
+            $corpSecretInput = $newPasswordInput;
+            this.addListener($corpSecretInput, 'textchange', 'validate');
+        }, this)
+    });
+{% endjs %}

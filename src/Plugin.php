@@ -9,6 +9,7 @@
 namespace panlatent\craft\dingtalk;
 
 use Craft;
+use craft\events\PluginEvent;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterCpNavItemsEvent;
 use craft\events\RegisterTemplateRootsEvent;
@@ -16,6 +17,7 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\services\Dashboard;
 use craft\services\Elements;
+use craft\services\Plugins;
 use craft\services\UserPermissions;
 use craft\services\Utilities;
 use craft\web\twig\variables\Cp;
@@ -64,7 +66,7 @@ class Plugin extends \craft\base\Plugin
     /**
      * @var string
      */
-    public $schemaVersion = '0.1.10-alpha.4';
+    public $schemaVersion = '0.1.10-alpha.5';
 
     /**
      * @var string
@@ -135,8 +137,8 @@ class Plugin extends \craft\base\Plugin
             ]);
         });
 
-        Event::on(View::class, View::EVENT_REGISTER_CP_TEMPLATE_ROOTS, function(RegisterTemplateRootsEvent $event) {
-            $event->roots['settings/plugins/dingtalk']  = $this->getBasePath() . '/templates/settings';
+        Event::on(View::class, View::EVENT_REGISTER_CP_TEMPLATE_ROOTS, function (RegisterTemplateRootsEvent $event) {
+            $event->roots['settings/plugins/dingtalk'] = $this->getBasePath() . '/templates/settings';
         });
 
         Event::on(Cp::class, Cp::EVENT_REGISTER_CP_NAV_ITEMS, function (RegisterCpNavItemsEvent $event) {
@@ -189,6 +191,17 @@ class Plugin extends \craft\base\Plugin
                 ],
 
             ];
+        });
+
+        Event::on(Plugins::class, Plugins::EVENT_BEFORE_SAVE_PLUGIN_SETTINGS, function (PluginEvent $event) {
+            if ($event->plugin === $this) {
+                $settings = $this->getSettings();
+                if ($settings->useDotEnv) {
+                    $config = Craft::$app->getConfig();
+                    $config->setDotEnvVar('DINGTALK_CORP_ID', $settings->getCorpId());
+                    $config->setDotEnvVar('DINGTALK_CORP_SECRET', $settings->getCorpSecret());
+                }
+            }
         });
 
         Craft::info(
