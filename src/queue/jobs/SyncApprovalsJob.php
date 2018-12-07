@@ -59,19 +59,19 @@ class SyncApprovalsJob extends BaseJob
             throw new InvalidConfigException("No a valid process exists");
         }
 
-        $ids = $api->getProcessInstanceIds($this->process->code, $startTime->getTimestamp(), $endTime->getTimestamp());
+        $ids = $api->getProcessInstanceIds($process->code, $startTime->getTimestamp(), $endTime->getTimestamp());
 
         foreach ($ids as $id) {
             $result = $api->getProcessInstanceById($id);
 
             if (!($approval = Approval::find()
-                ->processId($this->process->id)
+                ->processId($process->id)
                 ->instanceId($id)
                 ->one())) {
                 $approval = new Approval();
             }
 
-            $approval->processId = $this->process->id;
+            $approval->processId = $process->id;
             $approval->instanceId = $id;
             if (!$approvals->loadApprovalByApi($approval, $result)) {
                 Craft::warning("Couldn‘t load approval from api data with the instance ID: “{$id}“.", __METHOD__);
