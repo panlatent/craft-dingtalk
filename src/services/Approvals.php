@@ -9,6 +9,8 @@
 namespace panlatent\craft\dingtalk\services;
 
 use craft\helpers\ArrayHelper;
+use DateTime;
+use DateTimeZone;
 use panlatent\craft\dingtalk\base\ProcessInterface;
 use panlatent\craft\dingtalk\elements\Approval;
 use panlatent\craft\dingtalk\elements\User;
@@ -43,6 +45,8 @@ class Approvals extends Component
             return false;
         }
 
+        $timezone = new DateTimeZone('Asia/Shanghai');
+
         $approval->load([
             'title' => ArrayHelper::remove($config, 'title'),
             'originatorUserId' => $originatorUserId,
@@ -57,8 +61,8 @@ class Approvals extends Component
             'bizAction' => ArrayHelper::remove($config, 'biz_action'),
             'attachedInstanceIds' => ArrayHelper::remove($config, 'attached_process_instance_ids'),
             'status' => ArrayHelper::remove($config, 'status'),
-            'startDate' => ArrayHelper::remove($config, 'create_time'),
-            'finishDate' => ArrayHelper::remove($config, 'finish_time'),
+            'startDate' => new DateTime(ArrayHelper::remove($config, 'create_time'), $timezone),
+            'finishDate' => new DateTime(ArrayHelper::remove($config, 'finish_time'), $timezone),
         ], '');
 
         return true;
