@@ -44,8 +44,6 @@
 <a class="btn icon settings" href="{{ url('dingtalk/processes') }}">{{ 'Processes Settings'|t('dingtalk') }}</a>
 
 {% js %}
-    //Craft.PasswordInput('#corpSecret');
-
     $corpSecretInput = $('#settings-corpSecret');
     new Craft.PasswordInput($corpSecretInput, {
         onToggleInput: $.proxy(function($newPasswordInput) {
