@@ -11,18 +11,29 @@ namespace panlatent\craft\dingtalk\services;
 use Craft;
 use craft\errors\MissingComponentException;
 use craft\events\RegisterComponentTypesEvent;
+use craft\helpers\ArrayHelper;
 use craft\helpers\Component as ComponentHelper;
 use panlatent\craft\dingtalk\base\Robot;
 use panlatent\craft\dingtalk\base\RobotInterface;
 use panlatent\craft\dingtalk\errors\RobotException;
 use panlatent\craft\dingtalk\records\Robot as RobotRecord;
+use panlatent\craft\dingtalk\records\RobotWebhook as RobotWebhookRecord;
 use panlatent\craft\dingtalk\robots\ChatNoticeRobot;
 use panlatent\craft\dingtalk\robots\MissingRobot;
 use yii\base\Component;
 use yii\db\Query;
 
+/**
+ * Class Robots
+ *
+ * @package panlatent\craft\dingtalk\services
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class Robots extends Component
 {
+    /**
+     * @event \craft\events\RegisterComponentTypesEvent
+     */
     const EVENT_REGISTER_ROBOT_TYPES = 'registerRobotTypes';
 
     /**
@@ -164,19 +175,69 @@ class Robots extends Component
             return false;
         }
 
-        $translation = Craft::$app->db->beginTransaction();
+        $db = Craft::$app->getDb();
+
+        $translation = $db->beginTransaction();
         try {
             $robotRecord = $this->_getRobotRecordById($robot->id);
 
             $robotRecord->handle = $robot->handle;
             $robotRecord->name = $robot->name;
             $robotRecord->type = get_class($robot);
-            $robotRecord->settings= $robot->getSettings();
+            $robotRecord->settings = $robot->getSettings();
 
             $robotRecord->save(false);
 
             if ($isNewRobot) {
                 $robot->id = $robotRecord->id;
+            }
+
+            if (!$isNewRobot) {
+                $oldWebhookIds = RobotWebhookRecord::find()
+                    ->select('id')
+                    ->where(['robotId' => $robot->id])
+                    ->column();
+            }
+
+            $webhooks = $robot->getWebhooks();
+            foreach ($webhooks as $webhook) {
+                RobotWebhookRecord::find()
+                    ->select('id')
+                    ->where(['robotId' => $robot->id])
+                    ->column();
+
+                $db->createCommand()->upsert('{{%dingtalk_robotwebhooks}}', [
+                    'robotId' => $robot->id,
+                    'name' => $webhook->name,
+                    'url' => $webhook->url,
+                    'rateLimit' => $webhook->rateLimit,
+                    'rateWindow' => $webhook->rateWindow,
+                    'enabled' => (bool)$webhook->enabled,
+                ], [
+                    'id' => $webhook->id,
+                    'name' => $webhook->name,
+                    'url' => $webhook->url,
+                    'rateLimit' => $webhook->rateLimit,
+                    'rateWindow' => $webhook->rateWindow,
+                    'enabled' => (bool)$webhook->enabled,
+                ])->execute();
+            }
+
+            if (!$isNewRobot && isset($oldWebhookIds)) {
+                $deleteWebhookIds = [];
+                $webhookIds = ArrayHelper::getColumn($webhooks, 'id');
+                $webhookIds = array_filter($webhookIds);
+                foreach ($oldWebhookIds as $oldWebhookId) {
+                    if (!in_array($oldWebhookId, $webhookIds)) {
+                        $deleteWebhookIds[] = $oldWebhookId;
+                    }
+                }
+
+                if ($deleteWebhookIds) {
+                    $db->createCommand()->delete('{{%dingtalk_robotwebhooks}}', [
+                        'id' => $deleteWebhookIds,
+                    ])->execute();
+                }
             }
 
             $robot->afterSave($isNewRobot);
