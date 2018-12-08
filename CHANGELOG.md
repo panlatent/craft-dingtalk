@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ## [Unreleased]
 ### Changed
-- 支持创建审批流并同步审批数据作为审批元素
+
+## [0.1.10] - 2018-12-09
+### Added
+- 支持创建审批流并同步审批数据作为审批（ 元素 ）
+
+## Changed
 - 支持将密钥保存在环境变量而不是存储在插件设置中
 - 优化部门与通讯录同步
 - 支持一个钉钉机器人可将消息推送多个群（Webhook）
