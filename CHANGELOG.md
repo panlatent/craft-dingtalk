@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
-### Changed
+### Fixed
+- 修复了通讯录不能正确筛选已离职状态的人员
+
+### 
 
 ## [0.1.10] - 2018-12-09
 ### Added

@@ -283,6 +283,16 @@ class UserQuery extends ElementQuery
         return parent::beforePrepare();
     }
 
+    protected function statusCondition(string $status)
+    {
+        switch ($status) {
+            case User::STATUS_LEAVED:
+                return ['dingtalk_users.isLeaved' => true];
+            default:
+                return parent::statusCondition($status);
+        }
+    }
+
     /**
      * Prepare status conditions
      */
