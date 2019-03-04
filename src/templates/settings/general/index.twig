@@ -1,0 +1,15 @@
+{% extends "dingtalk/_layouts/settings" %}
+
+{% set selectedItem = 'general' %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <h2>{{ 'General Settings'|t('dingtalk') }}</h2>
+
+    <form method="post" accept-charset="UTF-8">
+        <input type="hidden" name="action" value="dingtalk/settings/save-settings">
+
+        <button class="btn submit">{{ 'Save'|t('app') }}</button>
+    </form>
+{% endblock %}

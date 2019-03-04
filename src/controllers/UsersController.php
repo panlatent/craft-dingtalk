@@ -12,6 +12,7 @@ use Craft;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\elements\User;
 use panlatent\craft\dingtalk\enums\PermissionItems;
+use yii\web\Response;
 
 /**
  * Class UsersController
@@ -21,6 +22,16 @@ use panlatent\craft\dingtalk\enums\PermissionItems;
  */
 class UsersController extends Controller
 {
+    /**
+     * @param int|null $userId
+     * @param User|null $user
+     * @return Response
+     */
+    public function actionEditUser(int $userId = null, User $user = null): Response
+    {
+        return $this->renderTemplate('dingtalk/users/_edit');
+    }
+
     /**
      * @return \yii\web\Response|null
      */

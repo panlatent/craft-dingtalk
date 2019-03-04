@@ -11,8 +11,10 @@ namespace panlatent\craft\dingtalk\elements;
 use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQueryInterface;
+use craft\helpers\UrlHelper;
 use craft\validators\DateTimeValidator;
 use DateTime;
+use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\elements\db\UserQuery;
 use panlatent\craft\dingtalk\errors\DepartmentException;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
@@ -33,7 +35,13 @@ use yii\helpers\ArrayHelper;
  */
 class User extends Element
 {
+    // Constants
+    // =========================================================================
+
     const STATUS_LEAVED = 'leaved';
+
+    // Static Methods
+    // =========================================================================
 
     /**
      * @return string
@@ -173,6 +181,9 @@ class User extends Element
         return ['name', 'mobile', 'tel', 'position'];
     }
 
+    // Properties
+    // =========================================================================
+
     /**
      * @var string|null 员工唯一标识ID（不可修改）
      */
@@ -283,6 +294,17 @@ class User extends Element
      */
     private $_departments;
 
+    // Public Methods
+    // =========================================================================
+
+    /**
+     * @inheritdoc
+     */
+    public function __toString()
+    {
+        return (string)$this->name;
+    }
+
     /**
      * @inheritdoc
      */
@@ -319,6 +341,141 @@ class User extends Element
         $attributes[] = 'leavedDate';
 
         return $attributes;
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    public function getStatus()
+    {
+        if ($this->archived) {
+            return static::STATUS_ARCHIVED;
+        }
+
+        if (!$this->enabled || !$this->enabledForSite) {
+            return static::STATUS_DISABLED;
+        }
+
+        return $this->isLeaved ? static::STATUS_LEAVED : static::STATUS_ENABLED;
+    }
+
+    /**
+     * @return Department|null
+     */
+    public function getPrimaryDepartment()
+    {
+        if ($this->_primaryDepartment !== null) {
+            return $this->_primaryDepartment;
+        }
+
+        $departmentId = (new Query())
+            ->select('departmentId')
+            ->from(Table::USERDEPARTMENTS)
+            ->where([
+                'userId' => $this->id,
+                'primary' => true,
+            ])
+            ->scalar();
+
+        if (!$departmentId) {
+            return null;
+        }
+
+        return $this->_primaryDepartment = Plugin::$plugin->getDepartments()->getDepartmentById($departmentId);
+    }
+
+    /**
+     * @param Department|int|null $department
+     */
+    public function setPrimaryDepartment($department = null)
+    {
+        if (is_int($department) || ctype_digit($department)) {
+            $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
+        }
+
+        if (!$department instanceof Department && $department !== null) {
+            throw new DepartmentException('Primary department must be a department instance');
+        }
+
+        $this->_primaryDepartment = $department;
+    }
+
+    /**
+     * @return Department[]
+     */
+    public function getDepartments()
+    {
+        if ($this->_departments !== null) {
+            return $this->_departments;
+        }
+
+        $departmentIds = (new Query())
+            ->select('departmentId')
+            ->from(Table::USERDEPARTMENTS)
+            ->where(['userId' => $this->id])
+            ->column();
+
+        $this->setDepartments($departmentIds);
+
+        return $this->_departments;
+    }
+
+    /**
+     * @param Department[]|int[]|null $departments
+     */
+    public function setDepartments($departments)
+    {
+        if ($departments === null) {
+            $this->_departments = null;
+            return;
+        }
+
+        $this->_departments = [];
+
+        foreach ($departments as $department) {
+            if (is_int($department) || ctype_digit($department)) {
+                $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
+            }
+
+            if (!$department instanceof Department) {
+                throw new DepartmentException('User department must be a department instance');
+            }
+
+            $this->_departments[] = $department;
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getFieldLayout()
+    {
+        return Craft::$app->getFields()->getLayoutByType(static::class);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getIsEditable(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getCpEditUrl()
+    {
+        return UrlHelper::cpUrl('dingtalk/users/' . $this->id);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getThumbUrl(int $size)
+    {
+        return $this->avatar ?: null;
     }
 
     /**
@@ -404,147 +561,8 @@ class User extends Element
         parent::afterSave($isNew);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getStatus()
-    {
-        if ($this->archived) {
-            return static::STATUS_ARCHIVED;
-        }
-
-        if (!$this->enabled || !$this->enabledForSite) {
-            return static::STATUS_DISABLED;
-        }
-
-        return $this->isLeaved ? static::STATUS_LEAVED : static::STATUS_ENABLED;
-    }
-
-    /**
-     * @return Department|null
-     */
-    public function getPrimaryDepartment()
-    {
-        if ($this->_primaryDepartment !== null) {
-            return $this->_primaryDepartment;
-        }
-
-        $departmentId = (new Query())
-            ->select('departmentId')
-            ->from('{{%dingtalk_userdepartments}}')
-            ->where([
-                'userId' => $this->id,
-                'primary' => true,
-            ])
-            ->scalar();
-
-        if (!$departmentId) {
-            return null;
-        }
-
-        return $this->_primaryDepartment = Plugin::$plugin->getDepartments()->getDepartmentById($departmentId);
-    }
-
-    /**
-     * @param Department|int|null $department
-     */
-    public function setPrimaryDepartment($department = null)
-    {
-        if (is_int($department) || ctype_digit($department)) {
-            $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
-        }
-
-        if (!$department instanceof Department && $department !== null) {
-            throw new DepartmentException('Primary department must be a department instance');
-        }
-
-        $this->_primaryDepartment = $department;
-    }
-
-    /**
-     * @return Department[]
-     */
-    public function getDepartments()
-    {
-        if ($this->_departments !== null) {
-            return $this->_departments;
-        }
-
-        $departmentIds = (new Query())
-            ->select('departmentId')
-            ->from('{{%dingtalk_userdepartment}}')
-            ->where(['userId' => $this->id])
-            ->column();
-
-        $this->setDepartments($departmentIds);
-
-        return $this->_departments;
-    }
-
-    /**
-     * @param Department[]|int[]|null $departments
-     */
-    public function setDepartments($departments)
-    {
-        if ($departments === null) {
-            $this->_departments = null;
-            return;
-        }
-
-        $this->_departments = [];
-
-        foreach ($departments as $department) {
-            if (is_int($department) || ctype_digit($department)) {
-                $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
-            }
-
-            if (!$department instanceof Department) {
-                throw new DepartmentException('User department must be a department instance');
-            }
-
-            $this->_departments[] = $department;
-        }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getFieldLayout()
-    {
-        return Craft::$app->getFields()->getLayoutByType(static::class);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getIsEditable(): bool
-    {
-        return false;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getCpEditUrl()
-    {
-        return 'plugin-handle/products/'.$this->id;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getThumbUrl(int $size)
-    {
-        return $this->avatar ?: null;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function __toString()
-    {
-        return (string)$this->name;
-    }
+    // Protected Methods
+    // =========================================================================
 
     /**
      * @inheritdoc

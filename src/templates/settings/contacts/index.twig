@@ -1,0 +1,14 @@
+{% extends "dingtalk/_layouts/settings" %}
+{% set title = 'Users Settings'|t('dingtalk') %}
+{% set fullPageForm = true %}
+
+{% block content %}
+    <h2>{{ 'Contacts'|t('dingtalk') }}</h2>
+
+    <input type="hidden" name="action" value="dingtalk/users/save-user-field-layout">
+    {{ csrfInput() }}
+
+    {% include "_includes/fieldlayoutdesigner" with {
+        fieldLayout: craft.app.fields.getLayoutByType('panlatent\\craft\\dingtalk\\elements\\User')
+    } only %}
+{% endblock %}

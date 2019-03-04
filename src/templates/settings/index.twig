@@ -1,0 +1,23 @@
+{% if currentUser.admin %}
+    {% redirect 'dingtalk/settings/general' %}
+{% endif %}
+
+{% if currentUser.can('dingtalk-manageContacts') %}
+    {% redirect 'dingtalk/settings/contacts' %}
+{% endif %}
+
+{% if currentUser.can('dingtalk-manageApprovals') %}
+    {% redirect 'dingtalk/settings/approvals' %}
+{% endif %}
+
+{% if currentUser.can('dingtalk-manageRobots') %}
+    {% redirect 'dingtalk/settings/robots' %}
+{% endif %}
+
+{% if currentUser.can('dingtalk-manageLogin') %}
+    {% redirect 'dingtalk/settings/login' %}
+{% endif %}
+
+{% if currentUser.can('dingtalk-manageCallbacks') %}
+    {% redirect 'dingtalk/settings/callbacks' %}
+{% endif %}

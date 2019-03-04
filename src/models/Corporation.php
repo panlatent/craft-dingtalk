@@ -12,13 +12,34 @@ use Craft;
 use craft\base\Model;
 
 /**
- * Class Settings
+ * Class Corporation
  *
  * @package panlatent\craft\dingtalk\models
+ * @property-read bool $isNew
  * @author Panlatent <panlatent@gmail.com>
  */
-class Settings extends Model
+class Corporation extends Model
 {
+    /**
+     * @var int|null
+     */
+    public $id;
+
+    /**
+     * @var bool|null
+     */
+    public $primary;
+
+    /**
+     * @var string|null
+     */
+    public $name;
+
+    /**
+     * @var string|null
+     */
+    public $handle;
+
     /**
      * @var string|null
      */
@@ -30,19 +51,30 @@ class Settings extends Model
     public $corpSecret;
 
     /**
-     * @var string|null
+     * @var bool|null
      */
-    public $callbackUrlRule;
+    public $hasUrls;
 
     /**
      * @var string|null
      */
-    public $callbackToken;
+    public $url;
 
     /**
-     * @var string|null
+     * @return string
      */
-    public $callbackEncodingAesKey;
+    public function __toString()
+    {
+       return (string)$this->name;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsNew(): bool
+    {
+        return !$this->id;
+    }
 
     /**
      * @return string|null
@@ -58,5 +90,10 @@ class Settings extends Model
     public function getCorpSecret()
     {
         return Craft::parseEnv($this->corpSecret);
+    }
+
+    public function getClient()
+    {
+
     }
 }

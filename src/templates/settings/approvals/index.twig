@@ -1,5 +1,8 @@
-{% extends "dingtalk/_layouts/settingscp" %}
+{% extends "dingtalk/_layouts/settings" %}
+
 {% set title = 'Processes'|t('dingtalk') %}
+{% set selectedSubnavItem = "approvals" %}
+{% set processes = craft.dingtalk.processes.getAllProcesses() %}
 
 {% block actionButton %}
     <a href="{{ url('dingtalk/processes/new') }}" class="btn submit">{{ 'New'|t('app') }}</a>

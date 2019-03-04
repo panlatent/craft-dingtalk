@@ -8,8 +8,9 @@
 
 namespace panlatent\craft\dingtalk\services;
 
-use EasyDingTalk\Application as DingTalkClient;
+use EasyDingTalk\Kernel\Exceptions\ClientError;
 use panlatent\craft\dingtalk\Plugin;
+use panlatent\craft\dingtalk\supports\Client;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
 
@@ -22,7 +23,7 @@ use yii\helpers\ArrayHelper;
 class Api extends Component
 {
     /**
-     * @var DingTalkClient|null
+     * @var Client|null
      */
     public $client;
 
@@ -34,9 +35,9 @@ class Api extends Component
         parent::init();
 
         if ($this->client === null) {
-            $this->client = new DingTalkClient([
-                'corp_id' => Plugin::$plugin->settings->corpId,
-                'corp_secret' => Plugin::$plugin->settings->corpSecret,
+            $this->client = new Client([
+                'corp_id' => Plugin::$plugin->settings->getCorpId(),
+                'corp_secret' => Plugin::$plugin->settings->getCorpSecret(),
             ]);
         }
     }
@@ -235,5 +236,25 @@ class Api extends Component
         ]);
 
         return $results['process_instance'];
+    }
+
+    /**
+     * 获得已注册的业务事件回调信息
+     *
+     * @return array|null
+     */
+    public function getCallback()
+    {
+        try {
+            $ret = $this->client->callback->get();
+        } catch (ClientError $exception) {
+            if ($exception->getCode() === 71007) {
+                return null;
+            }
+
+            throw $exception;
+        }
+
+        return $ret;
     }
 }

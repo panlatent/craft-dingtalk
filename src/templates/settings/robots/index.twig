@@ -1,5 +1,8 @@
-{% extends "dingtalk/_layouts/settingscp" %}
+{% extends "dingtalk/_layouts/settings" %}
+
 {% set title = "Robots"|t('dingtalk') %}
+{% set selectedSubnavItem = "robots" %}
+{% set robots = craft.dingtalk.robots.getAllRobots() %}
 
 {% block actionButton %}
     <a href="{{ url('dingtalk/robots/new') }}" class="btn submit add icon">{{ 'New'|t('app') }}</a>

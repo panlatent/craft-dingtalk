@@ -1,0 +1,42 @@
+{% extends "dingtalk/_layouts/settings" %}
+
+{% set title = 'Corporations'|t('dingtalk') %}
+{% set selectedSubnavItem = "corporations" %}
+{% set corporations = craft.dingtalk.corporations.getAllCorporations() %}
+
+{% block actionButton %}
+    <a href="{{ url('dingtalk/corporations/new') }}" class="btn submit">{{ 'New'|t('app') }}</a>
+{% endblock %}
+
+{% block content %}
+    <h2>{{ 'Corporations'|t('dingtalk') }}</h2>
+
+    {% if corporations|length %}
+        {% set sortable  = (corporations|length > 1) %}
+
+        <table id="corporations" class="data fullwidth collapsible">
+            <thead>
+            <th scope="col">{{ "Name"|t('app') }}</th>
+            <th scope="col">{{ "Handle"|t('app') }}</th>
+            <th scope="col">{{ "Corp ID"|t('app') }}</th>
+            <th scope="col">{{ "Primary"|t('app') }}</th>
+            <th scope="col">{{ "URL"|t('app') }}</th>
+            {% if sortable %}<td class="thin"></td>{% endif %}
+            <td class="thin"></td>
+            </thead>
+            <tbody>
+            {% for corporation in corporations %}
+                <tr data-id="{{ corporation.id }}" data-name="{{ corporation.name|t('site') }}">
+                    <th scope="row" data-title="{{ 'Name'|t('app') }}"><a href="{{ url('dingtalk/corporations/' ~ corporation.id) }}">{{ corporation.name }}</a></th>
+                    <td scope="row" data-title="{{ 'Handle'|t('app') }}" class="code">{{ corporation.handle }}</td>
+                    <td scope="code" data-title="{{ 'Corp ID'|t('app') }}">{{ corporation.getCorpId() }}</td>
+                    <td data-title="{{ 'Primary'|t('app') }}">{% if corporation.primary %}<div data-icon="check"></div>{% endif %}</td>
+                    <td data-title="{{ 'URL'|t('app') }}">{% if corporation.hasUrls %}{{ corporation.url }}{% endif %}</td>
+                    {% if sortable %}<td class="thin"><a class="move icon" title="{{ 'Reorder'|t('app') }}" role="button"></a></td>{% endif %}
+                    <td class="thin"><a class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

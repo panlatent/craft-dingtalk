@@ -8,11 +8,13 @@
 
 return [
     'DingTalk' => '钉钉',
-    'Show Contacts section on CP' => '在控制面板显示通讯录',
-    'Show Approvals section on CP' => '在控制面板显示审批',
-    'Sync Dingtalk Contacts' => '同步钉钉通讯录',
+    'Corporations' => '企业',
     'Contacts' => '通讯录',
+    'Robots' => '机器人',
     'Departments' => '部门',
+    'Users' => '用户',
+    'Settings' => '设置',
+    'Sync Dingtalk Contacts' => '同步钉钉通讯录',
     'Sync Contacts' => '同步通讯录',
     'All users' => '所有用户',
     'Serving staffs' => '在职员工',
@@ -39,8 +41,6 @@ return [
     'Not found a robot' => '找不到机器人',
     'Send message failed.' => '消息发送失败。',
     'Message has been sent.' => '消息已发送。',
-    'Robot' => '机器人',
-    'Robots' => '机器人',
     'Robot Type' => '机器人类型',
     'Create a new robot' => '创建新机器人',
     'Couldn’t save robot.' => '不能保存机器人。',
@@ -130,5 +130,5 @@ return [
     'Diploma Certificate' => '学位证书',
     'Release Letter' => '前公司离职证明',
     'Personal Photo' => '员工照片',
-    'Use environment variables storage {Corp Id} and {Corp Secret}' => '使用环境变量存储 {Corp Id} 和 {Corp Secret}'
+    'DingTalk Settings' => '钉钉设置',
 ];

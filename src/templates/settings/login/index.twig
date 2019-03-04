@@ -1,0 +1,48 @@
+{% extends "dingtalk/_layouts/settings" %}
+
+{% set selectedItem = 'login' %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <h2>{{ 'Login'|t('dingtalk') }}</h2>
+
+    <form method="post" accept-charset="UTF-8">
+        <input type="hidden" name="action" value="dingtalk/settings/save-settings">
+
+        {{ forms.lightswitchField({
+            label: 'Enable DingTalk Login',
+        }) }}
+
+        {{ forms.selectField({
+            label: 'Login Mehod',
+            options: [
+                {label: 'QR Code', value: 'qrcode'},
+                {label: 'Password', value: 'password'},
+            ],
+            toggle: true,
+        }) }}
+
+        {{ forms.textField({
+            label: 'App Id',
+        }) }}
+
+        <div id="qrcode">
+
+            {{ forms.checkBoxField({
+                label: 'Embedded',
+            }) }}
+
+        </div>
+
+        <id id="password" class="hidden">
+
+            {{ forms.textField({
+                label: "Redirect Uri"
+            }) }}
+
+        </id>
+
+        <button class="btn submit">{{ 'Save'|t('app') }}</button>
+    </form>
+{% endblock %}

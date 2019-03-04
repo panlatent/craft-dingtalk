@@ -1,0 +1,11 @@
+{% extends "dingtalk/_layouts/settings" %}
+
+{% set selectedSubnavItem = 'departments' %}
+
+{% block content %}
+    <h2>{{ 'Departments'|t('dingtalk') }}</h2>
+
+    <form method="post" accept-charset="UTF-8">
+        <button class="btn submit">{{ 'Save'|t('app') }}</button>
+    </form>
+{% endblock %}

@@ -1,7 +1,0 @@
-{% extends "_layouts/cp" %}
-
-{% set basecrumbs = [
-    {label: 'DingTalk'|t('dingtalk'), url: url('settings/plugins/dingtalk')}
-] %}
-
-{% set crumbs = crumbs is defined ? (basecrumbs|merge(crumbs)) : basecrumbs %}

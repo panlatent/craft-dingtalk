@@ -1,42 +1,23 @@
 {% import "_includes/forms" as forms %}
 
-{{ forms.textField({
+{{ forms.autosuggestField({
     label: "Corp Id"|t('dingtalk'),
+    required: true,
+    id: "cropId",
     name: "corpId",
     value: settings.corpId,
-    required: true
+    suggestEnvVars: true,
 }) }}
 
-{{ forms.passwordField({
+{{ forms.autosuggestField({
     label: "Corp Secret"|t('dingtalk'),
+    required: true,
     id: 'corpSecret',
     name: "corpSecret",
     value: settings.corpSecret,
-    required: true
+    suggestEnvVars: true,
 }) }}
 
-{{ forms.checkboxField({
-    label: "Use environment variables storage {Corp Id} and {Corp Secret}"|t('dingtalk', {
-        'Corp Id': '<b>' ~ 'Corp Id'|t('dingtalk') ~ '</b>',
-        'Corp Secret': '<b>' ~ 'Corp Secret'|t('dingtalk') ~ '</b>',
-    }),
-    name: "useDotEnv",
-    checked: settings.useDotEnv,
-}) }}
-
-{{ forms.lightSwitchField({
-    label: "Show Contacts section on CP"|t('dingtalk'),
-    name: "showContactsOnCpSection",
-    on: settings.showContactsOnCpSection
-}) }}
-
-{{ forms.lightSwitchField({
-    label: "Show Approvals section on CP"|t('dingtalk'),
-    name: "showApprovalsOnCpSection",
-    on: settings.showApprovalsOnCpSection
-}) }}
-
-<hr>
 
 <a class="btn icon settings"
    href="{{ url('settings/plugins/dingtalk/users') }}">{{ 'Users Settings'|t('dingtalk') }}</a>

@@ -1,0 +1,58 @@
+{% extends "_layouts/cp" %}
+
+{% set title = 'DingTalk Settings'|t('dingtalk') %}
+{% set selectedSubnavItem = 'settings' %}
+
+{% set navItems = {} %}
+
+
+{% if currentUser.admin %}
+    {% set navItems = {
+        'general': { title: "General Settings"|t('dingtalk') },
+        'corporations': { title: "Corporations"|t('dingtalk') },
+        'staff': { heading: "Staffs"|t('dingtalk') },
+        'contacts': { title: "Contacts"|t('dingtalk') },
+        'departments': { title: "Departments"|t('dingtalk') },
+        'userauth': { title: "User Auth"|t('dingtalk') },
+        'chats': { heading: "Chats"|t('dingtalk') },
+        'notifications': { title: "Notifications"|t('dingtalk') },
+        'messages': { title: "Messages"|t('dingtalk') },
+        'robots': { title: "Robots"|t('dingtalk') },
+        'others': { heading: "Others"|t('dingtalk') },
+        'approvals': { title: "Approvals"|t('dingtalk') },
+        'workrecords': { title: "Workrecords"|t('dingtalk') },
+        'attendance': { title: "Attendances"|t('dingtalk') },
+        'checkins': { title: "Checkins"|t('dingtalk') },
+        'reports': { title: "Reports"|t('dingtalk') },
+        'blackboards': { title: "Blackboards"|t('dingtalk') },
+        'smartwork': { title: "Smartwork"|t('dingtalk') },
+        'appmanages': { title: "App Manages"|t('dingtalk') },
+        'sports': { title: "Sports"|t('dingtalk') },
+        'fielstorage': { title: "Fiel Storage"|t('dingtalk') },
+        'integrations': { heading: "Integrations"|t('dingtalk') },
+        'login': { title: "Login"|t('dingtalk') },
+        'callbacks': { title: "Callbacks"|t('dingtalk') },
+    } %}
+{% endif %}
+
+{% if selectedItem is not defined %}
+    {% set selectedItem = craft.app.request.getSegment(3) %}
+{% endif %}
+
+{% set docTitle = navItems[selectedItem].title ~ ' - ' ~ title %}
+
+{% block sidebar %}
+    <nav>
+        <ul>
+            {% for id, item in navItems %}
+                {% if item.heading is defined %}
+                    <li class="heading"><span>{{ item.heading }}</span></li>
+                {% else %}
+                    <li>
+                        <a href="{{ url('dingtalk/settings/'~id) }}"{% if id == selectedItem %} class="sel"{% endif %}>{{ item.title }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+{% endblock %}

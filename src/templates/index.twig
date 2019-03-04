@@ -1,0 +1,18 @@
+{% if currentUser.can('dingtalk-manageCorporations') %}
+    {% redirect 'dingtalk/corporations' %}
+{% endif %}
+
+{% if currentUser.can('dingtalk-manageApprovals') %}
+    {% redirect 'dingtalk/approvals' %}
+{% endif %}
+
+{% if currentUser.can('dingtalk-manageRobots') %}
+    {% redirect 'dingtalk/robots' %}
+{% endif %}
+
+{% if currentUser.can('dingtalk-manageUsers') %}
+    {% redirect 'dingtalk/users' %}
+{% endif %}
+
+{% extends "403" %}
+{% set message = "You don’t have permission to access to any of the DingTalk sub-sections. Please contact an admin."|t('dingtalk') %}
