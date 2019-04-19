@@ -27,7 +27,7 @@ class CorporationsController extends Controller
      */
     public function init()
     {
-        $this->requireAdmin();
+        $this->requireAdmin(false);
 
         return parent::init();
     }
