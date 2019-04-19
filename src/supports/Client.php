@@ -15,6 +15,7 @@ use EasyDingTalk\Application;
  *
  * @package panlatent\craft\dingtalk\supports
  * @property-read \panlatent\craft\dingtalk\supports\Callback\Client $callback
+ * @property-read \EasyDingTalk\Extcontact\Client $extcontact
  * @author Panlatent <panlatent@gmail.com>
  */
 class Client extends Application

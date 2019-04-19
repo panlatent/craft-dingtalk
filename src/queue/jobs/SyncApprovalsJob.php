@@ -40,10 +40,10 @@ class SyncApprovalsJob extends BaseJob
      */
     public function execute($queue)
     {
-        $api = Plugin::$plugin->api;
-        $approvals = Plugin::$plugin->approvals;
+        $api = Plugin::getInstance()->api;
+        $approvals = Plugin::getInstance()->approvals;
         $elements = Craft::$app->getElements();
-        $processes = Plugin::$plugin->processes;
+        $processes = Plugin::getInstance()->processes;
 
         $startTime = DateTimeHelper::toDateTime($this->startTime) ?: new DateTime('1970-01-01');
         $endTime = DateTimeHelper::toDateTime($this->endTime) ?: new DateTime();

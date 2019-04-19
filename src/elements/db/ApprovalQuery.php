@@ -22,6 +22,14 @@ use panlatent\craft\dingtalk\elements\Approval;
  */
 class ApprovalQuery extends ElementQuery
 {
+    // Traits
+    // =========================================================================
+
+    use CorporationQuery;
+
+    // Properties
+    // =========================================================================
+
     /**
      * @var int[]|int|null
      */
@@ -31,6 +39,9 @@ class ApprovalQuery extends ElementQuery
      * @var string[]|string|null
      */
     public $instanceId;
+
+    // Public Methods
+    // =========================================================================
 
     /**
      * @param int[]|int|null $value
@@ -62,6 +73,7 @@ class ApprovalQuery extends ElementQuery
         $this->joinElementTable('dingtalk_approvals');
 
         $this->query->addSelect([
+            'dingtalk_approvals.corporationId',
             'dingtalk_approvals.processId',
             'dingtalk_approvals.businessId',
             'dingtalk_approvals.instanceId',
@@ -88,6 +100,8 @@ class ApprovalQuery extends ElementQuery
         if ($this->instanceId) {
             $this->subQuery->andWhere(Db::parseParam('dingtalk_approvals.instanceId', $this->instanceId));
         }
+
+        $this->_applyCorporationParam('dingtalk_approvals.corporationId');
 
         return parent::beforePrepare();
     }

@@ -2,3 +2,60 @@
 
 {% set title = "Robots"|t('dingtalk') %}
 {% set selectedSubnavItem = 'robots' %}
+{% set robots = craft.dingtalk.robots.getAllRobots() %}
+
+{% block actionButton %}
+    <a href="{{ url('dingtalk/robots/new') }}" class="btn submit add icon">{{ 'New'|t('app') }}</a>
+{% endblock %}
+
+{% block sidebar %}
+
+{% endblock %}
+
+{% block content %}
+    {% if robots|length %}
+        {% set sortable  = (robots|length > 1) %}
+
+        <table id="robots" class="data fullwidth collapsible">
+            <thead>
+            <th scope="col">{{ "Name"|t('app') }}</th>
+            <th scope="col">{{ "Handle"|t('app') }}</th>
+            <th scope="col">{{ "Type"|t('app') }}</th>
+            {% if sortable %}<td class="thin"></td>{% endif %}
+            <td class="thin"></td>
+            </thead>
+            <tbody>
+            {% for robot in robots %}
+                <tr data-id="{{ robot.id }}" data-name="{{ robot.name|t('site') }}">
+                    <th scope="row" data-title="{{ 'Name'|t('app') }}"><a href="{{ url('dingtalk/robots/' ~ robot.id) }}">{{ robot.name }}</a></th>
+                    <td scope="row" data-title="{{ 'Handle'|t('app') }}" class="code">{{ robot.handle }}</td>
+                    <td data-title="{{ 'Type'|t('app') }}">
+                        {% if robot is missing %}
+                            <span class="error">{{ robot.expectedType }}</span>
+                        {% else %}
+                            {{ robot.displayName() }}
+                        {% endif %}
+                    </td>
+                    {% if sortable %}<td class="thin"><a class="move icon" title="{{ 'Reorder'|t('app') }}" role="button"></a></td>{% endif %}
+                    <td class="thin"><a class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}
+
+{% js %}
+    var adminTable = new Craft.AdminTable({
+        tableSelector: '#robots',
+        noItemsSelector: '#norobots',
+        sortable: true,
+        reorderAction: 'dingtalk/robots/reorder-robots',
+        deleteAction: 'dingtalk/robots/delete-robot',
+        onDeleteItem: function() {
+            if (adminTable.totalItems == 0) {
+                $('#nav-assets').remove();
+            }
+        }
+    });
+{% endjs %}

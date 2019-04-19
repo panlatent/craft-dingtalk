@@ -39,6 +39,9 @@
         "hasCpSettings": true,
         "hasCpSection": true,
         "changelogUrl": "https://raw.githubusercontent.com/panlatent/craft-dingtalk/master/CHANGELOG.md",
-        "class": "panlatent\\craft\\dingtalk\\Plugin"
+        "class": "panlatent\\craft\\dingtalk\\Plugin",
+        "branch-alias": {
+            "dev-master": "0.2.x-dev"
+        }
     }
 }

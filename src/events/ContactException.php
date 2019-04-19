@@ -8,15 +8,15 @@
 
 namespace panlatent\craft\dingtalk\events;
 
-use craft\events\ElementEvent;
+use yii\base\Exception;
 
 /**
- * Class ElementLoadEvent
+ * Class ContactException
  *
  * @package panlatent\craft\dingtalk\events
  * @author Panlatent <panlatent@gmail.com>
  */
-class ElementLoadEvent extends ElementEvent
+class ContactException extends Exception
 {
 
 }

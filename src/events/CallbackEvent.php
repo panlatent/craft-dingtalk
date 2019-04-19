@@ -8,17 +8,27 @@
 
 namespace panlatent\craft\dingtalk\events;
 
+use panlatent\craft\dingtalk\models\Corporation;
 use yii\base\Event;
 
+/**
+ * Class CallbackEvent
+ *
+ * @package panlatent\craft\dingtalk\events
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class CallbackEvent extends Event
 {
+    // Properties
+    // =========================================================================
 
+    /**
+     * @var Corporation|null
+     */
+    public $corporation;
 
-//chat_add_member ：群会话添加人员
-//chat_remove_member ：群会话删除人员
-//chat_quit：群会话用户主动退群
-//chat_update_owner ：群会话更换群主
-//chat_update_title ：群会话更换群名称
-//chat_disband ：群会话解散群
-//chat_disband_microapp ：绑定了微应用的群会话，在解散时回调
+    /**
+     * @var int|null
+     */
+    public $postDate;
 }

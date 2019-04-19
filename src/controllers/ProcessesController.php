@@ -21,7 +21,7 @@ class ProcessesController extends Controller
 {
     public function actionIndex(): Response
     {
-        $allProcesses = Plugin::$plugin->processes->getAllProcesses();
+        $allProcesses = Plugin::getInstance()->processes->getAllProcesses();
 
         return $this->renderTemplate('dingtalk/processes/_index', [
             'processes' => $allProcesses,
@@ -37,7 +37,7 @@ class ProcessesController extends Controller
      */
     public function actionEditProcess(int $processId = null, ProcessInterface $process = null): Response
     {
-        $processes = Plugin::$plugin->processes;
+        $processes = Plugin::getInstance()->processes;
 
         $allProcessTypes = $processes->getAllProcessTypes();
 
@@ -88,7 +88,7 @@ class ProcessesController extends Controller
         $this->requirePostRequest();
 
         $request = Craft::$app->getRequest();
-        $processes = Plugin::$plugin->processes;
+        $processes = Plugin::getInstance()->processes;
 
 
         $process = $processes->createProcess([
@@ -123,7 +123,7 @@ class ProcessesController extends Controller
         $this->requirePostRequest();
         $this->requireAcceptsJson();
 
-        $processes = Plugin::$plugin->processes;
+        $processes = Plugin::getInstance()->processes;
 
         $processId = Craft::$app->getRequest()->getRequiredBodyParam('id');
         $process = $processes->getProcessById($processId);
@@ -145,7 +145,7 @@ class ProcessesController extends Controller
      */
     public function actionEditProcessSync(int $processId): Response
     {
-        $processes = Plugin::$plugin->processes;
+        $processes = Plugin::getInstance()->processes;
 
         $process = $processes->getProcessById($processId);
         if (!$process) {
@@ -164,7 +164,7 @@ class ProcessesController extends Controller
         $request = Craft::$app->getRequest();
 
         $processId = $request->getBodyParam('processId');
-        $process = Plugin::$plugin->processes->getProcessById($processId);
+        $process = Plugin::getInstance()->processes->getProcessById($processId);
         if (!$process) {
             throw new NotFoundHttpException();
         }

@@ -36,6 +36,11 @@ use yii\base\InvalidConfigException;
  */
 class Approval extends Element
 {
+    // Traits
+    // =========================================================================
+
+    use CorporationTrait;
+
     // Statuses
     // -------------------------------------------------------------------------
 
@@ -44,6 +49,9 @@ class Approval extends Element
     const STATUS_TERMINATED = 'terminated';
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELED = 'canceled';
+
+    // Static Methods
+    // =========================================================================
 
     /**
      * @return ApprovalQuery
@@ -94,11 +102,12 @@ class Approval extends Element
                 'key' => '*',
                 'label' => Craft::t('dingtalk', 'All approvals'),
                 'criteria' => [],
-            ],
-            ['heading' => '审批流程']
+            ]
         ];
 
-        $processes = Plugin::$plugin->processes->getAllProcesses();
+        $sources[] = ['heading' => '审批流程'];
+
+        $processes = Plugin::getInstance()->processes->getAllProcesses();
         foreach ($processes as $process) {
             /** @var Process $process */
             $sources[] = [
@@ -138,6 +147,9 @@ class Approval extends Element
     {
         return ['businessId', 'originatorUser', 'originatorDepartment', 'isAgree', 'status', 'startDate'];
     }
+
+    // Properties
+    // =========================================================================
 
     /**
      * @var int|null 审批流程 ID
@@ -222,6 +234,9 @@ class Approval extends Element
      */
     private $_formValues = [];
 
+    // Public Methods
+    // =========================================================================
+
     /**
      * @inheritdoc
      */
@@ -250,47 +265,6 @@ class Approval extends Element
         $attributes[] = 'startDate';
         $attributes[] = 'finishDate';
         return $attributes;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function afterSave(bool $isNew)
-    {
-        if (!$isNew) {
-            $approvalRecord = ApprovalRecord::findOne(['id' => $this->id]);
-            if (!$approvalRecord) {
-                throw new Exception('Invalid approval ID: ' . $this->id);
-            }
-        } else {
-            $approvalRecord = new ApprovalRecord();
-        }
-
-        $approvalRecord->id = $this->id;
-        $approvalRecord->processId = $this->processId;
-        $approvalRecord->businessId = $this->businessId;
-        $approvalRecord->instanceId = $this->instanceId;
-        $approvalRecord->originatorUserId = $this->originatorUserId;
-        $approvalRecord->originatorDepartmentId = $this->originatorDepartmentId;
-        $approvalRecord->title = $this->title;
-        $approvalRecord->approveUserIds = $this->approveUserIds ? Json::encode($this->approveUserIds) : null;
-        $approvalRecord->ccUserIds = $this->ccUserIds ? Json::encode($this->ccUserIds) : null;
-        $approvalRecord->isAgree = (bool)$this->isAgree;
-        $approvalRecord->formValues = $this->_formValues ? Json::encode($this->_formValues) : null;
-        $approvalRecord->operationRecords = $this->operationRecords ? Json::encode($this->operationRecords) : null;
-        $approvalRecord->tasks = $this->tasks ? Json::encode($this->tasks) : null;
-        $approvalRecord->bizAction = $this->bizAction ? ucfirst(strtolower($this->bizAction)) : null;
-        $approvalRecord->attachedInstanceIds = $this->attachedInstanceIds ? Json::encode($this->attachedInstanceIds) : null;
-        $approvalRecord->startDate = $this->startDate;
-        $approvalRecord->finishDate = $this->finishDate;
-
-        if ($this->_status) {
-            $approvalRecord->status = ucfirst($this->_status);
-        }
-
-        $approvalRecord->save(false);
-
-        parent::afterSave($isNew);
     }
 
     /**
@@ -335,7 +309,7 @@ class Approval extends Element
             throw new InvalidConfigException();
         }
 
-        return Plugin::$plugin->processes->getProcessById($this->processId);
+        return Plugin::getInstance()->processes->getProcessById($this->processId);
     }
 
     /**
@@ -359,7 +333,7 @@ class Approval extends Element
             throw new InvalidConfigException();
         }
 
-        return Plugin::$plugin->departments->getDepartmentById($this->originatorDepartmentId);
+        return Plugin::getInstance()->departments->getDepartmentById($this->originatorDepartmentId);
     }
 
     /**
@@ -381,6 +355,51 @@ class Approval extends Element
 
         $this->_formValues = $formValues ?? [];
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function afterSave(bool $isNew)
+    {
+        if (!$isNew) {
+            $approvalRecord = ApprovalRecord::findOne(['id' => $this->id]);
+            if (!$approvalRecord) {
+                throw new Exception('Invalid approval ID: ' . $this->id);
+            }
+        } else {
+            $approvalRecord = new ApprovalRecord();
+        }
+
+        $approvalRecord->id = $this->id;
+        $approvalRecord->corporationId = $this->corporationId;
+        $approvalRecord->processId = $this->processId;
+        $approvalRecord->businessId = $this->businessId;
+        $approvalRecord->instanceId = $this->instanceId;
+        $approvalRecord->originatorUserId = $this->originatorUserId;
+        $approvalRecord->originatorDepartmentId = $this->originatorDepartmentId;
+        $approvalRecord->title = $this->title;
+        $approvalRecord->approveUserIds = $this->approveUserIds ? Json::encode($this->approveUserIds) : null;
+        $approvalRecord->ccUserIds = $this->ccUserIds ? Json::encode($this->ccUserIds) : null;
+        $approvalRecord->isAgree = (bool)$this->isAgree;
+        $approvalRecord->formValues = $this->_formValues ? Json::encode($this->_formValues) : null;
+        $approvalRecord->operationRecords = $this->operationRecords ? Json::encode($this->operationRecords) : null;
+        $approvalRecord->tasks = $this->tasks ? Json::encode($this->tasks) : null;
+        $approvalRecord->bizAction = $this->bizAction ? ucfirst(strtolower($this->bizAction)) : null;
+        $approvalRecord->attachedInstanceIds = $this->attachedInstanceIds ? Json::encode($this->attachedInstanceIds) : null;
+        $approvalRecord->startDate = $this->startDate;
+        $approvalRecord->finishDate = $this->finishDate;
+
+        if ($this->_status) {
+            $approvalRecord->status = ucfirst($this->_status);
+        }
+
+        $approvalRecord->save(false);
+
+        parent::afterSave($isNew);
+    }
+
+    // Private Methods
+    // =========================================================================
 
     /**
      * @inheritdoc

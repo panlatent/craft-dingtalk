@@ -8,7 +8,6 @@
 
 namespace panlatent\craft\dingtalk\models;
 
-use Craft;
 use craft\base\Model;
 
 /**
@@ -21,11 +20,13 @@ class Settings extends Model
 {
     /**
      * @var string|null
+     * @deprecated
      */
     public $corpId;
 
     /**
      * @var string|null
+     * @deprecated
      */
     public $corpSecret;
 
@@ -43,20 +44,4 @@ class Settings extends Model
      * @var string|null
      */
     public $callbackEncodingAesKey;
-
-    /**
-     * @return string|null
-     */
-    public function getCorpId()
-    {
-        return Craft::parseEnv($this->corpId);
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getCorpSecret()
-    {
-        return Craft::parseEnv($this->corpSecret);
-    }
 }

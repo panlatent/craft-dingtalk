@@ -1,0 +1,47 @@
+{% import "_includes/forms" as forms %}
+
+<form id="sync" class="utility" method="post" accept-charset="UTF-8">
+    <input type="hidden" name="action" value="dingtalk/utilities/sync-action">
+    {{ csrfInput() }}
+
+    {{ forms.checkboxSelectField({
+        label: "Corporations"|t('dingtalk'),
+        id: 'corporationIds',
+        name: 'corporationIds',
+        options: corporationOptions,
+        showAllOption: true,
+        values: '*',
+    }) }}
+
+
+    {{ forms.checkboxSelectField({
+        label: "Sync Types"|t('dingtalk'),
+        id: 'types',
+        name: 'types',
+        options: [
+            {label: "Users"|t('dingtalk'), value: "users"},
+            {label: "External Contacts"|t('dingtalk'), value: "externalcontacts"},
+            {label: "Approvals"|t('dingtalk'), value: "approvals"},
+        ],
+        showAllOption: true,
+        values: '*',
+    }) }}
+
+    <hr>
+
+    <h4>{{ "Options"|t('dingtalk') }}</h4>
+
+    {{ forms.lightswitchField({
+        label: 'With leaved users'|t('dingtalk'),
+        name: 'withLeavedUsers',
+        on: true,
+        toggle: 'dimission',
+    }) }}
+
+    <hr>
+
+    <div class="buttons">
+        <input type="submit" class="btn submit" value="{{ 'Sync'|t('dingtalk') }}" />
+        <div class="utility-status"></div>
+    </div>
+</form>

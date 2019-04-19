@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Added
 - 现在支持多个企业管理
 - 添加消息模板和组，通过向已配置模板（ Twig模版 ）注入变量来生成消息内容
+- 支持外部联系人的新增和同步
 - 支持设置事件回调
 - 支持发送工作通知
 - 优化通讯录和智能人事字段
@@ -19,8 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 
 ### Fixed
 - 修复了通讯录不能正确筛选已离职状态的人员
+- 修复从数据库查询部门时，模型丢失 `sortOrder` 和 `archived` 属性
 
-## [0.1.10] - 2018-12-09
+## 0.1.10 - 2018-12-09
 ### Added
 - 支持创建审批流并同步审批数据作为审批（ 元素 ）
 
@@ -29,7 +31,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 - 优化部门与通讯录同步
 - 支持一个钉钉机器人可将消息推送多个群（Webhook）
 
-## [0.1.8] or early - 2018-09-04 - 2018-11-21
+## 0.1.8 or early - 2018-09-04 - 2018-11-21
 
 ### Added
 - 支持将钉钉用户同步至本地并作为元素显示

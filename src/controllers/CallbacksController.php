@@ -9,9 +9,13 @@
 namespace panlatent\craft\dingtalk\controllers;
 
 use Craft;
+use craft\helpers\ArrayHelper;
 use craft\helpers\Json;
 use craft\helpers\StringHelper;
 use craft\web\Controller;
+use DateTime;
+use DateTimeZone;
+use panlatent\craft\dingtalk\models\Callback;
 use panlatent\craft\dingtalk\Plugin;
 use yii\web\BadRequestHttpException;
 use yii\web\JsonParser;
@@ -24,10 +28,19 @@ use yii\web\JsonParser;
  */
 class CallbacksController extends Controller
 {
+    /**
+     * @inheritdoc
+     */
     public $enableCsrfValidation = false;
 
+    /**
+     * @inheritdoc
+     */
     protected $allowAnonymous = true;
 
+    /**
+     * @inheritdoc
+     */
     public function beforeAction($action)
     {
         if (!isset($request->parsers['application/json'])) {
@@ -37,15 +50,19 @@ class CallbacksController extends Controller
         return parent::beforeAction($action);
     }
 
+    /**
+     * @return array
+     */
     public function actionReceiveEvent()
     {
         $this->requirePostRequest();
         $this->requireSignature();
 
+        $callbacks = Plugin::getInstance()->getCallbacks();
         $request = Craft::$app->getRequest();
 
         $encrypt = $request->getRequiredBodyParam('encrypt');
-        $encodingAesKey = Plugin::$plugin->getSettings()->callbackEncodingAesKey;
+        $encodingAesKey = Plugin::getInstance()->getSettings()->callbackEncodingAesKey;
 
         $data = $this->_decrypt($encodingAesKey, $encrypt);
 
@@ -62,11 +79,24 @@ class CallbacksController extends Controller
             ];
         }
 
+        $name = ArrayHelper::remove($data, 'EventType');
+        $corpId = ArrayHelper::remove($data, 'CorpId');
+        $timestamp = ArrayHelper::remove($data, 'TimeStamp');
+
+        $corporation = Plugin::getInstance()->getCorporations()->getCorporationByCorpId($corpId);
+
+        $callbacks->post(new Callback([
+            'corporation' => $corporation,
+            'name' => $name,
+            'data' => $data,
+            'postDate' => new DateTime($timestamp/1000, new DateTimeZone('Asia/Shanghai')),
+        ]));
+
         return [];
     }
 
     /**
-     *
+     * Require signature.
      */
     protected function requireSignature()
     {
@@ -77,31 +107,39 @@ class CallbacksController extends Controller
         $nonce = $request->getRequiredQueryParam('nonce');
         $timestamp = $request->getRequiredQueryParam('timestamp');
 
-        $token = Plugin::$plugin->getSettings()->callbackToken;
+        $token = Plugin::getInstance()->getSettings()->callbackToken;
 
         $validateData = [$encrypt, $token, $timestamp, $nonce];
         sort($validateData);
-
 
         if ($signature !== sha1(implode('', $validateData))) {
             throw new BadRequestHttpException();
         }
     }
 
+    /**
+     * @param array $data
+     * @return string
+     */
     private function _signature(array $data)
     {
-        $data[] = Plugin::$plugin->getSettings()->callbackToken;
+        $data[] = Plugin::getInstance()->getSettings()->callbackToken;
         sort($data);
 
         return sha1(implode('', $data));
     }
 
+    /**
+     * @param string $encodingAesKey
+     * @param string $content
+     * @return string
+     */
     private function _encrypt(string $encodingAesKey, string $content)
     {
         $aesKey = base64_decode($encodingAesKey . '=');
         $iv = substr($aesKey, 0, 16);
 
-        $msg = StringHelper::randomString(16) . pack('N', strlen($content)) . $content . Plugin::$plugin->getSettings()->getCorpId();
+        $msg = StringHelper::randomString(16) . pack('N', strlen($content)) . $content . Plugin::getInstance()->getSettings()->getCorpId();
 
         $encrypt = openssl_encrypt($msg, 'AES-256-CBC', $aesKey, OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING, $iv);
 
@@ -119,7 +157,11 @@ class CallbacksController extends Controller
         return base64_encode($encrypt . $padString);
     }
 
-
+    /**
+     * @param string $encodingAesKey
+     * @param string $encrypt
+     * @return mixed|null
+     */
     private function _decrypt(string $encodingAesKey, string $encrypt)
     {
         $aesKey = base64_decode($encodingAesKey . '=');

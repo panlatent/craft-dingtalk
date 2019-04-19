@@ -24,6 +24,14 @@ use panlatent\craft\dingtalk\Plugin;
  */
 class UserQuery extends ElementQuery
 {
+    // Traits
+    // =========================================================================
+
+    use CorporationQuery;
+
+    // Properties
+    // =========================================================================
+
     /**
      * @var string[]|string|null
      */
@@ -83,6 +91,9 @@ class UserQuery extends ElementQuery
      * @var bool|null
      */
     public $isLeaved;
+
+    // Public Methods
+    // =========================================================================
 
     /**
      * @param string[]|string|null $value
@@ -221,6 +232,7 @@ class UserQuery extends ElementQuery
         $this->joinElementTable('dingtalk_users');
 
         $this->query->select([
+            'dingtalk_users.corporationId',
             'dingtalk_users.userId',
             'dingtalk_users.name',
             'dingtalk_users.position',
@@ -246,7 +258,7 @@ class UserQuery extends ElementQuery
         }
 
         if ($this->departmentId) {
-            $allDepartments = Plugin::$plugin->departments->getAllDepartments();
+            $allDepartments = Plugin::getInstance()->departments->getAllDepartments();
 
             $departmentIds = (array)$this->departmentId;
             foreach ($departmentIds as $departmentId) {
@@ -279,13 +291,19 @@ class UserQuery extends ElementQuery
         }
 
         $this->_prepareStatusConditions();
+        $this->_applyCorporationParam('dingtalk_users.corporationId');
 
         return parent::beforePrepare();
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function statusCondition(string $status)
     {
         switch ($status) {
+            case User::STATUS_IN_SERVICE:
+                return ['dingtalk_users.isLeaved' => false];
             case User::STATUS_LEAVED:
                 return ['dingtalk_users.isLeaved' => true];
             default:

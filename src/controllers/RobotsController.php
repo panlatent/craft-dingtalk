@@ -17,22 +17,24 @@ use panlatent\craft\dingtalk\robots\ChatNoticeRobot;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
+/**
+ * Class RobotsController
+ *
+ * @package panlatent\craft\dingtalk\controllers
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class RobotsController extends Controller
 {
-    public function actionIndex(): Response
-    {
-        $allRobots = Plugin::$plugin->robots->getAllRobots();
-
-        return $this->renderTemplate('dingtalk/robots/_index', [
-            'robots' => $allRobots,
-        ]);
-    }
-
+    /**
+     * @param int|null $robotId
+     * @param RobotInterface|null $robot
+     * @return Response
+     */
     public function actionEditRobot(int $robotId = null, RobotInterface $robot = null): Response
     {
         $this->requirePermission('manageDingTalkRobots');
 
-        $robots = Plugin::$plugin->robots;
+        $robots = Plugin::getInstance()->robots;
 
         /** @var Robot $robot */
         if ($robot === null) {
@@ -86,7 +88,7 @@ class RobotsController extends Controller
         $this->requirePermission('manageDingTalkRobots');
 
         $request = Craft::$app->getRequest();
-        $robots = Plugin::$plugin->robots;
+        $robots = Plugin::getInstance()->robots;
 
         $type = $request->getBodyParam('type');
 
@@ -122,7 +124,7 @@ class RobotsController extends Controller
         $this->requireAcceptsJson();
         $this->requirePermission('manageDingTalkRobots');
 
-        $robots = Plugin::$plugin->robots;
+        $robots = Plugin::getInstance()->robots;
         $robotId = Craft::$app->request->getBodyParam('id');
         if (!($robot = $robots->getRobotById($robotId))) {
             return $this->asJson(['success' => false]);

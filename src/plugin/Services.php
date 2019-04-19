@@ -11,6 +11,7 @@ namespace panlatent\craft\dingtalk\plugin;
 use panlatent\craft\dingtalk\services\Api;
 use panlatent\craft\dingtalk\services\Approvals;
 use panlatent\craft\dingtalk\services\Callbacks;
+use panlatent\craft\dingtalk\services\Contacts;
 use panlatent\craft\dingtalk\services\Corporations;
 use panlatent\craft\dingtalk\services\Departments;
 use panlatent\craft\dingtalk\services\Messages;
@@ -27,6 +28,7 @@ use panlatent\craft\dingtalk\services\Users;
  * @property-read Approvals $approvals
  * @property-read Callbacks $callbacks
  * @property-read Corporations $corporations
+ * @property-read Contacts $contacts
  * @property-read Departments $departments
  * @property-read Messages $messages
  * @property-read Processes $processes
@@ -66,6 +68,14 @@ trait Services
     public function getCorporations()
     {
         return $this->get('corporations');
+    }
+
+    /**
+     * @return Contacts
+     */
+    public function getContacts()
+    {
+        return $this->get('contacts');
     }
 
     /**
@@ -126,6 +136,7 @@ trait Services
             'approvals' => Approvals::class,
             'callbacks' => Callbacks::class,
             'corporations' => Corporations::class,
+            'contacts' => Contacts::class,
             'departments' => Departments::class,
             'messages' => Messages::class,
             'processes' => Processes::class,

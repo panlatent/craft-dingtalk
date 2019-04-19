@@ -5,7 +5,7 @@
 {% set corporations = craft.dingtalk.corporations.getAllCorporations() %}
 
 {% block actionButton %}
-    <a href="{{ url('dingtalk/corporations/new') }}" class="btn submit">{{ 'New'|t('app') }}</a>
+    <a href="{{ url('dingtalk/settings/corporations/new') }}" class="btn submit">{{ 'New'|t('app') }}</a>
 {% endblock %}
 
 {% block content %}
@@ -16,27 +16,55 @@
 
         <table id="corporations" class="data fullwidth collapsible">
             <thead>
-            <th scope="col">{{ "Name"|t('app') }}</th>
-            <th scope="col">{{ "Handle"|t('app') }}</th>
-            <th scope="col">{{ "Corp ID"|t('app') }}</th>
-            <th scope="col">{{ "Primary"|t('app') }}</th>
-            <th scope="col">{{ "URL"|t('app') }}</th>
-            {% if sortable %}<td class="thin"></td>{% endif %}
-            <td class="thin"></td>
+                <th scope="col">{{ "Name"|t('app') }}</th>
+                <th scope="col">{{ "Handle"|t('app') }}</th>
+                <th scope="col">{{ "Corp ID"|t('dingtalk') }}</th>
+                <th scope="col">{{ "Primary"|t('app') }}</th>
+                <th scope="col">{{ "Callback"|t('dingtalk') }}</th>
+                <th scope="col" data-attribute="link" data-icon="world" title="{{ "Link"|t('dingtalk') }}"></th>
+                {% if sortable %}<td class="thin"></td>{% endif %}
+                <td class="thin"></td>
             </thead>
             <tbody>
-            {% for corporation in corporations %}
-                <tr data-id="{{ corporation.id }}" data-name="{{ corporation.name|t('site') }}">
-                    <th scope="row" data-title="{{ 'Name'|t('app') }}"><a href="{{ url('dingtalk/corporations/' ~ corporation.id) }}">{{ corporation.name }}</a></th>
-                    <td scope="row" data-title="{{ 'Handle'|t('app') }}" class="code">{{ corporation.handle }}</td>
-                    <td scope="code" data-title="{{ 'Corp ID'|t('app') }}">{{ corporation.getCorpId() }}</td>
-                    <td data-title="{{ 'Primary'|t('app') }}">{% if corporation.primary %}<div data-icon="check"></div>{% endif %}</td>
-                    <td data-title="{{ 'URL'|t('app') }}">{% if corporation.hasUrls %}{{ corporation.url }}{% endif %}</td>
-                    {% if sortable %}<td class="thin"><a class="move icon" title="{{ 'Reorder'|t('app') }}" role="button"></a></td>{% endif %}
-                    <td class="thin"><a class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
-                </tr>
-            {% endfor %}
+                {% for corporation in corporations %}
+                    <tr data-id="{{ corporation.id }}" data-name="{{ corporation.name|t('site') }}">
+                        <th scope="row" data-title="{{ 'Name'|t('app') }}"><a href="{{ url('dingtalk/settings/corporations/' ~ corporation.id) }}">{{ corporation.name }}</a></th>
+                        <td data-title="{{ 'Handle'|t('app') }}" class="code">{{ corporation.handle }}</td>
+                        <td data-title="{{ 'Corp ID'|t('dingtalk') }}">{{ corporation.getCorpId() }}</td>
+                        <td data-title="{{ 'Primary'|t('app') }}">{% if corporation.primary %}<div data-icon="check"></div>{% endif %}</td>
+                        <td data-title="{{ 'Callback'|t('dingtalk') }}">
+                            <a href=""></a>
+                            {% if corporation.isRegisteredCallback %}
+                                <div data-icon="check"></div>
+                            {% else %}
+                                <form accept-charset="UTF-8" method="post">
+                                    <input type="hidden" name="action" value="dingtalk/corporations/register-callback">
+                                    <input type="hidden" name="corporationId" value="{{ corporation.id }}">
+                                    <button class="btn submit small">{{ "Register"|t('dingtalk') }}</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                        <td data-title="{{ 'URL'|t('app') }}">{% if corporation.hasUrls %}<a href="{{ corporation.url }}"><i data-icon="world"></i></a>{% endif %}</td>
+                        {% if sortable %}<td class="thin"><a class="move icon" title="{{ 'Reorder'|t('app') }}" role="button"></a></td>{% endif %}
+                        <td class="thin"><a class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
     {% endif %}
 {% endblock %}
+
+{% js %}
+    var adminTable = new Craft.AdminTable({
+        tableSelector: '#corporations',
+        noItemsSelector: '#nocorporations',
+        sortable: true,
+        reorderAction: 'dingtalk/corporations/reorder-corporations',
+        deleteAction: 'dingtalk/corporations/delete-corporation',
+        onDeleteItem: function() {
+            if (adminTable.totalItems == 0) {
+                $('#nav-assets').remove();
+            }
+        }
+    });
+{% endjs %}

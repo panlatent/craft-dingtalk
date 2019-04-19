@@ -1,6 +1,7 @@
 {% extends "dingtalk/_layouts/settings" %}
 
 {% set selectedItem = 'general' %}
+{% set settings = craft.dingtalk.settings %}
 
 {% import "_includes/forms" as forms %}
 
@@ -9,7 +10,17 @@
 
     <form method="post" accept-charset="UTF-8">
         <input type="hidden" name="action" value="dingtalk/settings/save-settings">
+        {{ csrfInput() }}
+
+        {{ forms.autosuggestField({
+            label: "Event Callback URL Rule"|t('dingtalk'),
+            id: 'callbackUrl',
+            name: 'settings[callbackUrlRule]',
+            value: settings.callbackUrlRule,
+            suggestEnvVars: true,
+        }) }}
 
         <button class="btn submit">{{ 'Save'|t('app') }}</button>
     </form>
+
 {% endblock %}

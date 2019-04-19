@@ -4,6 +4,12 @@
 
 {% import "_includes/forms" as forms %}
 
+{% block contextMenu %}
+    {% include "dingtalk/_includes/corporationmenu" with {
+        corporations: craft.dingtalk.corporations.getAllCorporations()
+    } %}
+{% endblock %}
+
 {% block content %}
     {% if callback is null %}
         <h4>{{ '本企业还没有注册业务事件回调！' }}</h4>
@@ -13,26 +19,6 @@
         <input type="hidden" name="action" value="dingtalk/settings/save-settings">
         {{ csrfInput() }}
 
-        {{ forms.autosuggestField({
-            label: 'Callback URL Rule',
-            name: 'settings[callbackUrlRule]',
-            value: craft.dingtalk.settings.callbackUrlRule,
-            suggestEnvVars: true,
-        }) }}
-
-        {{ forms.autosuggestField({
-            label: 'Token',
-            suggestEnvVars: true,
-        }) }}
-
-        {{ forms.autosuggestField({
-            label: 'AES Key',
-            suggestEnvVars: true,
-        }) }}
-
-        {{ forms.checkboxGroupField({
-            label: 'Events',
-        }) }}
 
         <button class="btn submit">{{ 'Save'|t('app') }}</button>
     </form>

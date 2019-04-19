@@ -9,10 +9,14 @@
 namespace panlatent\craft\dingtalk\services;
 
 use Craft;
+use craft\helpers\ArrayHelper;
+use craft\helpers\StringHelper;
 use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\errors\CorporationException;
 use panlatent\craft\dingtalk\events\CorporationEvent;
 use panlatent\craft\dingtalk\models\Corporation;
+use panlatent\craft\dingtalk\records\Corporation as CorporationRecord;
+use Throwable;
 use yii\base\Component;
 use yii\db\Query;
 
@@ -53,17 +57,22 @@ class Corporations extends Component
     /**
      * @var bool
      */
-    public $_fetchedAllCorporations = false;
+    private $_fetchedAllCorporations = false;
 
     /**
      * @var Corporation[]|null
      */
-    public $_corporationsById;
+    private $_corporationsById;
 
     /**
      * @var Corporation[]|null
      */
-    public $_corporationsByHandle;
+    private $_corporationsByHandle;
+
+    /**
+     * @var Corporation|null
+     */
+    private $_primaryCorporation;
 
     // Public Methods
     // =========================================================================
@@ -117,7 +126,7 @@ class Corporations extends Component
      * @param string $handle
      * @return Corporation|null
      */
-    public function getCorporationsByHandleByHandle(string $handle)
+    public function getCorporationByHandle(string $handle)
     {
         if ($this->_corporationsByHandle && array_key_exists($handle, $this->_corporationsByHandle)) {
             return $this->_corporationsByHandle[$handle];
@@ -135,6 +144,44 @@ class Corporations extends Component
     }
 
     /**
+     * @param string $corpId
+     * @return Corporation|null
+     */
+    public function getCorporationByCorpId(string $corpId)
+    {
+        if ($this->_fetchedAllCorporations) {
+            return ArrayHelper::firstWhere($this->_corporationsById, 'corpId', $corpId);
+        }
+
+        $result = $this->_createQuery()
+            ->where(['corpId' => $corpId])
+            ->one();
+
+        return $result ? $this->createCorporation($result) : null;
+    }
+
+    /**
+     * @return Corporation|null
+     */
+    public function getPrimaryCorporation()
+    {
+        if ($this->_primaryCorporation !== null) {
+            return $this->_primaryCorporation;
+        }
+
+        $corporationId = $this->_createQuery()
+            ->select('id')
+            ->where(['primary' => true])
+            ->scalar();
+
+        if (!$corporationId) {
+            return null;
+        }
+
+        return $this->_primaryCorporation = $this->getCorporationById($corporationId);
+    }
+
+    /**
      * @param mixed $config
      * @return Corporation
      */
@@ -147,6 +194,11 @@ class Corporations extends Component
         return new Corporation($config);
     }
 
+    /**
+     * @param Corporation $corporation
+     * @param bool $runValidation
+     * @return bool
+     */
     public function saveCorporation(Corporation $corporation, bool $runValidation = true): bool
     {
         $isNewCorporation = $corporation->getIsNew();
@@ -163,23 +215,38 @@ class Corporations extends Component
             return false;
         }
 
+        $oldPrimaryCorporationId = $this->getPrimaryCorporation()->id ?? false;
+
         $transaction = Craft::$app->getDb()->beginTransaction();
         try {
             if (!$isNewCorporation) {
-                $record = \panlatent\craft\dingtalk\records\Corporation::findOne(['id' => $corporation->id]);
+                $record = CorporationRecord::findOne(['id' => $corporation->id]);
                 if (!$corporation) {
                     throw new CorporationException("No corporation exists with the ID: “{$corporation->id}“.");
                 }
             } else {
-                $record = new \panlatent\craft\dingtalk\records\Corporation();
+                $record = new CorporationRecord();
             }
 
+            if ($isNewCorporation) {
+                if (empty($corporation->callbackToken)) {
+                    $corporation->callbackToken = StringHelper::randomString(16, true);
+                }
+                if (empty($corporation->callbackAesKey)) {
+                    $corporation->callbackAesKey = StringHelper::randomString(43);
+                }
+            }
+
+            $record->primary = (bool)$corporation->primary;
             $record->name = $corporation->name;
-            $record->handle = $corporation->name;
+            $record->handle = $corporation->handle;
             $record->corpId = $corporation->corpId;
             $record->corpSecret = $corporation->corpSecret;
-            $record->hasUrls = $corporation->hasUrls;
+            $record->hasUrls = (bool)$corporation->hasUrls;
             $record->url = $corporation->url;
+            $record->callbackEnabled = $corporation->callbackEnabled;
+            $record->callbackToken = $corporation->callbackToken;
+            $record->callbackAesKey = $corporation->callbackAesKey;
 
             $record->save(false);
 
@@ -187,8 +254,18 @@ class Corporations extends Component
                 $corporation->id = $record->id;
             }
 
+            if ($oldPrimaryCorporationId && $corporation->primary && $oldPrimaryCorporationId !== $corporation->id) {
+                Craft::$app->getDb()->createCommand()
+                    ->update('{{%dingtalk_corporations}}', [
+                        'primary' => false,
+                    ], [
+                        'id' => $oldPrimaryCorporationId,
+                    ])
+                    ->execute();
+            }
+
             $transaction->commit();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $transaction->rollBack();
 
             throw $exception;
@@ -221,6 +298,10 @@ class Corporations extends Component
             ]));
         }
 
+        if (!$corporation->beforeDelete()) {
+            return false;
+        }
+
         $db = Craft::$app->getDb();
 
         $transaction = $db->beginTransaction();
@@ -230,16 +311,47 @@ class Corporations extends Component
             ])->execute();
 
             $transaction->commit();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $transaction->rollBack();
 
             throw $exception;
         }
 
+        $corporation->afterDelete();
+
         if ($this->hasEventHandlers(self::EVENT_AFTER_DELETE_CORPORATION)) {
             $this->trigger(self::EVENT_AFTER_DELETE_CORPORATION, new CorporationEvent([
                 'corporation' => $corporation,
             ]));
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array $corporationIds
+     * @return bool
+     */
+    public function reorderCorporations(array $corporationIds)
+    {
+        $db = Craft::$app->getDb();
+        $transaction = $db->beginTransaction();
+        try {
+            foreach ($corporationIds as $order => $id) {
+                $db->createCommand()
+                    ->update(Table::CORPORATIONS, [
+                        'sortOrder' => $order + 1
+                    ], [
+                        'id' => $id,
+                    ])
+                    ->execute();
+            }
+
+            $transaction->commit();
+        } catch (Throwable $e) {
+            $transaction->rollBack();
+
+            throw $e;
         }
 
         return true;
@@ -254,7 +366,7 @@ class Corporations extends Component
     private function _createQuery(): Query
     {
         return (new Query())
-            ->select(['id', 'primary', 'name', 'handle', 'corpId', 'corpSecret', 'hasUrls', 'url'])
+            ->select(['id', 'primary', 'name', 'handle', 'corpId', 'corpSecret', 'hasUrls', 'url', 'callbackEnabled', 'callbackToken', 'callbackAesKey'])
             ->from(Table::CORPORATIONS)
             ->orderBy(['sortOrder' => SORT_ASC, 'dateCreated' => SORT_ASC]);
     }

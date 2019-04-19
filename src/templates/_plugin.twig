@@ -17,20 +17,3 @@
     value: settings.corpSecret,
     suggestEnvVars: true,
 }) }}
-
-
-<a class="btn icon settings"
-   href="{{ url('settings/plugins/dingtalk/users') }}">{{ 'Users Settings'|t('dingtalk') }}</a>
-<a class="btn icon settings" href="{{ url('dingtalk/robots') }}">{{ 'Robots Settings'|t('dingtalk') }}</a>
-<a class="btn icon settings" href="{{ url('dingtalk/processes') }}">{{ 'Processes Settings'|t('dingtalk') }}</a>
-
-{% js %}
-    $corpSecretInput = $('#settings-corpSecret');
-    new Craft.PasswordInput($corpSecretInput, {
-        onToggleInput: $.proxy(function($newPasswordInput) {
-            this.removeListener($corpSecretInput, 'textchange');
-            $corpSecretInput = $newPasswordInput;
-            this.addListener($corpSecretInput, 'textchange', 'validate');
-        }, this)
-    });
-{% endjs %}

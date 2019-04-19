@@ -1,3 +1,7 @@
+{% if currentUser.admin %}
+    {% redirect 'dingtalk/dashboard' %}
+{% endif %}
+
 {% if currentUser.can('dingtalk-manageCorporations') %}
     {% redirect 'dingtalk/corporations' %}
 {% endif %}

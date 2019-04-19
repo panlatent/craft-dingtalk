@@ -1,1 +1,114 @@
 {% extends "_layouts/cp" %}
+
+{% set isNew = corporationId is defined ? corporationId is not empty : false %}
+{% set corporation = corporation is defined ? corporation : (isNew ? craft.dingtalk.corporations.getCorporationById(corporationId) : craft.dingtalk.corporations.createCorporation([])) %}
+{% set title = isNew ? corporation.name : 'New Corporation'|t('dingtalk') %}
+{% set selectedSubnavItem = "settings" %}
+{% set fullPageForm = true %}
+{% set crumbs = [
+    {label: "DingTalk Settings"|t('dingtalk'), url: url('dingtalk/settings')},
+    {label: "Corporations"|t('dingtalk'), url: url('dingtalk/settings/corporations')},
+] %}
+{% set tabs = [
+    {label: "Settings"|t('app'), url: '#settings'},
+    {label: "Callback"|t('dingtalk'), url: '#callback'}
+] %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <input type="hidden" name="action" value="dingtalk/corporations/save-corporation">
+    <input type="hidden" name="corporationId" value="{{ corporation.id }}">
+    {{ redirectInput('dingtalk/settings/corporations') }}
+
+    <div id="settings">
+        {{ forms.textField({
+            label: "Corporation Name"|t('dingtalk'),
+            required: true,
+            id: 'name',
+            name: 'name',
+            value: corporation.name,
+            errors: corporation.getErrors('name'),
+        }) }}
+
+        {{ forms.textField({
+            label: "Handle"|t('app'),
+            required: true,
+            id: 'handle',
+            name: 'handle',
+            value: corporation.handle,
+            errors: corporation.getErrors('handle'),
+        }) }}
+
+        {{ forms.autosuggestField({
+            label: "Corp Id"|t('dingtalk'),
+            required: true,
+            id: 'corpId',
+            name: 'corpId',
+            value: corporation.corpId,
+            errors: corporation.getErrors('corpId'),
+            suggestEnvVars: true,
+        }) }}
+
+        {{ forms.autosuggestField({
+            label: "Corp Secret"|t('dingtalk'),
+            required: true,
+            id: 'corpSecret',
+            name: 'corpSecret',
+            value: corporation.corpSecret,
+            errors: corporation.getErrors('corpSecret'),
+            suggestEnvVars: true,
+        }) }}
+
+        <hr>
+
+        {{ forms.lightSwitchField({
+            label: "Has Urls?"|t('dingtalk'),
+            id: 'hasUrls',
+            name: 'hasUrls',
+            on: corporation.hasUrls,
+            errors: corporation.getErrors('hasUrls'),
+            toggle: 'url'
+        }) }}
+
+        <div id="url"{% if not corporation.hasUrls %} class="hidden"{% endif %}>
+            {{ forms.autosuggestField({
+                label: "URL"|t('dingtalk'),
+                id: 'url',
+                name: 'url',
+                value: corporation.url,
+                suggestEnvVars: true,
+            }) }}
+        </div>
+
+    </div>
+
+    <div id="callback" class="hidden">
+        {{ forms.lightSwitchField({
+            label: "Enable Callback"|t('dingtalk'),
+            id: 'callbackEnabled',
+            name: 'callbackEnabled',
+            value: corporation.callbackEnabled,
+        }) }}
+
+        {{ forms.autosuggestField({
+            label: 'Token'|t('dingtalk'),
+            id: 'token',
+            name: 'token',
+            value: corporation.callbackToken,
+            suggestEnvVars: true,
+        }) }}
+
+        {{ forms.autosuggestField({
+            label: 'AES Key'|t('dingtalk'),
+            id: 'aesKey',
+            name: 'aesKey',
+            value: corporation.callbackAesKey,
+            suggestEnvVars: true,
+        }) }}
+
+        {{ forms.checkboxGroupField({
+            label: 'Events',
+        }) }}
+    </div>
+{% endblock %}

@@ -35,9 +35,15 @@ use yii\helpers\ArrayHelper;
  */
 class User extends Element
 {
+    // Traits
+    // =========================================================================
+
+    use CorporationTrait;
+
     // Constants
     // =========================================================================
 
+    const STATUS_IN_SERVICE = 'in-service';
     const STATUS_LEAVED = 'leaved';
 
     // Static Methods
@@ -89,7 +95,7 @@ class User extends Element
     public static function statuses(): array
     {
         return [
-            static::STATUS_ENABLED => Craft::t('app', 'Enabled'),
+            static::STATUS_IN_SERVICE => ['label' => Craft::t('dingtalk', 'In-service'), 'color' => 'green'],
             static::STATUS_LEAVED => Craft::t('dingtalk', 'Leaved'),
             static::STATUS_DISABLED => ['label' => Craft::t('app', 'Disabled'), 'color' => 'red'],
         ];
@@ -109,20 +115,20 @@ class User extends Element
             ],
 
         ];
-        $allDepartments = Plugin::$plugin->getDepartments()->getAllDepartments();
 
-        $sources[] = ['heading' => Craft::t('dingtalk', 'Serving staffs')];
-        $sources = array_merge($sources, DepartmentHelper::sourceTree($allDepartments, 1));
+        $sources[] = ['heading' => Craft::t('dingtalk', 'Corporations')];
 
-        $sources[] = ['heading' => Craft::t('dingtalk', 'Leaved staffs')];
-        $sources[] = [
-            'key' => 'isLeaved:*',
-            'label' => Craft::t('dingtalk', 'Leaved users'),
-            'criteria' => [
-                'isLeaved' => true,
-            ],
-            'hasThumbs' => true,
-        ];
+        foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
+            $sources[] = [
+                'key' => 'corporation:*',
+                'label' => $corporation->name,
+                'hasThumbs' => true,
+                'criteria' => [
+                    'corporationId' => $corporation->id,
+                ],
+                'nested' => DepartmentHelper::sourceTree($corporation->getDepartments(), $corporation->id),
+            ];
+        }
 
         return $sources;
     }
@@ -357,7 +363,7 @@ class User extends Element
             return static::STATUS_DISABLED;
         }
 
-        return $this->isLeaved ? static::STATUS_LEAVED : static::STATUS_ENABLED;
+        return $this->isLeaved ? static::STATUS_LEAVED : static::STATUS_IN_SERVICE;
     }
 
     /**
@@ -382,7 +388,7 @@ class User extends Element
             return null;
         }
 
-        return $this->_primaryDepartment = Plugin::$plugin->getDepartments()->getDepartmentById($departmentId);
+        return $this->_primaryDepartment = Plugin::getInstance()->getDepartments()->getDepartmentById($departmentId);
     }
 
     /**
@@ -391,7 +397,7 @@ class User extends Element
     public function setPrimaryDepartment($department = null)
     {
         if (is_int($department) || ctype_digit($department)) {
-            $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
+            $department = Plugin::getInstance()->getDepartments()->getDepartmentById($department);
         }
 
         if (!$department instanceof Department && $department !== null) {
@@ -435,7 +441,7 @@ class User extends Element
 
         foreach ($departments as $department) {
             if (is_int($department) || ctype_digit($department)) {
-                $department = Plugin::$plugin->getDepartments()->getDepartmentById($department);
+                $department = Plugin::getInstance()->getDepartments()->getDepartmentById($department);
             }
 
             if (!$department instanceof Department) {

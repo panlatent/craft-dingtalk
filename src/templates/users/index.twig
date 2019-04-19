@@ -3,3 +3,7 @@
 {% set title = "Users"|t('app') %}
 {% set elementType = 'panlatent\\craft\\dingtalk\\elements\\User' %}
 {% set selectedSubnavItem = 'users' %}
+
+{% block actionButton %}
+    <button class="btn submit add icon">{{ "Add contact"|t('dingtalk') }}</button>
+{% endblock %}

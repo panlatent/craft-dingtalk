@@ -16,6 +16,7 @@ use craft\db\ActiveRecord;
  * @package panlatent\craft\dingtalk\records
  * @internal
  * @property int $id
+ * @property int $corporationId
  * @property int $processId
  * @property string $businessId
  * @property string $instanceId

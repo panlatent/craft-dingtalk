@@ -1,0 +1,9 @@
+{% extends "_layouts/elementindex" %}
+
+{% set elementType = "panlatent\\craft\\dingtalk\\elements\\Contact" %}
+{% set title = "Contacts"|t('dingtalk') %}
+{% set selectedSubnavItem = "contacts" %}
+
+{% block actionButton %}
+    <a href="" class="btn submit icon add">{{ 'New contact'|t('dingtalk') }}</a>
+{% endblock %}

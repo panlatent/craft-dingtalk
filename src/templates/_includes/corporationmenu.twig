@@ -1,0 +1,41 @@
+{% if corporations is not defined %}
+    {% set corporations = craft.dingtalk.corporations.getAllCorporations() %}
+{% endif %}
+
+{% if corporations|length %}
+    {% set selectedCorporation = selectedCorporation is defined ? selectedCorporation : null %}
+    {% set selectedCorporation = selectedCorporation ?? corporations|first %}
+    {% set suffix = craft.app.request.segment(3) %}
+    <div>
+        <div class="btn menubtn" data-icon="world">{{ selectedCorporation.name }}</div>
+        <div id="corporationmenu" class="menu">
+            <h6>{{ selectedCorporation.name }}</h6>
+            <ul class="padded">
+                {% for corporation in corporations %}
+                    {% set url = urlFormat is defined ? url(urlFormat|replace({
+                        '{id}': corporation.id,
+                        '{handle}': corporation.handle
+                    })) %}
+                    <li><a{% if selectedCorporation.id == corporation.id %} class="sel"{% endif %}{% if url %} href="{{ url }}"{% endif %}>{{ corporation.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    {% js at beginBody %}
+        Craft.defaultIndexCriteria.corporationId = {{ selectedCorporation.id }};
+    {% endjs %}
+
+{#    {% js %}#}
+{#        $('#corporationmenu a').on('click', function() {#}
+{#        Craft.defaultIndexCriteria.corporationId = 2;#}
+
+{#        Craft.elementIndex = Craft.createElementIndex('{{ elementType|e("js") }}', $('#main'), {#}
+{#                context:        '{{ context }}',#}
+{#                storageKey:     'elementindex.{{ elementType|e("js") }}',#}
+{#                criteria:       Craft.defaultIndexCriteria#}
+{#            });#}
+{#        });#}
+{#    {% endjs %}#}
+{% endif %}
+

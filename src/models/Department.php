@@ -75,7 +75,7 @@ class Department extends Model
             return null;
         }
 
-        return $this->_parent = Plugin::$plugin->departments->getDepartmentById($this->parentId);
+        return $this->_parent = Plugin::getInstance()->departments->getDepartmentById($this->parentId);
     }
 
     /**

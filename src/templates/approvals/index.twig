@@ -4,6 +4,15 @@
 {% set title = "Approvals"|t('dingtalk') %}
 {% set selectedSubnavItem = 'approvals' %}
 
+{% block contextMenu %}
+    {% set urlFormat = url("dingtalk/approvals/{handle}") %}
+    {% set selectedCorporation = corporationHandle is defined ? craft.dingtalk.corporations.getCorporationByHandle(corporationHandle) %}
+    {% include "dingtalk/_includes/corporationmenu" with {
+        selectedCorporation: selectedCorporation,
+        urlFormat: urlFormat,
+    } %}
+{% endblock %}
+
 {% block sidebar %}
     {{ parent() }}
 

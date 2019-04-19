@@ -36,8 +36,8 @@ class Api extends Component
 
         if ($this->client === null) {
             $this->client = new Client([
-                'corp_id' => Plugin::$plugin->settings->getCorpId(),
-                'corp_secret' => Plugin::$plugin->settings->getCorpSecret(),
+                'corp_id' => Plugin::getInstance()->settings->getCorpId(),
+                'corp_secret' => Plugin::getInstance()->settings->getCorpSecret(),
             ]);
         }
     }

@@ -17,10 +17,10 @@ namespace panlatent\craft\dingtalk\db;
 abstract class Table
 {
     const APPROVALS = '{{%dingtalk_approvals}}';
-    const CORPORATIONS = '{{%dingtalk_corporation}}';
+    const CORPORATIONS = '{{%dingtalk_corporations}}';
     const DEPARTMENTS = '{{%dingtalk_departments}}';
     const PROCESSES = '{{%dingtalk_processes}}';
-    const Robots = '{{%dingtalk_robots}}';
+    const ROBOTS = '{{%dingtalk_robots}}';
     const USERS = '{{%dingtalk_users}}';
     const USERDEPARTMENTS = '{{%dingtalk_userdepartments}}';
 }

@@ -11,6 +11,7 @@ namespace panlatent\craft\dingtalk;
 use Craft;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\helpers\UrlHelper;
 use craft\services\Dashboard;
 use craft\services\Elements;
 use craft\services\UserPermissions;
@@ -23,7 +24,7 @@ use panlatent\craft\dingtalk\plugin\Routes;
 use panlatent\craft\dingtalk\plugin\Services;
 use panlatent\craft\dingtalk\user\Permissions;
 use panlatent\craft\dingtalk\utilities\RobotMessages;
-use panlatent\craft\dingtalk\utilities\SyncContacts;
+use panlatent\craft\dingtalk\utilities\Sync;
 use panlatent\craft\dingtalk\web\twig\CraftVariableBehavior;
 use panlatent\craft\dingtalk\widgets\DingTalk as DingTalkWidget;
 use yii\base\Event;
@@ -45,11 +46,6 @@ class Plugin extends \craft\base\Plugin
 
     // Properties
     // =========================================================================
-
-    /**
-     * @var Plugin
-     */
-    public static $plugin;
 
     /**
      * @var string
@@ -80,7 +76,6 @@ class Plugin extends \craft\base\Plugin
     public function init()
     {
         parent::init();
-        self::$plugin = $this;
 
         Craft::setAlias('@dingtalk', $this->getBasePath());
         $this->name = Craft::t('dingtalk', 'DingTalk');
@@ -102,6 +97,25 @@ class Plugin extends \craft\base\Plugin
     {
         $ret = parent::getCpNavItem();
 
+        $ret['subnav']['dashboard'] = [
+            'label' => Craft::t('dingtalk', 'Dashboard'),
+            'url' => 'dingtalk/dashboard'
+        ];
+
+        if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_USERS)) {
+            $ret['subnav']['users'] = [
+                'label' => Craft::t('dingtalk', 'Users'),
+                'url' => 'dingtalk/users'
+            ];
+        }
+
+        if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_CONTACTS)) {
+            $ret['subnav']['contacts'] = [
+                'label' => Craft::t('dingtalk', 'Contacts'),
+                'url' => 'dingtalk/contacts'
+            ];
+        }
+
         if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_APPROVALS)) {
             $ret['subnav']['approvals'] = [
                 'label' => Craft::t('dingtalk', 'Approvals'),
@@ -116,13 +130,6 @@ class Plugin extends \craft\base\Plugin
             ];
         }
 
-        if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_USERS)) {
-            $ret['subnav']['users'] = [
-                'label' => Craft::t('dingtalk', 'Users'),
-                'url' => 'dingtalk/users'
-            ];
-        }
-
         if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_SETTINGS)) {
             $ret['subnav']['settings'] = [
                 'label' => Craft::t('dingtalk', 'Settings'),
@@ -131,6 +138,14 @@ class Plugin extends \craft\base\Plugin
         }
 
         return $ret;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getSettingsResponse()
+    {
+        return Craft::$app->getResponse()->redirect(UrlHelper::cpUrl('dingtalk/settings/general'));
     }
 
     // Protected Methods
@@ -142,16 +157,6 @@ class Plugin extends \craft\base\Plugin
     protected function createSettingsModel(): Settings
     {
         return new Settings();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function settingsHtml(): string
-    {
-        return Craft::$app->view->renderTemplate('dingtalk/_plugin', [
-            'settings' => $this->getSettings(),
-        ]);
     }
 
     // Private Methods
@@ -184,7 +189,7 @@ class Plugin extends \craft\base\Plugin
     private function _registerUtilities()
     {
         Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITY_TYPES, function (RegisterComponentTypesEvent $event) {
-            $event->types[] = SyncContacts::class;
+            $event->types[] = Sync::class;
             $event->types[] = RobotMessages::class;
         });
     }

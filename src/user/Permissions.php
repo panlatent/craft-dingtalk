@@ -18,6 +18,7 @@ abstract class Permissions
 {
     const MANAGE_CORPORATIONS = 'dingtalk-manageCorporations';
     const MANAGE_APPROVALS = 'dingtalk-manageApprovals';
+    const MANAGE_CONTACTS = 'dingtalk-manageContacts';
     const MANAGE_ROBOTS = 'dingtalk-manageRobots';
     const MANAGE_USERS = 'dingtalk-manageUsers';
     const MANAGE_SETTINGS = 'dingtalk-manageSettings';

@@ -9,18 +9,27 @@
 namespace panlatent\craft\dingtalk\services;
 
 use Craft;
-use craft\helpers\ArrayHelper;
+use craft\helpers\Db;
 use craft\helpers\Json;
 use panlatent\craft\dingtalk\errors\DepartmentException;
-use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\models\Department;
-use panlatent\craft\dingtalk\Plugin;
+use panlatent\craft\dingtalk\models\DepartmentCriteria;
 use panlatent\craft\dingtalk\records\Department as DepartmentRecord;
+use Throwable;
 use yii\base\Component;
 use yii\db\Query;
 
+/**
+ * Class Departments
+ *
+ * @package panlatent\craft\dingtalk\services
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class Departments extends Component
 {
+    // Properties
+    // =========================================================================
+
     /**
      * @var bool
      */
@@ -36,7 +45,12 @@ class Departments extends Component
      */
     private $_departmentsByName;
 
+    // Public Methods
+    // =========================================================================
+
     /**
+     * 返回所有部门
+     *
      * @return Department[]
      */
     public function getAllDepartments(): array
@@ -59,6 +73,26 @@ class Departments extends Component
         $this->_fetchedAllDepartments = true;
 
         return array_values($this->_departmentsById);
+    }
+
+    /**
+     * @return Department[]
+     */
+    public function getActiveDepartments(): array
+    {
+        $departments = [];
+
+        $results = $this->_createQuery()
+            ->where(['archived' => false])
+            ->all();
+
+        foreach ($results as $result) {
+            $departments[] = $department = $this->createDepartment($result);
+            $this->_departmentsById[$department->id] = $department;
+            $this->_departmentsByName[$department->name] = $department;
+        }
+
+        return $departments;
     }
 
     /**
@@ -127,46 +161,58 @@ class Departments extends Component
     }
 
     /**
-     * @return bool
+     * @param mixed $criteria
+     * @return Department[]
      */
-    public function pullAllDepartments(): bool
+    public function findDepartments($criteria): array
     {
-        $this->getAllDepartments();
-        $allLocalDepartments = $this->_departmentsById;
-        $this->_fetchedAllDepartments = false;
+        if (!$criteria instanceof DepartmentCriteria) {
+            $criteria = new DepartmentCriteria($criteria);
+        }
+
+        $query = $this->_createQuery();
+        $this->_applyDepartmentConditions($query, $criteria);
+
+        if ($criteria->order) {
+            $query->orderBy($criteria->order);
+        }
+
+        if ($criteria->offset) {
+            $query->offset($criteria->offset);
+        }
+
+        if ($criteria->limit) {
+            $query->limit($criteria->limit);
+        }
+
+        $results = $query->all();
 
         $departments = [];
-
-        $results = Plugin::$plugin->getApi()->getAllDepartments();
-
         foreach ($results as $result) {
-            $id = ArrayHelper::remove($result, 'id');
-            $department = Plugin::$plugin->departments->createDepartment([
-                'id' => $id,
-                'name' => ArrayHelper::remove($result, 'name'),
-                'parentId' => ArrayHelper::remove($result, 'parentid'),
-                'sortOrder' => ArrayHelper::remove($result, 'order'),
-                'settings' => $result,
-            ]);
-            $departments[] = $department;
-
-            if (isset($allLocalDepartments[$id])) {
-                unset($allLocalDepartments[$id]);
-            }
+            $departments[] = $this->createDepartment($result);
         }
 
-        foreach ($allLocalDepartments as $department) {
-            $department->archived = true;
-            $departments[] = $department;
+        return $departments;
+    }
+
+    /**
+     * @param mixed $criteria
+     * @return Department|null
+     */
+    public function findDepartment($criteria)
+    {
+        if (!$criteria instanceof DepartmentCriteria) {
+            $criteria = new DepartmentCriteria($criteria);
         }
 
-        $departments = DepartmentHelper::parentSort($departments);
-        foreach ($departments as $sortOrder => $department) {
-            $department->sortOrder = $sortOrder;
-            $this->saveDepartment($department);
+        $criteria->limit = 1;
+
+        $results = $this->findDepartments($criteria);
+        if (is_array($results) && !empty($results)) {
+            return array_pop($results);
         }
 
-        return true;
+        return null;
     }
 
     /**
@@ -187,7 +233,7 @@ class Departments extends Component
      */
     public function saveDepartment(Department $department, bool $runValidation = true): bool
     {
-        $isNew = (empty($department->id) || !DepartmentRecord::find()->where(['id' => $department->id])->exists());
+        $isNewDepartment = (empty($department->id) || !DepartmentRecord::find()->where(['id' => $department->id])->exists());
 
         if ($runValidation && !$department->validate()) {
             return false;
@@ -195,7 +241,7 @@ class Departments extends Component
 
         $transaction = Craft::$app->db->beginTransaction();
         try {
-            if ($isNew) {
+            if ($isNewDepartment) {
                 $departmentRecord = new DepartmentRecord();
             } else {
                 $departmentRecord = DepartmentRecord::findOne(['id' => $department->id]);
@@ -204,7 +250,6 @@ class Departments extends Component
                 }
             }
 
-            $departmentRecord->id = $department->id;
             $departmentRecord->name = $department->name;
             $departmentRecord->parentId = $department->parentId;
             $departmentRecord->settings = Json::encode($department->settings);
@@ -214,7 +259,7 @@ class Departments extends Component
             $departmentRecord->save(false);
 
             $transaction->commit();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $transaction->rollBack();
 
             throw $exception;
@@ -225,6 +270,10 @@ class Departments extends Component
         return true;
     }
 
+    /**
+     * @param Department $department
+     * @return bool
+     */
     public function deleteDepartment(Department $department): bool
     {
         $db = Craft::$app->getDb();
@@ -237,7 +286,7 @@ class Departments extends Component
                 ])->execute();
 
             $transaction->commit();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $transaction->rollBack();
 
             throw $exception;
@@ -246,11 +295,36 @@ class Departments extends Component
         return true;
     }
 
+    // Private Methods
+    // =========================================================================
+
+    /**
+     * @return Query
+     */
     private function _createQuery(): Query
     {
         return (new Query())
-            ->select(['id', 'name', 'parentId', 'settings'])
+            ->select(['id', 'name', 'parentId', 'settings', 'sortOrder', 'archived'])
             ->from('{{%dingtalk_departments}}')
             ->orderBy('sortOrder');
+    }
+
+    /**
+     * @param Query $query
+     * @param DepartmentCriteria $criteria
+     */
+    private function _applyDepartmentConditions(Query $query, DepartmentCriteria $criteria)
+    {
+        if ($criteria->corporationId) {
+            $query->andWhere(Db::parseParam('corporationId', $criteria->corporationId));
+        }
+
+        if ($criteria->name) {
+            $query->andWhere(Db::parseParam('name', $criteria->name));
+        }
+
+        if ($criteria->archived) {
+            $query->andWhere(Db::parseParam('archived', $criteria->archived));
+        }
     }
 }
