@@ -237,7 +237,7 @@ class Corporations extends Component
                 }
             }
 
-            $record->primary = (bool)$corporation->primary;
+            $record->primary = $oldPrimaryCorporationId ? (bool)$corporation->primary : true;
             $record->name = $corporation->name;
             $record->handle = $corporation->handle;
             $record->corpId = $corporation->corpId;
