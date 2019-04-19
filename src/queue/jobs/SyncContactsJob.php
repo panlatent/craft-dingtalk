@@ -106,17 +106,24 @@ class SyncContactsJob extends BaseJob
 
         $allDepartments = [];
         $localDepartments = $this->getCorporation()->getDepartments();
+        $localDepartments = ArrayHelper::index($localDepartments, 'id');
 
         $results = $this->getCorporation()->getRemote()->getAllDepartments();
         foreach ($results as $result) {
             $id = ArrayHelper::remove($result, 'id');
-            $department = Plugin::getInstance()->departments->createDepartment([
-                'id' => $id,
-                'name' => ArrayHelper::remove($result, 'name'),
-                'parentId' => ArrayHelper::remove($result, 'parentid'),
-                'sortOrder' => ArrayHelper::remove($result, 'order'),
-                'settings' => $result,
-            ]);
+
+            $department = $departments->getDepartmentById($id);
+            if (!$department) {
+                $department = $departments->createDepartment(['id' => $id]);
+            }
+
+            $department->corporationId = $this->corporationId;
+            $department->name =  ArrayHelper::remove($result, 'name');
+            $department->parentId = ArrayHelper::remove($result, 'parentid');
+            $department->sortOrder = ArrayHelper::remove($result, 'order');
+            $department->settings = $result;
+            $department->archived = false;
+
             $allDepartments[] = $department;
 
             if (isset($localDepartments[$id])) {
@@ -130,7 +137,7 @@ class SyncContactsJob extends BaseJob
         }
 
         $allDepartments = DepartmentHelper::parentSort($allDepartments);
-        foreach ($allDepartments as $sortOrder => $department) {
+        foreach (array_values($allDepartments) as $sortOrder => $department) {
             $department->sortOrder = $sortOrder;
             $departments->saveDepartment($department);
         }

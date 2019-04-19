@@ -78,6 +78,11 @@ class SettingsController extends Controller
         return $this->redirectToPostedUrl();
     }
 
+    /**
+     * @param Settings $settings
+     * @param bool $runValidation
+     * @return bool
+     */
     private function _saveSettings(Settings $settings, bool $runValidation = true)
     {
         if ($settings === null) {
@@ -94,5 +99,4 @@ class SettingsController extends Controller
 
         return true;
     }
-
 }

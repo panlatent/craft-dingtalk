@@ -221,6 +221,10 @@ class Departments extends Component
      */
     public function createDepartment($config): Department
     {
+        if (is_array($config) && isset($config['settings']) && is_string($config['settings'])) {
+            $config['settings'] = Json::decodeIfJson($config['settings']);
+        }
+
         $department = new Department($config);
 
         return $department;
@@ -233,7 +237,7 @@ class Departments extends Component
      */
     public function saveDepartment(Department $department, bool $runValidation = true): bool
     {
-        $isNewDepartment = (empty($department->id) || !DepartmentRecord::find()->where(['id' => $department->id])->exists());
+        $isNewDepartment = !$department->id;
 
         if ($runValidation && !$department->validate()) {
             return false;
@@ -242,21 +246,22 @@ class Departments extends Component
         $transaction = Craft::$app->db->beginTransaction();
         try {
             if ($isNewDepartment) {
-                $departmentRecord = new DepartmentRecord();
+                $record = new DepartmentRecord();
             } else {
-                $departmentRecord = DepartmentRecord::findOne(['id' => $department->id]);
-                if (!$departmentRecord) {
+                $record = DepartmentRecord::findOne(['id' => $department->id]);
+                if (!$record) {
                     throw new DepartmentException("No department exists due ID: “{$department->id}“");
                 }
             }
 
-            $departmentRecord->name = $department->name;
-            $departmentRecord->parentId = $department->parentId;
-            $departmentRecord->settings = Json::encode($department->settings);
-            $departmentRecord->sortOrder = $department->sortOrder;
-            $departmentRecord->archived = (bool)$department->archived;
+            $record->corporationId = $department->corporationId;
+            $record->name = $department->name;
+            $record->parentId = $department->parentId;
+            $record->settings = $department->settings ? Json::encode($department->settings) : null;
+            $record->sortOrder = $department->sortOrder;
+            $record->archived = (bool)$department->archived;
 
-            $departmentRecord->save(false);
+            $record->save(false);
 
             $transaction->commit();
         } catch (Throwable $exception) {
@@ -265,7 +270,7 @@ class Departments extends Component
             throw $exception;
         }
 
-        $department->id = $departmentRecord->id;
+        $department->id = $record->id;
 
         return true;
     }
@@ -304,7 +309,7 @@ class Departments extends Component
     private function _createQuery(): Query
     {
         return (new Query())
-            ->select(['id', 'name', 'parentId', 'settings', 'sortOrder', 'archived'])
+            ->select(['id', 'corporationId', 'name', 'parentId', 'settings', 'sortOrder', 'archived'])
             ->from('{{%dingtalk_departments}}')
             ->orderBy('sortOrder');
     }

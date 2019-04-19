@@ -220,6 +220,16 @@ class Contact extends Element
     }
 
     /**
+     * @inheritdoc
+     */
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        return $fields;
+    }
+
+    /**
      * @return User
      */
     public function getFollower(): User

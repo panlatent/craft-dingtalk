@@ -15,7 +15,7 @@ use craft\db\ActiveRecord;
  *
  * @package panlatent\craft\dingtalk\records
  * @property int $id
- * @property string $handle
+ * @property int $corporationId
  * @property string $name
  * @property int $parentId
  * @property string $settings
@@ -25,6 +25,9 @@ use craft\db\ActiveRecord;
  */
 class Department extends ActiveRecord
 {
+    /**
+     * @inheritdoc
+     */
     public static function tableName()
     {
         return '{{%dingtalk_departments}}';

@@ -10,11 +10,13 @@ namespace panlatent\craft\dingtalk\models;
 
 use craft\base\Model;
 use panlatent\craft\dingtalk\Plugin;
+use yii\base\InvalidConfigException;
 
 /**
  * Class Department
  *
  * @package panlatent\craft\dingtalk\models
+ * @property-read Corporation $corporation
  * @property-read Department $parent
  * @property-read Department[] $parents
  * @property-read string fullName
@@ -22,10 +24,18 @@ use panlatent\craft\dingtalk\Plugin;
  */
 class Department extends Model
 {
+    // Properties
+    // =========================================================================
+
     /**
      * @var int|null 部门唯一据柄（id）
      */
     public $id;
+
+    /**
+     * @var int|null 集团ID
+     */
+    public $corporationId;
 
     /**
      * @var string|null 部门名称
@@ -53,6 +63,11 @@ class Department extends Model
     public $archived;
 
     /**
+     * @var Corporation|null
+     */
+    private $_corporation;
+
+    /**
      * @var Department|null
      */
     private $_parent;
@@ -61,6 +76,33 @@ class Department extends Model
      * @var string|null
      */
     private $_fullName;
+
+    // Public Methods
+    // =========================================================================
+
+    /**
+     * @return Corporation
+     */
+    public function getCorporation(): Corporation
+    {
+        if ($this->_corporation !== null) {
+            return $this->_corporation;
+        }
+
+        if (!$this->corporationId) {
+            throw new InvalidConfigException("Invalid corporation id");
+        }
+
+        $this->_corporation = Plugin::getInstance()
+            ->getCorporations()
+            ->getCorporationById($this->corporationId);
+
+        if ($this->_corporation === null) {
+            throw new InvalidConfigException("Missing corporation with the ID: {$this->corporationId}");
+        }
+
+        return $this->_corporation;
+    }
 
     /**
      * @return null|Department
