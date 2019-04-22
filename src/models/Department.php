@@ -38,6 +38,11 @@ class Department extends Model
     public $corporationId;
 
     /**
+     * @var int|null 钉钉部门 ID
+     */
+    public $dingDepartmentId;
+
+    /**
      * @var string|null 部门名称
      */
     public $name;
@@ -79,6 +84,35 @@ class Department extends Model
 
     // Public Methods
     // =========================================================================
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return (string)$this->name;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        $rules = parent::rules();
+        $rules[] = [['corporationId', 'dingDepartmentId', 'name'], 'required'];
+
+        return $rules;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        return $fields;
+    }
 
     /**
      * @return Corporation
@@ -152,13 +186,5 @@ class Department extends Model
         $prefix[] = $this->name;
 
         return implode($glue, $prefix);
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString(): string
-    {
-        return $this->name ?? '';
     }
 }

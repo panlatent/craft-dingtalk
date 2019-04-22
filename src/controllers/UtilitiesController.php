@@ -12,7 +12,7 @@ use Craft;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\queue\jobs\SyncApprovalsJob;
-use panlatent\craft\dingtalk\queue\jobs\SyncContactsJob;
+use panlatent\craft\dingtalk\queue\jobs\SyncUsersJob;
 use panlatent\craft\dingtalk\queue\jobs\SyncExternalContactsJob;
 use yii\web\Response;
 
@@ -24,7 +24,6 @@ use yii\web\Response;
  */
 class UtilitiesController extends Controller
 {
-
     public function actionSendRobotMessageAction()
     {
         $this->requirePostRequest();
@@ -97,8 +96,9 @@ class UtilitiesController extends Controller
             foreach ($types as $type) {
                 switch ($type) {
                     case 'users':
-                        Craft::$app->getQueue()->push(new SyncContactsJob([
+                        Craft::$app->getQueue()->push(new SyncUsersJob([
                             'corporationId' => $corporation->id,
+                            'withSmartWorks' => $request->getBodyParam('withSmartWorks'),
                         ]));
                         break;
                     case 'externalcontacts':
@@ -113,11 +113,6 @@ class UtilitiesController extends Controller
             }
         }
 
-        return null;
-    }
-
-    private function _pushSyncJobs()
-    {
-
+        return $this->redirectToPostedUrl();
     }
 }

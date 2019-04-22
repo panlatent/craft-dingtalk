@@ -5,5 +5,5 @@
 {% set selectedSubnavItem = "contacts" %}
 
 {% block actionButton %}
-    <a href="" class="btn submit icon add">{{ 'New contact'|t('dingtalk') }}</a>
+    <a href="{{ url('dingtalk/contacts/new') }}" class="btn submit icon add">{{ 'New contact'|t('dingtalk') }}</a>
 {% endblock %}

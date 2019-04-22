@@ -34,8 +34,13 @@
     {{ forms.lightswitchField({
         label: 'With leaved users'|t('dingtalk'),
         name: 'withLeavedUsers',
-        on: true,
-        toggle: 'dimission',
+        on: false
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: 'With SmartWorks'|t('dingtalk'),
+        name: 'withSmartWorks',
+        on: false,
     }) }}
 
     <hr>

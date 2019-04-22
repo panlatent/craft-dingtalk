@@ -18,6 +18,12 @@ use panlatent\craft\dingtalk\elements\Approval;
 use panlatent\craft\dingtalk\Plugin;
 use yii\base\InvalidConfigException;
 
+/**
+ * 同步钉钉审批任务
+ *
+ * @package panlatent\craft\dingtalk\queue\jobs
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class SyncApprovalsJob extends BaseJob
 {
     /**

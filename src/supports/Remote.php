@@ -21,6 +21,9 @@ use yii\helpers\ArrayHelper;
  */
 class Remote extends Component
 {
+    // Properties
+    // =========================================================================
+
     /**
      * @var Client|null
      */
@@ -36,8 +39,11 @@ class Remote extends Component
      */
     public $corpSecret;
 
+    // Public Methods
+    // =========================================================================
+
     /**
-     * Init.
+     * @inheritdoc
      */
     public function init()
     {
@@ -242,6 +248,14 @@ class Remote extends Component
                 break;
             }
         }
+    }
+
+    /**
+     * @param array $config
+     */
+    public function createExternalContact(array $config)
+    {
+        $this->client->extcontact->create($config);
     }
 
     /**

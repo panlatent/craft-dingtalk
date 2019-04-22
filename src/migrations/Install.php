@@ -58,6 +58,7 @@ class Install extends Migration
         $this->createTable('{{%dingtalk_departments}}', [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
+            'dingDepartmentId', $this->integer()->notNull(),
             'name' => $this->string(255)->notNull(),
             'parentId' => $this->integer(),
             'settings' => $this->text(),
@@ -69,6 +70,8 @@ class Install extends Migration
         ]);
 
         $this->createIndex(null, '{{%dingtalk_departments}}', 'corporationId');
+        $this->createIndex(null, '{{%dingtalk_departments}}', 'dingDepartmentId');
+        $this->createIndex(null, '{{%dingtalk_departments}}', ['corporationId', 'dingDepartmentId'], true);
         $this->createIndex(null, '{{%dingtalk_departments}}', 'name');
         $this->createIndex(null, '{{%dingtalk_departments}}', ['archived', 'dateCreated']);
         $this->createIndex(null, '{{%dingtalk_departments}}', 'sortOrder');

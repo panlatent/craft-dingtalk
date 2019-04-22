@@ -27,6 +27,8 @@ use Throwable;
  * @property string $callbackToken
  * @property string $callbackAesKey
  * @property-read bool $isRegisteredCallback
+ * @property-read Department[] $departments
+ * @property-read Department $rootDepartment
  * @property-read Remote $remote
  * @property-read ApprovalQuery $approvals
  * @property-read UserQuery $users
@@ -43,9 +45,9 @@ class Corporation extends Model
     public $id;
 
     /**
-     * @var bool|null
+     * @var bool
      */
-    public $primary;
+    public $primary = false;
 
     /**
      * @var string|null
@@ -68,9 +70,9 @@ class Corporation extends Model
     public $corpSecret;
 
     /**
-     * @var bool|null
+     * @var bool
      */
-    public $hasUrls;
+    public $hasUrls = false;
 
     /**
      * @var string|null
@@ -78,9 +80,9 @@ class Corporation extends Model
     public $url;
 
     /**
-     * @var bool|null
+     * @var bool
      */
-    public $callbackEnabled;
+    public $callbackEnabled = false;
 
     /**
      * @var Remote
@@ -116,10 +118,21 @@ class Corporation extends Model
         $rules = parent::rules();
         $rules[] = [['name', 'handle', 'corpId', 'corpSecret', 'hasUrls'], 'required'];
         $rules[] = [['name', 'corpId', 'corpSecret', 'callbackToken', 'callbackAesKey'], 'string'];
-        $rules[] = [['hasUrls', 'callbackEnabled'], 'boolean'];
+        $rules[] = [['primary', 'hasUrls', 'callbackEnabled'], 'boolean'];
         $rules[] = [['handle'], HandleValidator::class];
 
         return $rules;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function fields()
+    {
+        $fields = parent::fields();
+        unset($fields['corpId'], $fields['corpSecret'], $fields['callbackEnabled']);
+
+        return $fields;
     }
 
     /**
@@ -214,6 +227,19 @@ class Corporation extends Model
             ->getDepartments()
             ->findDepartments([
                 'corporationId' => $this->id,
+            ]);
+    }
+
+    /**
+     * @return Department
+     */
+    public function getRootDepartment(): Department
+    {
+        return Plugin::getInstance()
+            ->getDepartments()
+            ->findDepartment([
+                'corporationId' => $this->id,
+                'root' => true,
             ]);
     }
 

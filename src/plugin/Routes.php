@@ -12,6 +12,12 @@ use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
 use yii\base\Event;
 
+/**
+ * Trait Routes
+ *
+ * @package panlatent\craft\dingtalk\plugin
+ * @author Panlatent <panlatent@gmail.com>
+ */
 trait Routes
 {
     /**
@@ -21,6 +27,8 @@ trait Routes
     {
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function (RegisterUrlRulesEvent $event) {
             $event->rules = array_merge($event->rules, [
+                'dingtalk/contacts/new' => 'dingtalk/contacts/edit-contact',
+                'dingtalk/contacts/<contactId:\d+>' => 'dingtalk/contacts/edit-contact',
                 'dingtalk/approvals/<corporationHandle:{handle}>' => ['template' => 'dingtalk/approvals'],
                 'dingtalk/processes' => 'dingtalk/processes',
                 'dingtalk/processes/new' => 'dingtalk/processes/edit-process',
@@ -30,7 +38,7 @@ trait Routes
                 'dingtalk/robots/<robotId:\d+>' => 'dingtalk/robots/edit-robot',
                 'dingtalk/users/<userId:\d+>' => 'dingtalk/users/edit-user',
                 'dingtalk/settings/corporations/new' => ['template' => 'dingtalk/settings/corporations/_edit'],
-                'dingtalk/settings/corporations/<corporationId:\d+>' => ['template' => 'dingtalk/settings/corporations/_edit']
+                'dingtalk/settings/corporations/<corporationId:\d+>' => ['template' => 'dingtalk/settings/corporations/_edit'],
             ]);
         });
     }

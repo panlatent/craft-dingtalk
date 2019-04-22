@@ -187,6 +187,19 @@ class ContactQuery extends ElementQuery
             $this->subQuery->andWhere(Db::parseParam('dingtalk_contacts.position', $this->position));
         }
 
+        if ($this->labelOf) {
+            if (!is_array($this->labelOf)) {
+                $this->labelOf = [$this->labelOf];
+            }
+            $labelIds = [];
+            foreach ($this->labelOf as $label) {
+                $labelIds[] = $label instanceof ContactLabel ? $label->id : $label;
+            }
+            $this->subQuery->leftJoin('{{%dingtalk_contactlabels_contacts}} r', '[[r.contactId]] = [[dingtalk_contacts.id]]');
+            $this->subQuery->andWhere(Db::parseParam('r.labelId', $labelIds));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_contacts.position', $this->position));
+        }
+
         $this->_applyCorporationParam('dingtalk_contacts.corporationId');
 
         return parent::beforePrepare();

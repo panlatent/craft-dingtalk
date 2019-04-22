@@ -11,6 +11,7 @@ namespace panlatent\craft\dingtalk\elements;
 use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQueryInterface;
+use craft\helpers\UrlHelper;
 use panlatent\craft\dingtalk\elements\db\ContactQuery;
 use panlatent\craft\dingtalk\models\ContactLabel;
 use panlatent\craft\dingtalk\Plugin;
@@ -72,19 +73,32 @@ class Contact extends Element
             $groups = $contacts->getCorporationLabelGroups($corporation->id);
 
             $nested = [];
-
             foreach ($groups as $group) {
+                $labelNested = [];
+                foreach ($group->getLabels() as $label) {
+                    $labelNested[] = [
+                        'key' => $label->id,
+                        'label' => $label->name,
+                        'criteria' => [
+                            'corporationId' => $corporation->id,
+                            'labelOf' => $label,
+                        ],
+                    ];
+                }
+
                 $nested[] = [
-                    'key' => $corporation->handle . ':' . $group->id,
+                    'key' => $group->id,
                     'label' => $group->name,
+                    'status' => $group->color,
                     'criteria' => [
                         'corporationId' => $corporation->id,
                     ],
+                    'nested' => $labelNested,
                 ];
             }
 
             $sources[] = [
-                'key' => $corporation->handle . ':*',
+                'key' => $corporation->handle,
                 'label' => $corporation->name,
                 'criteria' => [
                     'corporationId' => $corporation->id,
@@ -135,7 +149,7 @@ class Contact extends Element
     {
         return [
             'name' => Craft::t('dingtalk', 'Name'),
-            'companyName' => Craft::t('dingtalk', 'CompanyName'),
+            'companyName' => Craft::t('dingtalk', 'Company Name'),
             'position' => Craft::t('dingtalk', 'Position'),
         ];
     }
@@ -189,6 +203,11 @@ class Contact extends Element
     public $remark;
 
     /**
+     * @var bool 保存时提交
+     */
+    public $commitOnSave = true;
+
+    /**
      * @var User|null
      */
     private $_follower;
@@ -215,6 +234,7 @@ class Contact extends Element
     public function rules()
     {
         $rules = parent::rules();
+        $rules[] = [['name', 'mobile', 'position', 'followerId'], 'required'];
 
         return $rules;
     }
@@ -225,8 +245,46 @@ class Contact extends Element
     public function fields()
     {
         $fields = parent::fields();
+        unset($fields['commitOnSave']);
+
+        $fields[] = 'labels';
+        $fields['followerName'] = function () {
+            return $this->getFollower()->name;
+        };
 
         return $fields;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function extraFields()
+    {
+        $fields = parent::extraFields();
+        $fields[] = 'corporation';
+        $fields[] = 'follower';
+
+        return $fields;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getCpEditUrl()
+    {
+        return UrlHelper::cpUrl('dingtalk/contacts/' . $this->id);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getTableAttributeHtml(string $attribute): string
+    {
+        if ($attribute === 'follower') {
+            return '<a href="' . $this->getFollower()->getCpEditUrl() . '">' . (string)$this->getFollower() . '</a>';
+        }
+
+        return parent::getTableAttributeHtml($attribute);
     }
 
     /**
@@ -284,13 +342,25 @@ class Contact extends Element
     /**
      * @inheritdoc
      */
+    public function  beforeSave(bool $isNew): bool
+    {
+        return parent::beforeSave($isNew);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function afterSave(bool $isNew)
     {
-        if ($isNew) {
+//        if ($this->commitOnSave) {
+//            Plugin::getInstance()->getContacts()->commitContact($this, $isNew);
+//        }
+
+        if (!$isNew) {
+            $record = ContactRecord::findOne(['id' => $this->id]);
+        } else {
             $record = new ContactRecord();
             $record->id = $this->id;
-        } else {
-            $record = ContactRecord::findOne(['id' => $this->id]);
         }
 
         $record->corporationId = $this->corporationId;

@@ -21,9 +21,7 @@ use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\models\Department;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\records\User as UserRecord;
-use panlatent\craft\dingtalk\records\UserDepartment as UserDepartmentRecord;
 use yii\db\Query;
-use yii\helpers\ArrayHelper;
 
 /**
  * Class User
@@ -120,13 +118,13 @@ class User extends Element
 
         foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
             $sources[] = [
-                'key' => 'corporation:*',
+                'key' => 'corporation:' . $corporation->id,
                 'label' => $corporation->name,
                 'hasThumbs' => true,
                 'criteria' => [
                     'corporationId' => $corporation->id,
                 ],
-                'nested' => DepartmentHelper::sourceTree($corporation->getDepartments(), $corporation->id),
+                'nested' => DepartmentHelper::elementSources($corporation->getDepartments(), $corporation->getRootDepartment()->id),
             ];
         }
 
@@ -151,7 +149,7 @@ class User extends Element
         return [
             'name' => ['label' => Craft::t('dingtalk', 'Name')],
             'position' => ['label' => Craft::t('dingtalk', 'Position')],
-            'primaryDepartment' =>  ['label' => Craft::t('dingtalk', 'Primary Department')],
+            'primaryDepartment' => ['label' => Craft::t('dingtalk', 'Primary Department')],
             'mobile' => ['label' => Craft::t('dingtalk', 'Mobile')],
             'jobNumber' => ['label' => Craft::t('dingtalk', 'Job Number')],
             'email' => ['label' => Craft::t('dingtalk', 'Email')],
@@ -496,6 +494,7 @@ class User extends Element
         }
 
         $userRecord->id = $this->id;
+        $userRecord->corporationId = $this->corporationId;
         $userRecord->userId = $this->userId;
         $userRecord->name = $this->name;
         $userRecord->position = $this->position;
@@ -528,39 +527,39 @@ class User extends Element
             }
         }
 
-        // Save user relation departments...
+        // Save user relation departments. If is empty array, delete all department relations.
         if ($this->_departments !== null) {
-            if (!empty($this->_departments)) {
-                /** @var UserDepartmentRecord[] $departmentRecords */
-                $departmentRecords = UserDepartmentRecord::find()->where(['userId' => $this->id])->all();
-                $departmentRecords = ArrayHelper::index($departmentRecords, 'departmentId');
+            $db = Craft::$app->getDb();
 
-                foreach ($this->_departments as $department) {
-                    if (!is_object($department)) {
-                        Craft::warning($department,__METHOD__);
-                    }
-                    if (isset($departmentRecords[$department->id])) {
-                        $departmentRecord = $departmentRecords[$department->id];
-                        unset($departmentRecords[$department->id]);
-                    } else {
-                        $departmentRecord = new UserDepartmentRecord();
-                    }
+            $oldDepartmentIds = (new Query())
+                ->select('departmentId')
+                ->from(Table::USERDEPARTMENTS)
+                ->where(['userId' => $this->id])
+                ->indexBy('departmentId')
+                ->column();
 
-                    $departmentRecord->userId = $this->id;
-                    $departmentRecord->departmentId = $department->id;
+            foreach ($this->_departments as $department) {
+                $db->createCommand()
+                    ->upsert(Table::USERDEPARTMENTS, [
+                        'userId' => $this->id,
+                        'departmentId' => $department->id,
+                    ], [
+                        'primary' => $department === $this->_primaryDepartment,
+                    ])
+                    ->execute();
 
-                    if ($this->_primaryDepartment) {
-                        $departmentRecord->primary = $department === $this->_primaryDepartment;
-                    }
-
-                    $departmentRecord->save(false);
+                if (isset($oldDepartmentIds[$department->id])) {
+                    unset($oldDepartmentIds[$department->id]);
                 }
+            }
 
-                foreach ($departmentRecords as $departmentRecord) {
-                    $departmentRecord->delete();
-                }
-            } else {
-                UserDepartmentRecord::deleteAll(['userId' => $this->id]);
+            if (!empty($oldDepartmentIds)) {
+                $db->createCommand()
+                    ->delete(Table::USERDEPARTMENTS, [
+                        'userId' => $this->id,
+                        'departmentId' => $oldDepartmentIds,
+                    ])
+                    ->execute();
             }
         }
 

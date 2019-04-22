@@ -63,6 +63,11 @@ class UserQuery extends ElementQuery
     public $mobile;
 
     /**
+     * @var string[]|string|null
+     */
+    public $jobNumber;
+
+    /**
      * @var bool|int|null
      */
     public $isActive;
@@ -157,6 +162,17 @@ class UserQuery extends ElementQuery
     public function mobile($value)
     {
         $this->mobile = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string[]|string|null $value
+     * @return $this
+     */
+    public function jobNumber($value)
+    {
+        $this->jobNumber = $value;
 
         return $this;
     }
@@ -288,6 +304,10 @@ class UserQuery extends ElementQuery
 
         if ($this->mobile) {
             $this->subQuery->andWhere(Db::parseParam('dingtalk_users.mobile', $this->mobile));
+        }
+
+        if ($this->jobNumber) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.jobNumber', $this->jobNumber));
         }
 
         $this->_prepareStatusConditions();

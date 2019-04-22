@@ -40,11 +40,6 @@ class Departments extends Component
      */
     private $_departmentsById;
 
-    /**
-     * @var Department[]|null
-     */
-    private $_departmentsByName;
-
     // Public Methods
     // =========================================================================
 
@@ -60,14 +55,12 @@ class Departments extends Component
         }
 
         $this->_departmentsById = [];
-        $this->_departmentsByName = [];
 
         $results = $this->_createQuery()->all();
 
         foreach ($results as $result) {
             $department = $this->createDepartment($result);
             $this->_departmentsById[$department->id] = $department;
-            $this->_departmentsByName[$department->name] = $department;
         }
 
         $this->_fetchedAllDepartments = true;
@@ -76,6 +69,8 @@ class Departments extends Component
     }
 
     /**
+     * 返回所有未归档部门
+     *
      * @return Department[]
      */
     public function getActiveDepartments(): array
@@ -89,7 +84,6 @@ class Departments extends Component
         foreach ($results as $result) {
             $departments[] = $department = $this->createDepartment($result);
             $this->_departmentsById[$department->id] = $department;
-            $this->_departmentsByName[$department->name] = $department;
         }
 
         return $departments;
@@ -140,28 +134,7 @@ class Departments extends Component
     }
 
     /**
-     * @param string $name
-     * @return null|Department
-     */
-    public function getDepartmentByName(string $name)
-    {
-        if ($this->_fetchedAllDepartments && array_key_exists($name, $this->_departmentsByName)) {
-            return $this->_departmentsByName[$name];
-        }
-
-        if ($this->_fetchedAllDepartments) {
-            return null;
-        }
-
-        $result = $this->_createQuery()
-            ->where(['name' => $name])
-            ->one();
-
-        return $this->_departmentsByName[$name] = $result ? $this->createDepartment($result) : null;
-    }
-
-    /**
-     * @param mixed $criteria
+     * @param DepartmentCriteria|array $criteria
      * @return Department[]
      */
     public function findDepartments($criteria): array
@@ -196,7 +169,7 @@ class Departments extends Component
     }
 
     /**
-     * @param mixed $criteria
+     * @param DepartmentCriteria|array $criteria
      * @return Department|null
      */
     public function findDepartment($criteria)
@@ -255,6 +228,7 @@ class Departments extends Component
             }
 
             $record->corporationId = $department->corporationId;
+            $record->dingDepartmentId = $department->dingDepartmentId;
             $record->name = $department->name;
             $record->parentId = $department->parentId;
             $record->settings = $department->settings ? Json::encode($department->settings) : null;
@@ -263,6 +237,10 @@ class Departments extends Component
 
             $record->save(false);
 
+            if ($isNewDepartment) {
+                $department->id = $record->id;
+            }
+
             $transaction->commit();
         } catch (Throwable $exception) {
             $transaction->rollBack();
@@ -270,7 +248,7 @@ class Departments extends Component
             throw $exception;
         }
 
-        $department->id = $record->id;
+        $this->_departmentsById[$department->id] = $department;
 
         return true;
     }
@@ -309,7 +287,7 @@ class Departments extends Component
     private function _createQuery(): Query
     {
         return (new Query())
-            ->select(['id', 'corporationId', 'name', 'parentId', 'settings', 'sortOrder', 'archived'])
+            ->select(['id', 'corporationId', 'dingDepartmentId', 'name', 'parentId', 'settings', 'sortOrder', 'archived'])
             ->from('{{%dingtalk_departments}}')
             ->orderBy('sortOrder');
     }
@@ -324,12 +302,20 @@ class Departments extends Component
             $query->andWhere(Db::parseParam('corporationId', $criteria->corporationId));
         }
 
+        if ($criteria->dingDepartmentId) {
+            $query->andWhere(Db::parseParam('dingDepartmentId', $criteria->dingDepartmentId));
+        }
+
         if ($criteria->name) {
             $query->andWhere(Db::parseParam('name', $criteria->name));
         }
 
         if ($criteria->archived) {
             $query->andWhere(Db::parseParam('archived', $criteria->archived));
+        }
+
+        if ($criteria->root !== null) {
+            $query->andWhere([$criteria->root ? 'is' : 'is not', 'parentId', null]);
         }
     }
 }

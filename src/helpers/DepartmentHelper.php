@@ -50,7 +50,7 @@ class DepartmentHelper
         return $roots;
     }
 
-    public static function sourceTree(array $departments, int $parentId = null): array
+    public static function elementSources(array $departments, int $parentId = null): array
     {
         $sources = [];
 
@@ -64,7 +64,7 @@ class DepartmentHelper
                     ],
                     'hasThumbs' => true,
                 ];
-                if (!empty($children = static::sourceTree($departments, $department->id))) {
+                if (!empty($children = static::elementSources($departments, $department->id))) {
                     $source['nested'] = $children;
                 }
                 $sources[] =  $source;

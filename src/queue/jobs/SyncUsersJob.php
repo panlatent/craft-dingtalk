@@ -19,20 +19,25 @@ use Throwable;
 use yii\base\InvalidConfigException;
 
 /**
- * Class SyncContactsJob
+ * 同步钉钉用户任务
  *
  * @package panlatent\craft\dingtalk\queue\jobs
  * @author Panlatent <panlatent@gmail.com>
  */
-class SyncContactsJob extends BaseJob
+class SyncUsersJob extends BaseJob
 {
     // Properties
     // =========================================================================
 
     /**
-     * @var int|null
+     * @var int|null Corporation ID
      */
     public $corporationId;
+
+    /**
+     * @var
+     */
+    public $withSmartWorks = false;
 
     /**
      * @var Corporation|null
@@ -57,6 +62,9 @@ class SyncContactsJob extends BaseJob
             $transaction->commit();
         } catch (Throwable $exception) {
             $transaction->rollBack();
+
+            Craft::error($exception->getMessage(), 'dingtalk-sync-job');
+
             throw $exception;
         }
     }
@@ -106,23 +114,40 @@ class SyncContactsJob extends BaseJob
 
         $allDepartments = [];
         $localDepartments = $this->getCorporation()->getDepartments();
-        $localDepartments = ArrayHelper::index($localDepartments, 'id');
+        $localDepartments = ArrayHelper::index($localDepartments, 'dingDepartmentId');
 
         $results = $this->getCorporation()->getRemote()->getAllDepartments();
-        foreach ($results as $result) {
+        $results = $this->_sortRemoteDepartments($results);
+
+        foreach (array_values($results) as $sortOrder => $result) {
             $id = ArrayHelper::remove($result, 'id');
 
-            $department = $departments->getDepartmentById($id);
+            $department = $departments->findDepartment([
+                'corporationId' => $this->corporationId,
+                'dingDepartmentId' => $id
+            ]);
+
             if (!$department) {
-                $department = $departments->createDepartment(['id' => $id]);
+                $department = $departments->createDepartment([
+                    'corporationId' => $this->corporationId,
+                    'dingDepartmentId' => $id
+                ]);
             }
 
-            $department->corporationId = $this->corporationId;
+            $parentId = null;
+            if ($dingParentId = ArrayHelper::remove($result, 'parentid')) {
+                $parent = ArrayHelper::firstWhere($allDepartments, 'dingDepartmentId', $dingParentId);
+                $parentId = $parent->id;
+            }
+
             $department->name =  ArrayHelper::remove($result, 'name');
-            $department->parentId = ArrayHelper::remove($result, 'parentid');
+            $department->parentId = $parentId;
             $department->sortOrder = ArrayHelper::remove($result, 'order');
             $department->settings = $result;
             $department->archived = false;
+            $department->sortOrder = $sortOrder;
+
+            $departments->saveDepartment($department);
 
             $allDepartments[] = $department;
 
@@ -150,43 +175,58 @@ class SyncContactsJob extends BaseJob
      */
     private function _syncIncumbentUsers(): bool
     {
-        $departments = Plugin::getInstance()->getDepartments()->getAllDepartments();
+        $departments = $this->getCorporation()->getDepartments();
         $elements = Craft::$app->getElements();
 
         $incumbentIds = [];
         $handledDingUserIds = [];
 
         foreach ($departments as $department) {
-            $results = $this->getCorporation()->getRemote()->getUsersByDepartmentId($department->id);
+            $results = $this->getCorporation()->getRemote()->getUsersByDepartmentId($department->dingDepartmentId);
             $results = array_filter($results, function ($result) use ($handledDingUserIds) {
                 return !in_array($result['userid'], $handledDingUserIds);
             });
 
             for (; count($results);) {
                 $userResults = ArrayHelper::index(array_splice($results, 0, 20), 'userid');
-                $userFieldResults = $this->_fetchUserFieldsByUserIds(array_keys($userResults));
-                foreach ($userResults as $key => &$value) {
-                    $value = ArrayHelper::merge($value, $userFieldResults[$key]);
+
+                if ($this->withSmartWorks) {
+                    $userFieldResults = $this->_fetchUserFieldsByUserIds(array_keys($userResults));
+                    foreach ($userResults as $key => &$value) {
+                        $value = ArrayHelper::merge($value, $userFieldResults[$key]);
+                    }
                 }
+
                 foreach ($userResults as $dingUserId => $result) {
-                    if (!($user = User::find()->userId($dingUserId)->one())) {
+                    $user = User::find()
+                        ->corporationId($this->corporationId)
+                        ->userId($dingUserId)
+                        ->one();
+
+                    if (!$user) {
                         $user = new User();
                     }
 
-                    $user->position = ArrayHelper::remove($data, 'position');
-                    $user->tel = ArrayHelper::remove($data, 'tel');
-                    $user->isAdmin = ArrayHelper::remove($data, 'isAdmin');
-                    $user->isBoss = ArrayHelper::remove($data, 'isBoss');
-                    $user->isLeader = ArrayHelper::remove($data, 'isLeader');
-                    $user->isHide = ArrayHelper::remove($data, 'isHide');
-                    $user->avatar = ArrayHelper::remove($data, 'avatar');
-                    $user->jobNumber = ArrayHelper::remove($data, 'jobnumber');
-                    $user->email = ArrayHelper::remove($data, 'email');
-                    $user->orgEmail = ArrayHelper::remove($data, 'orgEmail');
-                    $user->mobile = ArrayHelper::remove($data, 'mobile');
-                    $user->remark = ArrayHelper::remove($data, 'remark');
-                    $user->sortOrder = ArrayHelper::remove($data, 'order');
-                    $user->departments = ArrayHelper::remove($data, 'department');
+                    $userDepartments = [];
+                    foreach (ArrayHelper::remove($result, 'department') as $dingDepartmentId) {
+                        $userDepartments[] = ArrayHelper::firstWhere($departments, 'dingDepartmentId', $dingDepartmentId);
+                    }
+
+                    $user->corporationId = $this->corporationId;
+                    $user->position = ArrayHelper::remove($result, 'position');
+                    $user->tel = ArrayHelper::remove($result, 'tel');
+                    $user->isAdmin = ArrayHelper::remove($result, 'isAdmin');
+                    $user->isBoss = ArrayHelper::remove($result, 'isBoss');
+                    $user->isLeader = ArrayHelper::remove($result, 'isLeader');
+                    $user->isHide = ArrayHelper::remove($result, 'isHide');
+                    $user->avatar = ArrayHelper::remove($result, 'avatar');
+                    $user->jobNumber = ArrayHelper::remove($result, 'jobnumber');
+                    $user->email = ArrayHelper::remove($result, 'email');
+                    $user->orgEmail = ArrayHelper::remove($result, 'orgEmail');
+                    $user->mobile = ArrayHelper::remove($result, 'mobile');
+                    $user->remark = ArrayHelper::remove($result, 'remark');
+                    $user->sortOrder = ArrayHelper::remove($result, 'order');
+                    $user->departments = $userDepartments;
                     $user->isLeaved = false;
                     $this->_loadUser($user, $result);
 
@@ -272,6 +312,32 @@ class SyncContactsJob extends BaseJob
 
             $values = array_filter($fields);
         });
+
+        return $results;
+    }
+
+    /**
+     * @param array $departments
+     * @param int|null $parentId
+     * @return array
+     */
+    private function _sortRemoteDepartments(array $departments, int $parentId = null): array
+    {
+        $results = [];
+
+        foreach ($departments as $key => $department) {
+            $currentParentId  = $department['parentid'] ?? null;
+            if ($currentParentId == $parentId) {
+                $results[] = $department;
+                unset($departments[$key]);
+            }
+        }
+
+        if (!empty($departments)) {
+            foreach ($results as $result) {
+                $results = array_merge($results, $this->_sortRemoteDepartments($departments, $result['id']));
+            }
+        }
 
         return $results;
     }

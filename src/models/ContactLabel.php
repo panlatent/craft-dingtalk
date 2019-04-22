@@ -77,6 +77,30 @@ class ContactLabel extends Model
     }
 
     /**
+     * @inheritdoc
+     */
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields['groupName'] = function() {
+            return $this->getGroup()->name;
+        };
+
+        return $fields;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function extraFields()
+    {
+        $fields = parent::extraFields();
+        $fields[] = 'group';
+
+        return  $fields;
+    }
+
+    /**
      * @return ContactLabelGroup
      */
     public function getGroup(): ContactLabelGroup
@@ -85,7 +109,7 @@ class ContactLabel extends Model
             return $this->_group;
         }
 
-        if ($this->id === null || $this->groupId === null) {
+        if ($this->groupId === null) {
             throw new InvalidConfigException();
         }
 

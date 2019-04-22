@@ -24,14 +24,24 @@ class DepartmentCriteria extends Model
     public $corporationId;
 
     /**
+     * @var int[]|int|null
+     */
+    public $dingDepartmentId;
+
+    /**
      * @var string[]|string|null
      */
     public $name;
 
     /**
-     * @var string[]|string|null
+     * @var int[]|int|null
      */
     public $parentId;
+
+    /**
+     * @var bool|null
+     */
+    public $root;
 
     /**
      * @var bool|null

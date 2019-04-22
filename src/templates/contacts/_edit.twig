@@ -1,0 +1,55 @@
+{% extends "_layouts/cp" %}
+
+{% set selectedSubnavItem = 'contacts' %}
+{% set fullPageForm = true %}
+{% set crumbs = [
+    {label: "DingTalk"|t('dingtalk'), url: url('dingtalk')},
+    {label: "Contacts"|t('dingtalk'), url: url('dingtalk/contacts')},
+] %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <input type="hidden" name="action" value="dingtalk/contacts/save-contact">
+    <input type="hidden" name="contactId" value="{{ contact.id }}">
+
+    <div id="settings">
+
+{#        {{ forms.selectField({#}
+{#            label: "Corporation"|t('dingtalk'),#}
+{#            id: "corporationId",#}
+{#            name: "corporationId",#}
+{#            value: contact.corporationId,#}
+{#            options: [],#}
+{#            errors: contact.getErrors('corporationId'),#}
+{#        }) }}#}
+
+        {{ forms.textField({
+            label: "Name"|t('dingtalk'),
+        }) }}
+
+        {{ forms.textField({
+            label: "Mobile"|t('dingtalk'),
+        }) }}
+
+        {{ forms.textField({
+            label: "Position"|t('dingtalk'),
+        }) }}
+
+        {{ forms.elementSelectField({
+            label: "Follower"|t('dingtalk'),
+            id: "followerId",
+            name: "followerId",
+            sourceElementId: contact.followerId,
+            errors: contact.getErrors('followerId'),
+            elementType: "panlatent\\craft\\dingtalk\\elements\\User",
+            limit: 1,
+        }) }}
+
+    </div>
+
+{% endblock %}
+
+{% js %}
+    // $('#followerId').on(
+{% endjs %}

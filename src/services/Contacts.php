@@ -9,6 +9,7 @@
 namespace panlatent\craft\dingtalk\services;
 
 use Craft;
+use panlatent\craft\dingtalk\elements\Contact;
 use panlatent\craft\dingtalk\events\ContactException;
 use panlatent\craft\dingtalk\models\ContactLabel;
 use panlatent\craft\dingtalk\models\ContactLabelGroup;
@@ -17,6 +18,7 @@ use panlatent\craft\dingtalk\records\ContactLabelGroup as ContactLabelGroupRecor
 use Throwable;
 use yii\base\Component;
 use yii\db\Query;
+use yii\helpers\ArrayHelper;
 
 /**
  * Class Contacts
@@ -55,11 +57,6 @@ class Contacts extends Component
     // Public Methods
     // =========================================================================
 
-    public function getAllLabelGroups(): array
-    {
-        return [];
-    }
-
     /**
      * @param int $corporationId
      * @return ContactLabelGroup[]
@@ -79,9 +76,17 @@ class Contacts extends Component
         return $groups;
     }
 
-    public function getLabelGroupById(int $id)
+    /**
+     * @param int $groupId
+     * @return ContactLabelGroup|null
+     */
+    public function getLabelGroupById(int $groupId)
     {
+        $result = $this->_createLabelGroupQuery()
+            ->where(['id' => $groupId])
+            ->one();
 
+        return $result ? $this->createLabelGroup($result) : null;
     }
 
     /**
@@ -287,6 +292,47 @@ class Contacts extends Component
 
 
         return true;
+    }
+
+    // Contacts
+    // =========================================================================
+
+    /**
+     * @param Contact $contact
+     * @param bool $runValidation
+     * @return bool
+     */
+    public function saveContact(Contact $contact, bool $runValidation = true): bool
+    {
+        $isNew = !$contact->id && !$contact->userId;
+
+        if ($isNew) {
+            $info = $contact->getCorporation()->getRemote()->createExternalContact([
+                'name' => $contact->name,
+                'mobile' => $contact->mobile,
+                'title' => (string)$contact->position,
+                'follower_user_id' => $contact->getFollower()->userId,
+                'address' => (string)$contact->address,
+                'remark' => (string)$contact->remark,
+                'state_code' => (string)$contact->stateCode,
+                'company_name' => (string)$contact->companyName,
+                'label_ids' => ArrayHelper::getColumn($contact->getLabels(), 'sourceId'),
+                'share_dept_ids' => [],
+                'share_user_ids' => [],
+            ]);
+
+            var_dump($info);die();
+        }
+
+
+
+        if (!$contact->userId) {
+
+        } else {
+
+        }
+
+        return Craft::$app->getElements()->saveElement($contact);
     }
 
     // Private Methods

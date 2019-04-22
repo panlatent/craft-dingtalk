@@ -4,7 +4,7 @@
 
 {% if corporations|length %}
     {% set selectedCorporation = selectedCorporation is defined ? selectedCorporation : null %}
-    {% set selectedCorporation = selectedCorporation ?? corporations|first %}
+    {% set selectedCorporation = selectedCorporation ?: corporations|first %}
     {% set suffix = craft.app.request.segment(3) %}
     <div>
         <div class="btn menubtn" data-icon="world">{{ selectedCorporation.name }}</div>

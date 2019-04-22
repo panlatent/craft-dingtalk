@@ -20,7 +20,7 @@ use yii\base\Exception;
 use yii\base\InvalidConfigException;
 
 /**
- * Class SyncExternalContactsJob
+ * 同步钉钉外部联系人任务
  *
  * @package panlatent\craft\dingtalk\queue\jobs
  * @author Panlatent <panlatent@gmail.com>
@@ -61,7 +61,7 @@ class SyncExternalContactsJob extends BaseJob
                 ]);
             }
 
-            $labelGroup->color = $this->_rgb2hex($groupData['color']);
+            $labelGroup->color = $this->_id2hex($groupData['color']);
 
             if (!$contacts->saveLabelGroup($labelGroup)) {
                 throw new Exception("Couldn’t save label group: {$groupData['name']}. " . Json::encode($labelGroup->getErrors()));
@@ -74,7 +74,7 @@ class SyncExternalContactsJob extends BaseJob
                 } else {
                     $label = $contacts->createLabel([
                         'groupId' => $labelGroup->id,
-                        'sourceId' => $labelData['id']
+                        'sourceId' => $labelData['id'],
                     ]);
                 }
 
@@ -120,10 +120,11 @@ class SyncExternalContactsJob extends BaseJob
             $contact->mobile = $result['mobile'];
             $contact->followerId = $follower->id;
             $contact->companyName = $result['company_name'] ?? null;
-            $contact->stateCode = $result['state_code']?? null;
+            $contact->stateCode = $result['state_code'] ?? null;
             $contact->position = isset($result['title']) && $result['title'] != 'null' ? $result['title'] : null;
             $contact->address = $result['address'] ?? null;
             $contact->remark = $result['remark'] ?? null;
+            $contact->commitOnSave = false;
 
             if (isset($result['label_ids'])) {
                 $contact->labels = $contacts->getLabelsBySourceIds($result['label_ids']);
@@ -170,13 +171,27 @@ class SyncExternalContactsJob extends BaseJob
     // =========================================================================
 
     /**
-     * @param string $value
+     * @param int $value
      * @return string
      */
-    private function _rgb2hex(string $value): string
+    private function _id2hex(int $value): string
     {
-        return '#' . str_pad(dechex(trim(substr($value, 0, 3), '-')), 2, '0', STR_PAD_LEFT) .
-            dechex(substr($value, 3, 3)) .
-            dechex(substr($value, 6, 3));
+        switch ($value) {
+            case -15220075:
+            case -15352701:
+                return 'green';
+            case -11687445:
+                return 'blue';
+            case -543394:
+                return 'orange';
+            case -405222:
+                return 'yellow';
+            case -895421:
+                return 'red';
+            case -3044894:
+                return 'purple';
+        }
+
+        return '';
     }
 }
