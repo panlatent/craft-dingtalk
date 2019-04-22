@@ -9,15 +9,22 @@ DintTalk plugin for Craft 3
 [![Craft CMS](https://img.shields.io/badge/Powered_by-Craft_CMS-orange.svg?style=flat)](https://craftcms.com/)
 [![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](https://www.yiiframework.com/)
 
-钉钉是一个阿里巴巴推出的智能移动办公平台，CraftCMS 3 钉钉插件能将 [钉钉](https://www.dingtalk.com/) 开放的能力整合至 CraftCSM 中，
-并提供再次开发的基础组件。
+CraftCMS 3 钉钉插件能将 [钉钉](https://www.dingtalk.com/) 开放的能力整合至 CraftCSM 中，
+并提供再次开发的基础构件。
 
 这个插件目前集成了钉钉通讯录、智能办公、钉钉群机器人以及审批。更多支持细节和变更请查看 [更新日志](CHANGELOG.md)。
+
+Features
+--------
++ 钉钉通讯录
++ 外部联系人
++ 支持智能办公(Smart Work)字段
++ 支持同步审批流
 
 Requirements
 ------------
 
-This plugin requires Craft CMS 3.0 or later.
+This plugin requires Craft CMS 3.1 or later.
 
 Installation
 ------------
@@ -36,3 +43,9 @@ To install the plugin, follow these instructions.
 
 Documentation
 -------------
+
+[中文文档](https://craft-dingtalk.docs.panlatent.com/)
+
+License
+-------
+The Craft DingTalk is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
