@@ -35,7 +35,7 @@ class SyncUsersJob extends BaseJob
     public $corporationId;
 
     /**
-     * @var
+     * @var bool With smart work data
      */
     public $withSmartWorks = false;
 
@@ -56,8 +56,7 @@ class SyncUsersJob extends BaseJob
 
         try {
             $this->_syncAllDepartments();
-            $this->_syncIncumbentUsers();
-            //Plugin::getInstance()->getUsers()->pullLeavedUsers();
+            $this->_syncAllUsers();
 
             $transaction->commit();
         } catch (Throwable $exception) {
@@ -173,7 +172,7 @@ class SyncUsersJob extends BaseJob
     /**
      * @return bool
      */
-    private function _syncIncumbentUsers(): bool
+    private function _syncAllUsers(): bool
     {
         $departments = $this->getCorporation()->getDepartments();
         $elements = Craft::$app->getElements();
