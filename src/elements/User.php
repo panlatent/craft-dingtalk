@@ -117,6 +117,8 @@ class User extends Element
         $sources[] = ['heading' => Craft::t('dingtalk', 'Corporations')];
 
         foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
+            $rootDepartment = $corporation->getRootDepartment();
+
             $sources[] = [
                 'key' => 'corporation:' . $corporation->id,
                 'label' => $corporation->name,
@@ -124,7 +126,7 @@ class User extends Element
                 'criteria' => [
                     'corporationId' => $corporation->id,
                 ],
-                'nested' => DepartmentHelper::elementSources($corporation->getDepartments(), $corporation->getRootDepartment()->id),
+                'nested' => $rootDepartment ? DepartmentHelper::elementSources($corporation->getDepartments(), $rootDepartment->id) : [],
             ];
         }
 

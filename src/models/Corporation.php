@@ -231,9 +231,9 @@ class Corporation extends Model
     }
 
     /**
-     * @return Department
+     * @return Department|null
      */
-    public function getRootDepartment(): Department
+    public function getRootDepartment()
     {
         return Plugin::getInstance()
             ->getDepartments()
