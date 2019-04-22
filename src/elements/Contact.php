@@ -12,11 +12,13 @@ use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQueryInterface;
 use craft\helpers\UrlHelper;
+use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\elements\db\ContactQuery;
 use panlatent\craft\dingtalk\models\ContactLabel;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\records\Contact as ContactRecord;
 use yii\base\InvalidConfigException;
+use yii\db\Query;
 
 /**
  * Class Contact
@@ -67,16 +69,28 @@ class Contact extends Element
             ],
         ];
 
+        $sources[] = ['heading' => Craft::t('dingtalk', 'Corporations')];
+        foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
+            $sources[] = [
+                'key' => $corporation->handle,
+                'label' => $corporation->name,
+                'criteria' => [
+                    'corporationId' => $corporation->id,
+                ]
+            ];
+        }
+
         $sources[] = ['heading' => Craft::t('dingtalk', 'Labels')];
 
         $contacts = Plugin::getInstance()->getContacts();
 
+        //
+
         // Labels
         foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
-            $groups = $contacts->getCorporationLabelGroups($corporation->id);
+            $sources[] = ['heading' => $corporation->name];
 
-            $nested = [];
-            foreach ($groups as $group) {
+            foreach ($contacts->getCorporationLabelGroups($corporation->id) as $group) {
                 $labelNested = [];
                 foreach ($group->getLabels() as $label) {
                     $labelNested[] = [
@@ -89,7 +103,7 @@ class Contact extends Element
                     ];
                 }
 
-                $nested[] = [
+                $sources[] = [
                     'key' => $group->id,
                     'label' => $group->name,
                     'status' => $group->color,
@@ -99,15 +113,6 @@ class Contact extends Element
                     'nested' => $labelNested,
                 ];
             }
-
-            $sources[] = [
-                'key' => $corporation->handle,
-                'label' => $corporation->name,
-                'criteria' => [
-                    'corporationId' => $corporation->id,
-                ],
-                'nested' => $nested,
-            ];
         }
 
         return $sources;
@@ -125,6 +130,7 @@ class Contact extends Element
             'position' => Craft::t('dingtalk', 'Position'),
             'address' => Craft::t('dingtalk', 'Address'),
             'follower' => Craft::t('dingtalk', 'Follower'),
+            'labels' => Craft::t('dingtalk', 'Labels'),
             'remark' => Craft::t('dingtalk', 'Remark'),
         ];
     }
@@ -237,7 +243,22 @@ class Contact extends Element
     public function rules()
     {
         $rules = parent::rules();
-        $rules[] = [['name', 'mobile', 'position', 'followerId', 'stateCode'], 'required'];
+        $rules[] = [['corporationId', 'userId', 'name', 'mobile', 'followerId', 'stateCode'], 'required'];
+        $rules[] = [['position', 'companyName', 'address', 'remark'], 'string'];
+        $rules[] = [['mobile'], function() {
+            $id = (new Query())
+                ->select('id')
+                ->from(Table::CONTACTS)
+                ->where([
+                    'corporationId' => $this->corporationId,
+                    'mobile' => $this->mobile,
+                ])
+                ->scalar();
+
+            if ($id !== $this->id) {
+                $this->addError('mobile', Craft::t('dingtalk', 'Contact mobile already exists.'));
+            }
+        }];
 
         return $rules;
     }
@@ -273,6 +294,22 @@ class Contact extends Element
     /**
      * @inheritdoc
      */
+    public function attributeLabels()
+    {
+        $labels = parent::attributeLabels();
+        $labels = array_merge($labels, [
+            'name' => Craft::t('dingtalk', 'Name'),
+            'mobile' => Craft::t('dingtalk', 'Mobile'),
+            'followerId' => Craft::t('dingtalk', 'Follower ID'),
+            'labels' => Craft::t('dingtalk', 'Labels'),
+        ]);
+
+        return $labels;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getCpEditUrl()
     {
         return UrlHelper::cpUrl('dingtalk/contacts/' . $this->id);
@@ -285,6 +322,14 @@ class Contact extends Element
     {
         if ($attribute === 'follower') {
             return '<a href="' . $this->getFollower()->getCpEditUrl() . '">' . (string)$this->getFollower() . '</a>';
+        } elseif ($attribute == 'labels') {
+            $labelHtml = [];
+
+            foreach ($this->getLabels() as $label) {
+                $labelHtml[] = '<span style="color: ' . $label->getGroup()->color .'">' . $label->name . '</span>';
+            }
+
+            return implode(',', $labelHtml);
         }
 
         return parent::getTableAttributeHtml($attribute);
@@ -351,7 +396,9 @@ class Contact extends Element
             $this->stateCode = '86';
         }
 
-        Plugin::getInstance()->getContacts()->saveRemoteContact($this);
+        if (!Plugin::getInstance()->getContacts()->saveRemoteContact($this)) {
+            return false;
+        }
 
         return parent::beforeSave($isNew);
     }

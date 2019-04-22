@@ -1,4 +1,24 @@
 {% extends "_layouts/cp" %}
 
-{% set title = 'Edit User' %}
 {% set selectedSubnavItem = 'users' %}
+{% set fullPageForm = true %}
+{% set crumbs = [
+    {label: "DingTalk"|t('dingtalk'), url: url('dingtalk')},
+    {label: "Users"|t('dingtalk'), url: url('dingtalk/users')},
+] %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <div id="settings">
+
+        {{ forms.textField({
+            label: "Name"|t('dingtalk'),
+            id: "name",
+            name: "name",
+            value: user.name,
+            errors: user.getErrors("name"),
+        }) }}
+
+    </div>
+{% endblock %}

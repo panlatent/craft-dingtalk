@@ -11,7 +11,6 @@ namespace panlatent\craft\dingtalk\controllers;
 use Craft;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\elements\Contact;
-use panlatent\craft\dingtalk\Plugin;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -45,7 +44,7 @@ class ContactsController extends Controller
         if ($isNew) {
             $title = Craft::t('dingtalk', 'Create a new contact');
         } else {
-            $title = Craft::t('dingtalk', 'Edit contact: {name}', ['name' => $contact->name]);
+            $title = $contact->name;
         }
 
         return $this->renderTemplate('dingtalk/contacts/_edit', [
@@ -65,19 +64,30 @@ class ContactsController extends Controller
 
         $request = Craft::$app->getRequest();
 
+        $contactId = $request->getBodyParam('contactId');
         $followerId = $request->getBodyParam('followerId.0');
 
+        if ($contactId) {
+            $contact = Contact::find()->id($contactId)->one();
+            if (!$contact) {
+                throw new NotFoundHttpException();
+            }
+        } else {
+            $contact = new Contact([
+                'corporationId' => $request->getBodyParam('corporationId'),
+            ]);
+        }
 
-        $contact = new Contact([
-            'id' => $request->getBodyParam('contactId'),
-            'corporationId' => '',
-            'name' => $request->getBodyParam('name'),
-            'mobile' => $request->getBodyParam('mobile'),
-            'position' => $request->getBodyParam('position'),
-            'followerId' => $followerId,
-        ]);
+        $contact->name =  $request->getBodyParam('name');
+        $contact->mobile = $request->getBodyParam('mobile');
+        $contact->position = $request->getBodyParam('position');
+        $contact->followerId = $followerId;
+        $contact->stateCode =  $request->getBodyParam('stateCode');
+        $contact->companyName =  $request->getBodyParam('companyName');
+        $contact->address =  $request->getBodyParam('address');
+        $contact->remark =  $request->getBodyParam('remark');
 
-        if (!Plugin::getInstance()->getContacts()->saveRemoteContact($contact)) {
+        if (!Craft::$app->getElements()->saveElement($contact)) {
             Craft::$app->getSession()->setError(Craft::t('dingtalk', 'Couldn’t save contact.'));
 
             Craft::$app->getUrlManager()->setRouteParams([
@@ -87,7 +97,7 @@ class ContactsController extends Controller
             return null;
         }
 
-        Craft::$app->getSession()->setName(Craft::t('dingtalk', 'Contact saved.'));
+        Craft::$app->getSession()->setNotice(Craft::t('dingtalk', 'Contact saved.'));
 
         return $this->redirectToPostedUrl();
     }

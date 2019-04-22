@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Added
 - 现在支持多个企业管理
 - 添加消息模板和组，通过向已配置模板（ Twig模版 ）注入变量来生成消息内容
+- 添加了 `Users` 和 `Contacts` 两个关联字段
 - 支持外部联系人的新增和同步
 - 支持设置事件回调
 - 支持发送工作通知

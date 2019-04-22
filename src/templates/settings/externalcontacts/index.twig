@@ -9,26 +9,6 @@
         <input type="hidden" name="action" value="dingtalk/settings/save-external-contacts-settings">
         {{ csrfInput() }}
 
-        {% set categoryGroupOptions = [] %}
-        {% for categoryGourp in craft.app.categories.getAllGroups() %}
-            {% set categoryGroupOptions = categoryGroupOptions|merge([
-                {
-                    label: categoryGourp.name,
-                    value: categoryGourp.uid,
-                }
-            ]) %}
-        {% endfor %}
-
-        {{ forms.selectField({
-            label: "Label Category"|t('dingtalk'),
-            instructions: "In which category is the tag stored?",
-            id: 'categoryGroupUid',
-            name: 'categoryGroupUid',
-            value: craft.dingtalk.settings.externalContactCategoryGroupUid,
-            options: categoryGroupOptions,
-        }) }}
-
-
         <button class="btn submit">{{ "Save"|t('app') }}</button>
 
     </form>

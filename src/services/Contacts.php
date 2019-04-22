@@ -306,6 +306,13 @@ class Contacts extends Component
     {
         $isNew = !$contact->id && !$contact->userId;
 
+        if ($isNew) {
+            Contact::find()
+                ->corporationId($contact->corporationId)
+                ->mobile($contact->mobile)
+                ->one();
+        }
+
         $remote = $contact->getCorporation()->getRemote();
 
         $data = [
@@ -326,7 +333,7 @@ class Contacts extends Component
             $dingUserId = $remote->createExternalContact($data);
             $contact->userId = $dingUserId;
         } else {
-            $data['userid'] = $contact->userId;
+            $data['user_id'] = $contact->userId;
             $remote->saveExternalContact($data);
         }
 

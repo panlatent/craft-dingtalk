@@ -17,6 +17,11 @@ namespace panlatent\craft\dingtalk\db;
 abstract class Table
 {
     const APPROVALS = '{{%dingtalk_approvals}}';
+    const CONTACTLABELGROUPS = '{{%dingtalk_contactslabelgroups}}';
+    const CONTACTLABELS = '{{%dingtalk_contactslabels}}';
+    const CONTACTLABELS_CONTACTS = '{{%dingtalk_contactslabelcontacts}}';
+    const CONTACTS = '{{%dingtalk_contacts}}';
+
     const CORPORATIONS = '{{%dingtalk_corporations}}';
     const DEPARTMENTS = '{{%dingtalk_departments}}';
     const PROCESSES = '{{%dingtalk_processes}}';

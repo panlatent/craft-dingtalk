@@ -12,6 +12,7 @@ use Craft;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\elements\User;
 use panlatent\craft\dingtalk\enums\PermissionItems;
+use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 /**
@@ -29,11 +30,28 @@ class UsersController extends Controller
      */
     public function actionEditUser(int $userId = null, User $user = null): Response
     {
-        return $this->renderTemplate('dingtalk/users/_edit');
+        if ($user === null) {
+            if ($userId !== null) {
+                $user = User::find()->id($userId)->one();
+                if (!$user) {
+                    throw new NotFoundHttpException();
+                }
+            } else {
+                $user = new User();
+            }
+        }
+
+        $isNew = !$user->id;
+
+
+        return $this->renderTemplate('dingtalk/users/_edit', [
+            'user' => $user,
+            'title' => $isNew ? Craft::t('dingtalk', 'Create a new user') : $user->name,
+        ]);
     }
 
     /**
-     * @return \yii\web\Response|null
+     * @return Response|null
      */
     public function actionSaveUserFieldLayout()
     {

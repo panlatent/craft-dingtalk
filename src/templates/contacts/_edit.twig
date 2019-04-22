@@ -6,12 +6,19 @@
     {label: "DingTalk"|t('dingtalk'), url: url('dingtalk')},
     {label: "Contacts"|t('dingtalk'), url: url('dingtalk/contacts')},
 ] %}
+{% set tabs = [
+    {label: "Settings"|t('dingtalk'), url: '#settings'},
+] %}
 
 {% import "_includes/forms" as forms %}
 
 {% block content %}
     <input type="hidden" name="action" value="dingtalk/contacts/save-contact">
     <input type="hidden" name="contactId" value="{{ contact.id }}">
+    {% if contact.id %}
+        <input type="hidden" name="corporationId" value="{{ contact.corporationId }}">
+    {% endif %}
+    {{ redirectInput('dingtalk/contacts') }}
 
     <div id="settings">
 
@@ -26,25 +33,73 @@
 
         {{ forms.textField({
             label: "Name"|t('dingtalk'),
+            id: "name",
+            name: "name",
+            value: contact.name,
+            errors: contact.getErrors("name"),
         }) }}
 
         {{ forms.textField({
             label: "Mobile"|t('dingtalk'),
-        }) }}
-
-        {{ forms.textField({
-            label: "Position"|t('dingtalk'),
+            id: "mobile",
+            name: "mobile",
+            value: contact.mobile,
+            errors: contact.getErrors("mobile"),
         }) }}
 
         {{ forms.elementSelectField({
             label: "Follower"|t('dingtalk'),
             id: "followerId",
             name: "followerId",
-            sourceElementId: contact.followerId,
+            elements: [contact.follower],
             errors: contact.getErrors('followerId'),
             elementType: "panlatent\\craft\\dingtalk\\elements\\User",
             limit: 1,
         }) }}
+
+        {{ forms.textField({
+            label: "Position"|t('dingtalk'),
+            id: "position",
+            name: "position",
+            value: contact.position,
+            errors: contact.getErrors("position"),
+        }) }}
+
+        {{ forms.textField({
+            label: "State Code"|t('dingtalk'),
+            id: "stateCode",
+            name: "stateCode",
+            value: contact.stateCode,
+            errors: contact.getErrors("stateCode"),
+        }) }}
+
+        {{ forms.textField({
+            label: "Company Name"|t('dingtalk'),
+            id: "companyName",
+            name: "companyName",
+            value: contact.companyName,
+            errors: contact.getErrors("companyName"),
+        }) }}
+
+        {{ forms.textField({
+            label: "Address"|t('dingtalk'),
+            id: "address",
+            name: "address",
+            value: contact.address,
+            errors: contact.getErrors("address"),
+        }) }}
+
+        {{ forms.textField({
+            label: "Remark"|t('dingtalk'),
+            id: "remark",
+            name: "remark",
+            value: contact.remark,
+            errors: contact.getErrors("remark"),
+        }) }}
+
+        <hr>
+
+        <h3>标签</h3>
 
     </div>
 
