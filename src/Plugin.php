@@ -20,6 +20,7 @@ use craft\services\Utilities;
 use craft\web\twig\variables\CraftVariable;
 use panlatent\craft\dingtalk\elements\Approval;
 use panlatent\craft\dingtalk\elements\User;
+use panlatent\craft\dingtalk\fields\Contacts;
 use panlatent\craft\dingtalk\fields\Users;
 use panlatent\craft\dingtalk\models\Settings;
 use panlatent\craft\dingtalk\plugin\Routes;
@@ -182,6 +183,7 @@ class Plugin extends \craft\base\Plugin
     private function _registerFieldTypes()
     {
         Event::on(Fields::class, Fields::EVENT_REGISTER_FIELD_TYPES, function (RegisterComponentTypesEvent $event) {
+            $event->types[] = Contacts::class;
             $event->types[] = Users::class;
         });
     }
