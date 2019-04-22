@@ -330,9 +330,6 @@ class Contacts extends Component
             $remote->saveExternalContact($data);
         }
 
-        $result = $remote->getExternalContactById($contact->userId);
-
-
         return true;
     }
 
