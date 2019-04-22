@@ -14,11 +14,13 @@ use craft\events\RegisterUserPermissionsEvent;
 use craft\helpers\UrlHelper;
 use craft\services\Dashboard;
 use craft\services\Elements;
+use craft\services\Fields;
 use craft\services\UserPermissions;
 use craft\services\Utilities;
 use craft\web\twig\variables\CraftVariable;
 use panlatent\craft\dingtalk\elements\Approval;
 use panlatent\craft\dingtalk\elements\User;
+use panlatent\craft\dingtalk\fields\Users;
 use panlatent\craft\dingtalk\models\Settings;
 use panlatent\craft\dingtalk\plugin\Routes;
 use panlatent\craft\dingtalk\plugin\Services;
@@ -82,6 +84,7 @@ class Plugin extends \craft\base\Plugin
 
         $this->_registerCpRoutes();
         $this->_registerElementTypes();
+        $this->_registerFieldTypes();
         $this->_registerPermissions();
         $this->_registerSiteRoutes();
         $this->_registerUtilities();
@@ -170,6 +173,16 @@ class Plugin extends \craft\base\Plugin
         Event::on(Elements::class, Elements::EVENT_REGISTER_ELEMENT_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = User::class;
             $event->types[] = Approval::class;
+        });
+    }
+
+    /**
+     * Register plugin fields.
+     */
+    private function _registerFieldTypes()
+    {
+        Event::on(Fields::class, Fields::EVENT_REGISTER_FIELD_TYPES, function (RegisterComponentTypesEvent $event) {
+            $event->types[] = Users::class;
         });
     }
 
