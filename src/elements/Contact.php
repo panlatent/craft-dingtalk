@@ -33,6 +33,9 @@ class Contact extends Element
 
     use CorporationTrait;
 
+    // Constants
+    // =========================================================================
+
     // Static Methods
     // =========================================================================
 
@@ -234,7 +237,7 @@ class Contact extends Element
     public function rules()
     {
         $rules = parent::rules();
-        $rules[] = [['name', 'mobile', 'position', 'followerId'], 'required'];
+        $rules[] = [['name', 'mobile', 'position', 'followerId', 'stateCode'], 'required'];
 
         return $rules;
     }
@@ -344,6 +347,12 @@ class Contact extends Element
      */
     public function  beforeSave(bool $isNew): bool
     {
+        if ($this->stateCode === null) {
+            $this->stateCode = '86';
+        }
+
+        Plugin::getInstance()->getContacts()->saveRemoteContact($this);
+
         return parent::beforeSave($isNew);
     }
 
@@ -352,10 +361,6 @@ class Contact extends Element
      */
     public function afterSave(bool $isNew)
     {
-//        if ($this->commitOnSave) {
-//            Plugin::getInstance()->getContacts()->commitContact($this, $isNew);
-//        }
-
         if (!$isNew) {
             $record = ContactRecord::findOne(['id' => $this->id]);
         } else {

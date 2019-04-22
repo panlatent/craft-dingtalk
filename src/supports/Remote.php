@@ -251,11 +251,39 @@ class Remote extends Component
     }
 
     /**
+     * 返回外部联系人
+     *
+     * @param string $userId
+     * @return array
+     */
+    public function getExternalContactById(string $userId): array
+    {
+        $result = $this->client->extcontact->get($userId);
+
+        return $result['result'];
+    }
+
+    /**
+     * @param array $config
+     * @return string
+     */
+    public function createExternalContact(array $config): string
+    {
+        $result = $this->client->extcontact->create([
+            'contact' => $config
+        ]);
+
+        return $result['userid'];
+    }
+
+    /**
      * @param array $config
      */
-    public function createExternalContact(array $config)
+    public function saveExternalContact(array $config)
     {
-        $this->client->extcontact->create($config);
+        $this->client->extcontact->update([
+            'contact' => $config
+        ]);
     }
 
     /**

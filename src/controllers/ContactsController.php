@@ -77,7 +77,7 @@ class ContactsController extends Controller
             'followerId' => $followerId,
         ]);
 
-        if (!Plugin::getInstance()->getContacts()->saveContact($contact)) {
+        if (!Plugin::getInstance()->getContacts()->saveRemoteContact($contact)) {
             Craft::$app->getSession()->setError(Craft::t('dingtalk', 'Couldn’t save contact.'));
 
             Craft::$app->getUrlManager()->setRouteParams([

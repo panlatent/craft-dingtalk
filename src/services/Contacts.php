@@ -302,37 +302,38 @@ class Contacts extends Component
      * @param bool $runValidation
      * @return bool
      */
-    public function saveContact(Contact $contact, bool $runValidation = true): bool
+    public function saveRemoteContact(Contact $contact, bool $runValidation = true): bool
     {
         $isNew = !$contact->id && !$contact->userId;
 
+        $remote = $contact->getCorporation()->getRemote();
+
+        $data = [
+            'name' => $contact->name,
+            'mobile' => $contact->mobile,
+            'title' => (string)$contact->position,
+            'follower_user_id' => $contact->getFollower()->userId,
+            'address' => (string)$contact->address,
+            'remark' => (string)$contact->remark,
+            'state_code' => (string)$contact->stateCode,
+            'company_name' => (string)$contact->companyName,
+            'label_ids' => ArrayHelper::getColumn($contact->getLabels(), 'sourceId'),
+            'share_dept_ids' => [],
+            'share_user_ids' => [],
+        ];
+
         if ($isNew) {
-            $info = $contact->getCorporation()->getRemote()->createExternalContact([
-                'name' => $contact->name,
-                'mobile' => $contact->mobile,
-                'title' => (string)$contact->position,
-                'follower_user_id' => $contact->getFollower()->userId,
-                'address' => (string)$contact->address,
-                'remark' => (string)$contact->remark,
-                'state_code' => (string)$contact->stateCode,
-                'company_name' => (string)$contact->companyName,
-                'label_ids' => ArrayHelper::getColumn($contact->getLabels(), 'sourceId'),
-                'share_dept_ids' => [],
-                'share_user_ids' => [],
-            ]);
-
-            var_dump($info);die();
-        }
-
-
-
-        if (!$contact->userId) {
-
+            $dingUserId = $remote->createExternalContact($data);
+            $contact->userId = $dingUserId;
         } else {
-
+            $data['userid'] = $contact->userId;
+            $remote->saveExternalContact($data);
         }
 
-        return Craft::$app->getElements()->saveElement($contact);
+        $result = $remote->getExternalContactById($contact->userId);
+
+
+        return true;
     }
 
     // Private Methods
