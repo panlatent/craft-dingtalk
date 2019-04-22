@@ -60,11 +60,12 @@
             suggestEnvVars: true,
         }) }}
 
-        {{ forms.checkboxField({
-            label: "Primary?"|t('dingtalk',
+        {{ forms.lightSwitchField({
+            label: "This the primary corporation?"|t('dingtalk'),
             id: "primary",
             name: "primary",
-            value: corporation
+            on: corporation.primary,
+            errors: corporation.getErrors('primary'),
         }) }}
 
         <hr>

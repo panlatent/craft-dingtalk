@@ -44,6 +44,7 @@ class CorporationsController extends Controller
 
         $corporation = $corporations->createCorporation([
             'id' => $request->getBodyParam('corporationId'),
+            'primary' => $request->getBodyParam('primary'),
             'name' => $request->getBodyParam('name'),
             'handle' => $request->getBodyParam('handle'),
             'corpId' => $request->getBodyParam('corpId'),
