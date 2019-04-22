@@ -255,7 +255,7 @@ class Contact extends Element
                 ])
                 ->scalar();
 
-            if ($id !== $this->id) {
+            if ($id && $id != $this->id) {
                 $this->addError('mobile', Craft::t('dingtalk', 'Contact mobile already exists.'));
             }
         }];
