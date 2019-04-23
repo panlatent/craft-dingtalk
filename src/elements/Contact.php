@@ -212,9 +212,14 @@ class Contact extends Element
     public $remark;
 
     /**
-     * @var bool 保存时提交
+     * @var bool 保存时同步远端数据
      */
-    public $commitOnSave = true;
+    public $saveWithRemote = true;
+
+    /**
+     * @var bool 删除元素时也删除远端数据
+     */
+    public $deleteWithRemote = true;
 
     /**
      * @var User|null
@@ -390,14 +395,10 @@ class Contact extends Element
     /**
      * @inheritdoc
      */
-    public function  beforeSave(bool $isNew): bool
+    public function beforeSave(bool $isNew): bool
     {
         if ($this->stateCode === null) {
             $this->stateCode = '86';
-        }
-
-        if (!Plugin::getInstance()->getContacts()->saveRemoteContact($this)) {
-            return false;
         }
 
         return parent::beforeSave($isNew);
@@ -441,5 +442,19 @@ class Contact extends Element
         }
 
         parent::afterSave($isNew);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function beforeDelete(): bool
+    {
+        if ($this->deleteWithRemote) {
+            if (!Plugin::getInstance()->getContacts()->deleteRemoteContact($this)) {
+                return false;
+            }
+        }
+
+        return parent::beforeDelete();
     }
 }

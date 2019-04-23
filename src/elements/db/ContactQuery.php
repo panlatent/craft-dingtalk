@@ -10,12 +10,15 @@ namespace panlatent\craft\dingtalk\elements\db;
 
 use craft\elements\db\ElementQuery;
 use craft\helpers\Db;
+use panlatent\craft\dingtalk\elements\Contact;
 use panlatent\craft\dingtalk\models\ContactLabel;
 
 /**
  * Class ContactQuery
  *
  * @package panlatent\craft\dingtalk\elements\db
+ * @method Contact[] all($db = null)
+ * @method Contact|null one($db = null)
  * @author Panlatent <panlatent@gmail.com>
  */
 class ContactQuery extends ElementQuery

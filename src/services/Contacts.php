@@ -9,8 +9,10 @@
 namespace panlatent\craft\dingtalk\services;
 
 use Craft;
+use craft\helpers\Json;
 use panlatent\craft\dingtalk\elements\Contact;
-use panlatent\craft\dingtalk\events\ContactException;
+use panlatent\craft\dingtalk\errors\ContactException;
+use panlatent\craft\dingtalk\events\ContactEvent;
 use panlatent\craft\dingtalk\models\ContactLabel;
 use panlatent\craft\dingtalk\models\ContactLabelGroup;
 use panlatent\craft\dingtalk\records\ContactLabel as ContactLabelRecord;
@@ -30,6 +32,26 @@ class Contacts extends Component
 {
     // Constants
     // =========================================================================
+
+    /**
+     * @event ContactEvent The event that is triggered before a contact is saved.
+     */
+    const EVENT_BEFORE_SAVE_CONTACT = 'beforeSaveContact';
+
+    /**
+     * @event ContactEvent The event that is triggered after a contact is saved.
+     */
+    const EVENT_AFTER_SAVE_CONTACT = 'afterSaveContact';
+
+    /**
+     * @event ContactEvent The event that is triggered before a contact is deleted.
+     */
+    const EVENT_BEFORE_DELETE_CONTACT = 'beforeDeleteContact';
+
+    /**
+     * @event ContactEvent The event that is triggered after a contact is deleted.
+     */
+    const EVENT_AFTER_DELETE_CONTACT = 'afterDeleteContact';
 
     // Properties
     // =========================================================================
@@ -302,42 +324,58 @@ class Contacts extends Component
      * @param bool $runValidation
      * @return bool
      */
-    public function saveRemoteContact(Contact $contact, bool $runValidation = true): bool
+    public function saveContact(Contact $contact, bool $runValidation = true)
     {
-        $isNew = !$contact->id && !$contact->userId;
+        $isNew = !$contact->id;
 
-        if ($isNew) {
-            Contact::find()
-                ->corporationId($contact->corporationId)
-                ->mobile($contact->mobile)
-                ->one();
+        if ($this->hasEventHandlers(self::EVENT_BEFORE_SAVE_CONTACT)) {
+            $this->trigger(self::EVENT_BEFORE_SAVE_CONTACT, new ContactEvent([
+                'contact' => $contact,
+                'isNew' => $isNew,
+            ]));
         }
 
-        $remote = $contact->getCorporation()->getRemote();
+        if ($runValidation && !$contact->validate()) {
+            Craft::info('Contact not saved due to validation error: ' . Json::encode($contact->getErrors()), __METHOD__);
+        }
 
-        $data = [
-            'name' => $contact->name,
-            'mobile' => $contact->mobile,
-            'title' => (string)$contact->position,
-            'follower_user_id' => $contact->getFollower()->userId,
-            'address' => (string)$contact->address,
-            'remark' => (string)$contact->remark,
-            'state_code' => (string)$contact->stateCode,
-            'company_name' => (string)$contact->companyName,
-            'label_ids' => ArrayHelper::getColumn($contact->getLabels(), 'sourceId'),
-            'share_dept_ids' => [],
-            'share_user_ids' => [],
-        ];
+        $transaction = Craft::$app->getDb()->beginTransaction();
+        try {
+            if ($contact->saveWithRemote && !$this->_ensureRemoteContact($contact)) {
+                return false;
+            }
 
-        if ($isNew) {
-            $dingUserId = $remote->createExternalContact($data);
-            $contact->userId = $dingUserId;
-        } else {
-            $data['user_id'] = $contact->userId;
-            $remote->saveExternalContact($data);
+            if (!Craft::$app->getElements()->saveElement($contact, false)) {
+                return false;
+            }
+
+            $transaction->commit();
+        } catch (Throwable $exception) {
+            $transaction->rollBack();
+
+            throw $exception;
+        }
+
+        if ($this->hasEventHandlers(self::EVENT_AFTER_SAVE_CONTACT)) {
+            $this->trigger(self::EVENT_AFTER_SAVE_CONTACT, new ContactEvent([
+                'contact' => $contact,
+                'isNew' => $isNew,
+            ]));
         }
 
         return true;
+
+    }
+
+    /**
+     * @param Contact $contact
+     * @return bool
+     */
+    public function deleteRemoteContact(Contact $contact): bool
+    {
+        return $contact->getCorporation()
+            ->getRemote()
+            ->deleteExternalContact($contact->userId);
     }
 
     // Private Methods
@@ -361,5 +399,50 @@ class Contacts extends Component
         return (new Query())
             ->select(['id', 'groupId', 'name', 'sourceId'])
             ->from('{{%dingtalk_contactlabels}}');
+    }
+
+    /**
+     * @param Contact $contact
+     * @return bool
+     */
+    private function _ensureRemoteContact(Contact $contact): bool
+    {
+        $remote = $contact->getCorporation()->getRemote();
+
+        $data = [
+            'name' => $contact->name,
+            'mobile' => $contact->mobile, // No support update mobile
+            'title' => (string)$contact->position,
+            'follower_user_id' => $contact->getFollower()->userId,
+            'address' => (string)$contact->address,
+            'remark' => (string)$contact->remark,
+            'state_code' => (string)$contact->stateCode,
+            'company_name' => (string)$contact->companyName,
+            'label_ids' => ArrayHelper::getColumn($contact->getLabels(), 'sourceId'),
+            'share_dept_ids' => [],
+            'share_user_ids' => [],
+        ];
+
+        if (!$contact->id && !$contact->userId) {
+            $userID = $remote->createExternalContact($data);
+
+            $trashedContact = Contact::find()
+                ->corporationId($contact->corporationId)
+                ->userId($userID)
+                ->trashed(true)
+                ->one();
+
+            if ($trashedContact) {
+                Craft::$app->getElements()->restoreElement($trashedContact);
+                $contact->id = $trashedContact->id;
+            }
+
+            $contact->userId = $userID;
+        } else {
+            $data['user_id'] = $contact->userId;
+            $remote->saveExternalContact($data);
+        }
+
+        return true;
     }
 }

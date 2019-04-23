@@ -18,5 +18,8 @@ use yii\base\Model;
  */
 class SyncUtilityForm extends Model
 {
+    public $corporationIds;
+
+    public $types;
 
 }

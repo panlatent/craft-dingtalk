@@ -10,6 +10,7 @@ namespace panlatent\craft\dingtalk\controllers;
 
 use Craft;
 use craft\web\Controller;
+use panlatent\craft\dingtalk\models\SyncUtilityForm;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\queue\jobs\SyncApprovalsJob;
 use panlatent\craft\dingtalk\queue\jobs\SyncUsersJob;
@@ -68,6 +69,18 @@ class UtilitiesController extends Controller
 
         $corporations = Plugin::getInstance()->getCorporations();
         $request = Craft::$app->getRequest();
+
+        $form = new SyncUtilityForm();
+
+        if ($form->load($request->getBodyParams(), '') && !$form->validate()) {
+            Craft::$app->getSession()->setError("Create sync jobs error.");
+
+            Craft::$app->getUrlManager()->setRouteParams([
+                'sync' => $form,
+            ]);
+
+            return null;
+        }
 
         $corporationIds = $request->getBodyParam('corporationIds', []);
         $types = $request->getBodyParam('types', []);

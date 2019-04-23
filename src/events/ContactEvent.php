@@ -8,15 +8,24 @@
 
 namespace panlatent\craft\dingtalk\events;
 
-use yii\base\Exception;
+use panlatent\craft\dingtalk\elements\Contact;
+use yii\base\Event;
 
 /**
- * Class ContactException
+ * Class ContactEvent
  *
  * @package panlatent\craft\dingtalk\events
  * @author Panlatent <panlatent@gmail.com>
  */
-class ContactException extends Exception
+class ContactEvent extends Event
 {
+    /**
+     * @var Contact|null
+     */
+    public $contact;
 
+    /**
+     * @var bool
+     */
+    public $isNew = false;
 }

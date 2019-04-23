@@ -490,34 +490,34 @@ class User extends Element
     public function afterSave(bool $isNew)
     {
         if ($isNew) {
-            $userRecord = new UserRecord();
+            $record = new UserRecord();
+            $record->id = $this->id;
         } else {
-            $userRecord = UserRecord::findOne(['id' => $this->id]);
+            $record = UserRecord::findOne(['id' => $this->id]);
         }
 
-        $userRecord->id = $this->id;
-        $userRecord->corporationId = $this->corporationId;
-        $userRecord->userId = $this->userId;
-        $userRecord->name = $this->name;
-        $userRecord->position = $this->position;
-        $userRecord->tel = $this->tel;
-        $userRecord->isAdmin = (bool)$this->isAdmin;
-        $userRecord->isBoss = (bool)$this->isBoss;
-        $userRecord->isLeader = (bool)$this->isLeader;
-        $userRecord->isHide = (bool)$this->isHide;
-        $userRecord->isLeaved = (bool)$this->isLeaved;
-        $userRecord->isActive = (bool)$this->isActive;
-        $userRecord->avatar = $this->avatar;
-        $userRecord->jobNumber = $this->jobNumber;
-        $userRecord->email = $this->email;
-        $userRecord->orgEmail = $this->orgEmail;
-        $userRecord->mobile = $this->mobile;
-        $userRecord->hiredDate = $this->hiredDate;
-        $userRecord->leavedDate = $this->leavedDate;
-        $userRecord->remark = $this->remark;
-        $userRecord->sortOrder = $this->sortOrder;
+        $record->corporationId = $this->corporationId;
+        $record->userId = $this->userId;
+        $record->name = $this->name;
+        $record->position = $this->position;
+        $record->tel = $this->tel;
+        $record->isAdmin = (bool)$this->isAdmin;
+        $record->isBoss = (bool)$this->isBoss;
+        $record->isLeader = (bool)$this->isLeader;
+        $record->isHide = (bool)$this->isHide;
+        $record->isLeaved = (bool)$this->isLeaved;
+        $record->isActive = (bool)$this->isActive;
+        $record->avatar = $this->avatar;
+        $record->jobNumber = $this->jobNumber;
+        $record->email = $this->email;
+        $record->orgEmail = $this->orgEmail;
+        $record->mobile = $this->mobile;
+        $record->hiredDate = $this->hiredDate;
+        $record->leavedDate = $this->leavedDate;
+        $record->remark = $this->remark;
+        $record->sortOrder = $this->sortOrder;
 
-        $userRecord->save(false);
+        $record->save(false);
 
         if ($this->_primaryDepartment) {
             if (empty($this->_departments)) {

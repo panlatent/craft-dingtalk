@@ -124,7 +124,7 @@ class SyncExternalContactsJob extends BaseJob
             $contact->position = isset($result['title']) && $result['title'] != 'null' ? $result['title'] : null;
             $contact->address = $result['address'] ?? null;
             $contact->remark = $result['remark'] ?? null;
-            $contact->commitOnSave = false;
+            $contact->saveWithRemote = false;
 
             if (isset($result['label_ids'])) {
                 $contact->labels = $contacts->getLabelsBySourceIds($result['label_ids']);

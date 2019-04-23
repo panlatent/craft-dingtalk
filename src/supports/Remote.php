@@ -287,6 +287,17 @@ class Remote extends Component
     }
 
     /**
+     * @param string $userId
+     * @return bool
+     */
+    public function deleteExternalContact(string $userId): bool
+    {
+        $result = $this->client->extcontact->delete($userId);
+
+        return isset($result['errcode']) && $result['errcode'] == 0;
+    }
+
+    /**
      * 批量获取审批实例 ID
      *
      * @param string $processCode
