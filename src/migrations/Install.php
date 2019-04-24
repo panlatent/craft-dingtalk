@@ -110,7 +110,8 @@ class Install extends Migration
         ]);
 
         $this->createIndex(null, '{{%dingtalk_users}}', 'corporationId');
-        $this->createIndex(null, '{{%dingtalk_users}}', ['userId'], true);
+        $this->createIndex(null, '{{%dingtalk_users}}', 'userId');
+        $this->createIndex(null, '{{%dingtalk_users}}', ['corporationId', 'userId'], true);
         $this->createIndex(null, '{{%dingtalk_users}}', ['name']);
         $this->createIndex(null, '{{%dingtalk_users}}', ['mobile']);
 
