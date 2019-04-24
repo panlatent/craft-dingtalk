@@ -245,6 +245,7 @@ class SyncUsersJob extends BaseJob
         $leavedUsers = User::find()
             ->corporationId($this->corporationId)
             ->andWhere(['not in', 'dingtalk_users.id', $incumbentIds])
+            ->isLeaved(false)
             ->all();
 
         if (!empty($leavedUsers)) {

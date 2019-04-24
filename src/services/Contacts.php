@@ -426,6 +426,9 @@ class Contacts extends Component
 
         if (!$contact->id && !$contact->userId) {
             $userID = $remote->createExternalContact($data);
+            if (!$userID) {
+                return false;
+            }
 
             $trashedContact = Contact::find()
                 ->corporationId($contact->corporationId)
@@ -441,7 +444,9 @@ class Contacts extends Component
             $contact->userId = $userID;
         } else {
             $data['user_id'] = $contact->userId;
-            $remote->saveExternalContact($data);
+            if (!$remote->saveExternalContact($data)) {
+                return false;
+            }
         }
 
         return true;

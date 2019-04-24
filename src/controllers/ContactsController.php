@@ -84,30 +84,19 @@ class ContactsController extends Controller
         }
 
         $labels = [];
-        foreach ($request->getBodyParam('labels', []) as $label) {
+        foreach (array_filter($request->getBodyParam('labels', [])) as $label) {
             $labels[] = $contacts->getLabelById($label);
         }
-
         $contact->labels = $labels;
 
-        $shareDepartmentIds = $request->getBodyParam('shareDepartments');
+        $shareDepartmentIds = $request->getBodyParam('departments');
         $shareUserIds = $request->getBodyParam('shareUsers');
 
-        if ($shareDepartmentIds === '') {
-            $shareDepartments = [];
-        } elseif ($shareDepartmentIds == '*') {
-            $shareDepartments = Plugin::getInstance()
+        $shareDepartments = [];
+        foreach ($shareDepartmentIds as $shareDepartmentId) {
+            $shareDepartments[] = Plugin::getInstance()
                 ->getDepartments()
-                ->findDepartments([
-                    'corporationId' => $request->getBodyParam('corporationId'),
-                ]);
-        } else {
-            $shareDepartments = [];
-            foreach ($shareDepartmentIds as $shareDepartmentId) {
-                $shareDepartments[] = Plugin::getInstance()
-                    ->getDepartments()
-                    ->getDepartmentById($shareDepartmentId);
-            }
+                ->getDepartmentById($shareDepartmentId);
         }
 
         if ($shareUserIds === '') {

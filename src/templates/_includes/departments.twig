@@ -20,16 +20,54 @@
     {% endif %}
 {% endif %}
 
-{%- set label = label is defined ? label : "Share Departments"|t('dingtalk') %}
+{%- set label = label is defined ? label : "Departments"|t('dingtalk') %}
+{%- set name = name is defined ? name : "departments" %}
 
-{% import "_includes/forms" as forms %}
+{% macro departmentList(departments, values, parent) %}
 
-{{ forms.checkboxSelectField({
-    label: label,
-    id: "shareDepartments",
-    name: "shareDepartments",
-    values: values,
-    options: departmentOptions,
-    errors: errors ?? null,
-    showAllOption: true,
-}) }}
+    {% from "_includes/forms" import checkbox %}
+    {% from _self import departmentList %}
+
+    <ul>
+        {% for department in departments %}
+            {% if department.parentId == (parent.id ?? null) %}
+                {% set checked = false %}
+                {% for value in values if value.id == department.id%}
+                    {% set checked = true %}
+                {% endfor %}
+                <li>
+                    {{ checkbox({
+                        label: department.name,
+                        id: "departments" ~ department.id,
+                        name: "departments[]",
+                        value: department.id,
+                        checked: checked is defined ? checked : false,
+                        errors: errors ?? null,
+                    }) }}
+
+                    {{
+                        departmentList(departments, values, department)
+                    }}
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% from _self import departmentList %}
+
+<div class="departments">
+    <h3>{{ label }}</h3>
+    {{ departmentList(departments, values) }}
+</div>
+
+{% css %}
+
+.departments {
+
+}
+
+.departments li ul {
+    margin-left: 20px;
+}
+{% endcss %}

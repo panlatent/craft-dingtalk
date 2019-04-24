@@ -8,7 +8,8 @@
 ] %}
 {% set tabs = [
     {label: "Settings"|t('dingtalk'), url: '#settings'},
-    {label: "Shares"|t('dingtalk'), url: '#shares'},
+    {label: "Labels"|t('dingtalk'), url: '#labels'},
+    {label: "Share Scopes"|t('dingtalk'), url: '#shares'},
 ] %}
 
 {% set isNewContact = contact.id ? false : true %}
@@ -18,7 +19,6 @@
 {% block actionButton %}
     <div class="btngroup">
         <input type="submit" class="btn submit" value="{{ 'Save'|t('app') }}">
-
         <div class="btn submit menubtn"></div>
         <div class="menu">
             {% if not isNewContact %}
@@ -41,6 +41,7 @@
 
         {{ forms.textField({
             label: "Name"|t('dingtalk'),
+            required: true,
             id: "name",
             name: "name",
             value: contact.name,
@@ -49,6 +50,7 @@
 
         {{ forms.textField({
             label: "Mobile"|t('dingtalk'),
+            required: true,
             id: "mobile",
             name: "mobile",
             value: contact.mobile,
@@ -57,9 +59,10 @@
 
         {{ forms.elementSelectField({
             label: "Follower"|t('dingtalk'),
+            required: true,
             id: "followerId",
             name: "followerId",
-            elements: isNewContact ? [] : [contact.follower],
+            elements: contact.followerId ? [contact.follower] : [],
             errors: contact.getErrors('followerId'),
             elementType: "panlatent\\craft\\dingtalk\\elements\\User",
             sources: ['corporation:' ~ contact.corporationId],
@@ -105,14 +108,14 @@
             value: contact.remark,
             errors: contact.getErrors("remark"),
         }) }}
+    </div>
 
-        <hr>
-
-        <h3>标签</h3>
+    <div id="labels" class="hidden">
 
         {% include "dingtalk/_includes/contactlabels" with {
             corporationId: contact.corporationId,
             contact: contact,
+            errors: contact.getErrors('labels'),
         } only %}
 
     </div>
@@ -121,11 +124,12 @@
 
         {% include "dingtalk/_includes/departments" with {
             corporationId: contact.corporationId,
-            selectedDepartments: contact.shareDepartments,
+            name: "shareDepartmentIds",
+            values: contact.shareDepartments,
         } only %}
 
         {{ forms.elementSelectField({
-            label: "Share Users"|t('dingtalk'),
+            label: "Users"|t('dingtalk'),
             id: "shareUsers",
             name: "shareUsers",
             elements: contact.shareUsers,
@@ -137,7 +141,3 @@
     </div>
 
 {% endblock %}
-
-{% js %}
-    // $('#followerId').on(
-{% endjs %}

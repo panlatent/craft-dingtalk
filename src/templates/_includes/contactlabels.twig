@@ -12,29 +12,37 @@
 
 {% import "_includes/forms" as forms %}
 
-{% for labelGroup in craft.dingtalk.contacts.getCorporationLabelGroups(corporationId) %}
-    {% set value = null %}
-    {% set labelOptions = [] %}
-    {% for label in labelGroup.labels %}
-        {% set labelOptions = labelOptions|merge([
-            {
-                label: label.name,
-                value: label.id,
-            }
-        ]) %}
+<div>
+    {% if errors is defined %}
+        {{ forms.errorList(errors) }}
+    {% endif %}
 
-        {% if label.id in selectedLabelIds %}
-            {% set value = label.id %}
-        {% endif %}
+    {% for labelGroup in craft.dingtalk.contacts.getCorporationLabelGroups(corporationId) %}
+        {% set value = null %}
+        {% set labelOptions = [{
+            label: "Not set"|t('dingtalk'),
+            value: null,
+        }] %}
+        {% for label in labelGroup.labels %}
+            {% set labelOptions = labelOptions|merge([
+                {
+                    label: label.name,
+                    value: label.id,
+                }
+            ]) %}
+
+            {% if label.id in selectedLabelIds %}
+                {% set value = label.id %}
+            {% endif %}
+        {% endfor %}
+
+        {{ forms.radioGroupField({
+            label: '<span class="status ' ~ labelGroup.color ~ '"></span>'  ~ labelGroup.name,
+            id: "labels-" ~ labelGroup.id|id,
+            name: "labels[" ~ labelGroup.id|id ~ "]",
+            value: value,
+            options: labelOptions
+        }) }}
     {% endfor %}
 
-    {{ forms.radioGroupField({
-        label: labelGroup.name,
-        id: "labels-" ~ labelGroup.id|id,
-        name: "labels[" ~ labelGroup.id|id ~ "]",
-        value: value,
-        options: labelOptions,
-        errors: errors ?? null
-    }) }}
-{% endfor %}
-
+</div>

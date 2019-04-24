@@ -1,17 +1,10 @@
-{% extends "dingtalk/_layouts/settingscp" %}
+{% extends "dingtalk/_layouts/settings" %}
 {% set title = 'Users Settings'|t('dingtalk') %}
 {% set fullPageForm = true %}
 
-{% block sidebar %}
-    <nav>
-        <ul>
-            <li><a class="sel" href="#">{{ 'Fields'|t('app') }}</a></li>
-            <li><a href="{{ url('settings/plugins/dingtalk/users/smartworks') }}">{{ 'Smart Works'|t('dingtalk') }}</a></li>
-        </ul>
-    </nav>
-{% endblock %}
-
 {% block content %}
+    <h2>{{ "Users"|t('dingtalk') }}</h2>
+
     <input type="hidden" name="action" value="dingtalk/users/save-user-field-layout">
     {{ csrfInput() }}
 

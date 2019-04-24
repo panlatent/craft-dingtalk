@@ -356,7 +356,6 @@ class User extends Element
         return $attributes;
     }
 
-
     /**
      * @inheritdoc
      */
@@ -517,8 +516,7 @@ class User extends Element
         $record->remark = $this->remark;
         $record->sortOrder = $this->sortOrder;
         $record->save(false);
-
-
+        
         if ($this->_departments !== null) {
             $db = Craft::$app->getDb();
 

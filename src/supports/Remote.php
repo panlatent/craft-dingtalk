@@ -8,8 +8,10 @@
 
 namespace panlatent\craft\dingtalk\supports;
 
+use Craft;
 use EasyDingTalk\Kernel\Exceptions\ClientError;
 use Generator;
+use Throwable;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
 
@@ -55,6 +57,16 @@ class Remote extends Component
                 'corp_secret' => $this->corpSecret,
             ]);
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllApps(): array
+    {
+        $results = $this->client->microapp->list();
+
+        return $results['appList'];
     }
 
     /**
@@ -264,26 +276,43 @@ class Remote extends Component
     }
 
     /**
+     * 创建外部联系人，返回外部联系人在钉钉中的ID
+     *
      * @param array $config
-     * @return string
+     * @return string|null
      */
-    public function createExternalContact(array $config): string
+    public function createExternalContact(array $config)
     {
-        $result = $this->client->extcontact->create([
-            'contact' => $config
-        ]);
+        try {
+            $result = $this->client->extcontact->create([
+                'contact' => $config
+            ]);
 
-        return $result['userid'];
+            return $result['userid'];
+        } catch (Throwable $exception) {
+            Craft::error($exception->getMessage(), __METHOD__);
+        }
+
+        return null;
     }
 
     /**
      * @param array $config
+     * @return bool
      */
-    public function saveExternalContact(array $config)
+    public function saveExternalContact(array $config): bool
     {
-        $this->client->extcontact->update([
-            'contact' => $config
-        ]);
+        try {
+            $this->client->extcontact->update([
+                'contact' => $config
+            ]);
+        } catch (Throwable $exception) {
+            Craft::error($exception->getMessage(), __METHOD__);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
