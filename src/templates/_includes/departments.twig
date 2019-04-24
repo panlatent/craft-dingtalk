@@ -1,0 +1,35 @@
+{% set corporation = corporation is defined ? corporatio : craft.dingtalk.corporations.getCorporationById(corporationId) %}
+{% set departments = department is defined ? departments : corporation.departments %}
+
+{% set departmentOptions = [] %}
+{% for department in departments %}
+    {% set departmentOptions = departmentOptions|merge([
+        {
+            label: department.name,
+            value: department.id,
+        }
+    ]) %}
+{% endfor %}
+
+{% if values is not defined %}
+    {% set values = [] %}
+    {% if selectedDepartments is defined %}
+        {% for selectedDepartment in selectedDepartments %}
+            {% set values = values|merge([selectedDepartment.id]) %}
+        {% endfor %}
+    {% endif %}
+{% endif %}
+
+{%- set label = label is defined ? label : "Share Departments"|t('dingtalk') %}
+
+{% import "_includes/forms" as forms %}
+
+{{ forms.checkboxSelectField({
+    label: label,
+    id: "shareDepartments",
+    name: "shareDepartments",
+    values: values,
+    options: departmentOptions,
+    errors: errors ?? null,
+    showAllOption: true,
+}) }}

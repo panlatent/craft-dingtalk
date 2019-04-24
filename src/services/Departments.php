@@ -11,6 +11,8 @@ namespace panlatent\craft\dingtalk\services;
 use Craft;
 use craft\helpers\Db;
 use craft\helpers\Json;
+use panlatent\craft\dingtalk\db\Table;
+use panlatent\craft\dingtalk\elements\Contact;
 use panlatent\craft\dingtalk\errors\DepartmentException;
 use panlatent\craft\dingtalk\models\Department;
 use panlatent\craft\dingtalk\models\DepartmentCriteria;
@@ -287,8 +289,17 @@ class Departments extends Component
     private function _createQuery(): Query
     {
         return (new Query())
-            ->select(['id', 'corporationId', 'dingDepartmentId', 'name', 'parentId', 'settings', 'sortOrder', 'archived'])
-            ->from('{{%dingtalk_departments}}')
+            ->select([
+                'departments.id',
+                'departments.corporationId',
+                'departments.dingDepartmentId',
+                'departments.name',
+                'departments.parentId',
+                'departments.settings',
+                'departments.sortOrder',
+                'departments.archived',
+            ])
+            ->from(Table::DEPARTMENTS . ' departments')
             ->orderBy('sortOrder');
     }
 
@@ -316,6 +327,12 @@ class Departments extends Component
 
         if ($criteria->root !== null) {
             $query->andWhere([$criteria->root ? 'is' : 'is not', 'parentId', null]);
+        }
+
+        if ($criteria->shareContactOf) {
+            $contactId = $criteria->shareContactOf instanceof Contact ? $criteria->shareContactOf->id : $criteria->shareContactOf;
+            $query->leftJoin(Table::CONTACTSHARES_DEPARTMENTS . ' contactshares_departments', '[[contactshares_departments.departmentId]] = [[departments.id]]');
+            $query->andWhere(Db::parseParam('contactshares_departments.contactId', $contactId));
         }
     }
 }

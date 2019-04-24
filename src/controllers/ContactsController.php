@@ -11,6 +11,8 @@ namespace panlatent\craft\dingtalk\controllers;
 use Craft;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\elements\Contact;
+use panlatent\craft\dingtalk\elements\User;
+use panlatent\craft\dingtalk\Plugin;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -36,7 +38,9 @@ class ContactsController extends Controller
                     throw new NotFoundHttpException();
                 }
             } else {
-                $contact = new Contact();
+                $contact = new Contact([
+                    'corporationId' => Craft::$app->getRequest()->getRequiredQueryParam('corporationId'),
+                ]);
             }
         }
 
@@ -63,6 +67,7 @@ class ContactsController extends Controller
         $this->requirePostRequest();
 
         $request = Craft::$app->getRequest();
+        $contacts = Plugin::getInstance()->getContacts();
 
         $contactId = $request->getBodyParam('contactId');
         $followerId = $request->getBodyParam('followerId.0');
@@ -78,20 +83,54 @@ class ContactsController extends Controller
             ]);
         }
 
-        $contact->name =  $request->getBodyParam('name');
+        $labels = [];
+        foreach ($request->getBodyParam('labels', []) as $label) {
+            $labels[] = $contacts->getLabelById($label);
+        }
+
+        $contact->labels = $labels;
+
+        $shareDepartmentIds = $request->getBodyParam('shareDepartments');
+        $shareUserIds = $request->getBodyParam('shareUsers');
+
+        if ($shareDepartmentIds === '') {
+            $shareDepartments = [];
+        } elseif ($shareDepartmentIds == '*') {
+            $shareDepartments = Plugin::getInstance()
+                ->getDepartments()
+                ->findDepartments([
+                    'corporationId' => $request->getBodyParam('corporationId'),
+                ]);
+        } else {
+            $shareDepartments = [];
+            foreach ($shareDepartmentIds as $shareDepartmentId) {
+                $shareDepartments[] = Plugin::getInstance()
+                    ->getDepartments()
+                    ->getDepartmentById($shareDepartmentId);
+            }
+        }
+
+        if ($shareUserIds === '') {
+            $shareUserIds = [];
+        }
+
+        $contact->name = $request->getBodyParam('name');
         $contact->mobile = $request->getBodyParam('mobile');
         $contact->position = $request->getBodyParam('position');
         $contact->followerId = $followerId;
-        $contact->stateCode =  $request->getBodyParam('stateCode');
-        $contact->companyName =  $request->getBodyParam('companyName');
-        $contact->address =  $request->getBodyParam('address');
-        $contact->remark =  $request->getBodyParam('remark');
+        $contact->stateCode = $request->getBodyParam('stateCode');
+        $contact->companyName = $request->getBodyParam('companyName');
+        $contact->address = $request->getBodyParam('address');
+        $contact->remark = $request->getBodyParam('remark');
+        $contact->labels = $labels;
+        $contact->shareDepartments = $shareDepartments;
+        $contact->shareUsers = $shareUserIds ? User::find()->id($shareUserIds)->all() : [];
 
-        if (!Craft::$app->getElements()->saveElement($contact)) {
+        if (!$contacts->saveContact($contact)) {
             Craft::$app->getSession()->setError(Craft::t('dingtalk', 'Couldn’t save contact.'));
 
             Craft::$app->getUrlManager()->setRouteParams([
-                'contact' => $contact
+                'contact' => $contact,
             ]);
 
             return null;
@@ -102,4 +141,41 @@ class ContactsController extends Controller
         return $this->redirectToPostedUrl();
     }
 
+    /**
+     * @return Response
+     */
+    public function actionDeleteContact(): Response
+    {
+        $this->requirePostRequest();
+
+        $request = Craft::$app->getRequest();
+        $contactId = $request->getRequiredBodyParam('contactId');
+
+        $contact = Contact::find()->id($contactId)->one();
+        if (!$contact) {
+            throw new NotFoundHttpException('Contact not found');
+        }
+
+        if (!Craft::$app->getElements()->deleteElement($contact)) {
+            if ($request->getAcceptsJson()) {
+                return $this->asJson(['success' => false]);
+            }
+
+            Craft::$app->getSession()->setError(Craft::t('dingtalk', 'Couldn’t delete contact.'));
+
+            Craft::$app->getUrlManager()->setRouteParams([
+                'contact' => $contact
+            ]);
+
+            return null;
+        }
+
+        if ($request->getAcceptsJson()) {
+            return $this->asJson(['success' => true]);
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('dingtalk', 'Contact deleted.'));
+
+        return $this->redirectToPostedUrl($contact);
+    }
 }

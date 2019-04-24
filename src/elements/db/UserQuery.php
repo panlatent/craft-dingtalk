@@ -10,6 +10,8 @@ namespace panlatent\craft\dingtalk\elements\db;
 
 use craft\elements\db\ElementQuery;
 use craft\helpers\Db;
+use panlatent\craft\dingtalk\db\Table;
+use panlatent\craft\dingtalk\elements\Contact;
 use panlatent\craft\dingtalk\elements\User;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\Plugin;
@@ -96,6 +98,11 @@ class UserQuery extends ElementQuery
      * @var bool|null
      */
     public $isLeaved;
+
+    /**
+     * @var Contact|int|null
+     */
+    public $shareContactOf;
 
     // Public Methods
     // =========================================================================
@@ -243,6 +250,20 @@ class UserQuery extends ElementQuery
         return $this;
     }
 
+    /**
+     * @param Contact|int|null $value
+     * @return $this
+     */
+    public function shareContactOf($value)
+    {
+        $this->shareContactOf = $value;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function beforePrepare(): bool
     {
         $this->joinElementTable('dingtalk_users');
@@ -308,6 +329,12 @@ class UserQuery extends ElementQuery
 
         if ($this->jobNumber) {
             $this->subQuery->andWhere(Db::parseParam('dingtalk_users.jobNumber', $this->jobNumber));
+        }
+
+        if ($this->shareContactOf) {
+            $contactId = $this->shareContactOf instanceof Contact ? $this->shareContactOf->id : $this->shareContactOf;
+            $this->subQuery->rightJoin(Table::CONTACTSHARES_USERS . ' contactshares_users', '[[contactshares_users.userId]] = [[dingtalk_users.id]]');
+            $this->subQuery->andWhere(Db::parseParam('contactshares_users.contactId', $contactId));
         }
 
         $this->_prepareStatusConditions();

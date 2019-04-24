@@ -9,6 +9,7 @@
 namespace panlatent\craft\dingtalk\models;
 
 use craft\base\Model;
+use panlatent\craft\dingtalk\elements\Contact;
 
 /**
  * Class DepartmentCriteria
@@ -42,6 +43,11 @@ class DepartmentCriteria extends Model
      * @var bool|null
      */
     public $root;
+
+    /**
+     * @var Contact|int|null
+     */
+    public $shareContactOf;
 
     /**
      * @var bool|null

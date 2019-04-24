@@ -126,8 +126,18 @@ class SyncExternalContactsJob extends BaseJob
             $contact->remark = $result['remark'] ?? null;
             $contact->saveWithRemote = false;
 
-            if (isset($result['label_ids'])) {
+            if (!empty($result['label_ids'])) {
                 $contact->labels = $contacts->getLabelsBySourceIds($result['label_ids']);
+            }
+
+            if (!empty($result['share_dept_ids'])) {
+                $contact->shareDepartments = Plugin::getInstance()->getDepartments()->findDepartments([
+                    'dingDepartmentId' => $result['share_dept_ids']
+                ]);
+            }
+
+            if (!empty($result['share_user_ids'])) {
+                $contact->shareUsers = User::find()->userId($result['share_user_ids'])->all();
             }
 
             if (!$elements->saveElement($contact)) {

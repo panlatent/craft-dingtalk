@@ -1,0 +1,40 @@
+{% set contact = contact is defined ? contact : craft.app.elements.getElementById(contactId, "panlatent\\craft\\dingtalk\\elements\\Contact") %}
+{% set corporation = corporation is defined ? corporatio : craft.dingtalk.corporations.getCorporationById(corporationId) %}
+
+{%- set label = label is defined ? label : "Share Departments"|t('dingtalk') %}
+
+{% set selectedLabelIds = [] %}
+{% for label in contact.labels %}
+    {% set selectedLabelIds = selectedLabelIds|merge([
+        label.id
+    ]) %}
+{% endfor %}
+
+{% import "_includes/forms" as forms %}
+
+{% for labelGroup in craft.dingtalk.contacts.getCorporationLabelGroups(corporationId) %}
+    {% set value = null %}
+    {% set labelOptions = [] %}
+    {% for label in labelGroup.labels %}
+        {% set labelOptions = labelOptions|merge([
+            {
+                label: label.name,
+                value: label.id,
+            }
+        ]) %}
+
+        {% if label.id in selectedLabelIds %}
+            {% set value = label.id %}
+        {% endif %}
+    {% endfor %}
+
+    {{ forms.radioGroupField({
+        label: labelGroup.name,
+        id: "labels-" ~ labelGroup.id|id,
+        name: "labels[" ~ labelGroup.id|id ~ "]",
+        value: value,
+        options: labelOptions,
+        errors: errors ?? null
+    }) }}
+{% endfor %}
+

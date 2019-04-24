@@ -14,7 +14,9 @@ use craft\elements\db\ElementQueryInterface;
 use craft\helpers\UrlHelper;
 use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\elements\db\ContactQuery;
+use panlatent\craft\dingtalk\elements\db\UserQuery;
 use panlatent\craft\dingtalk\models\ContactLabel;
+use panlatent\craft\dingtalk\models\Department;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\records\Contact as ContactRecord;
 use yii\base\InvalidConfigException;
@@ -26,6 +28,8 @@ use yii\db\Query;
  * @package panlatent\craft\dingtalk\elements
  * @property User $follower
  * @property ContactLabel[] $labels
+ * @property Department[] $shareDepartments
+ * @property User[] $shareUsers
  * @author Panlatent <panlatent@gmail.com>
  */
 class Contact extends Element
@@ -231,6 +235,16 @@ class Contact extends Element
      */
     private $_labels;
 
+    /**
+     * @var Department[]|null
+     */
+    private $_shareDepartments;
+
+    /**
+     * @var User[]|null
+     */
+    private $_shareUsers;
+
     // Public Methods
     // =========================================================================
 
@@ -248,8 +262,8 @@ class Contact extends Element
     public function rules()
     {
         $rules = parent::rules();
-        $rules[] = [['corporationId', 'userId', 'name', 'mobile', 'followerId', 'stateCode'], 'required'];
-        $rules[] = [['position', 'companyName', 'address', 'remark'], 'string'];
+        $rules[] = [['corporationId', 'name', 'mobile', 'followerId', 'stateCode'], 'required'];
+        $rules[] = [['userId', 'position', 'companyName', 'address', 'remark'], 'string'];
         $rules[] = [['mobile'], function() {
             $id = (new Query())
                 ->select('id')
@@ -393,6 +407,63 @@ class Contact extends Element
     }
 
     /**
+     * @return Department[]
+     */
+    public function getShareDepartments(): array
+    {
+        if ($this->_shareDepartments !== null) {
+            return $this->_shareDepartments;
+        }
+
+        if (!$this->id) {
+            return [];
+        }
+
+        $this->_shareDepartments = Plugin::getInstance()->getDepartments()
+            ->findDepartments([
+                'shareContactOf' => $this,
+            ]);
+
+        return $this->_shareDepartments;
+    }
+
+    /**
+     * @param Department[] $departments
+     */
+    public function setShareDepartments(array $departments)
+    {
+        $this->_shareDepartments = $departments;
+    }
+
+    /**
+     * @return User[]
+     */
+    public function getShareUsers(): array
+    {
+        if ($this->_shareUsers !== null) {
+            return $this->_shareUsers;
+        }
+
+        if (!$this->id) {
+            return [];
+        }
+
+        $this->_shareUsers =  User::find()
+            ->shareContactOf($this)
+            ->all();
+
+        return $this->_shareUsers;
+    }
+
+    /**
+     * @param User[] $users
+     */
+    public function setShareUsers(array $users)
+    {
+        $this->_shareUsers = $users;
+    }
+
+    /**
      * @inheritdoc
      */
     public function beforeSave(bool $isNew): bool
@@ -436,6 +507,64 @@ class Contact extends Element
                     ->upsert('{{%dingtalk_contactlabels_contacts}}', [
                         'labelId' => $label->id,
                         'contactId' => $this->id,
+                    ])
+                    ->execute();
+            }
+        }
+
+        $db = Craft::$app->getDb();
+
+        if ($this->_shareDepartments) {
+            $oldShareDepartmentIds = (new Query())
+                ->select('departmentId')
+                ->from(Table::CONTACTSHARES_DEPARTMENTS)
+                ->where(['contactId' => $this->id])
+                ->indexBy('id')
+                ->column();
+
+            foreach ($this->getShareDepartments() as $department) {
+                $db->createCommand()
+                    ->upsert(Table::CONTACTSHARES_DEPARTMENTS, [
+                        'contactId' => $this->id,
+                        'departmentId' => $department->id,
+                    ])
+                    ->execute();
+
+                unset($oldShareDepartmentIds[$department->id]);
+            }
+
+            if ($oldShareDepartmentIds) {
+                $db->createCommand()
+                    ->delete(Table::CONTACTSHARES_DEPARTMENTS, [
+                        'id' => $oldShareDepartmentIds,
+                    ])
+                    ->execute();
+            }
+        }
+
+        if ($this->_shareUsers) {
+            $oldShareUserIds = (new Query())
+                ->select('userId')
+                ->from(Table::CONTACTSHARES_USERS)
+                ->where(['contactId' => $this->id])
+                ->indexBy('id')
+                ->column();
+
+            foreach ($this->_shareUsers as $user) {
+                $db->createCommand()
+                    ->upsert(Table::CONTACTSHARES_USERS, [
+                        'contactId' => $this->id,
+                        'userId' => $user->id,
+                    ])
+                    ->execute();
+
+                unset($oldShareUserIds[$user->id]);
+            }
+
+            if ($oldShareUserIds) {
+                $db->createCommand()
+                    ->delete(Table::CONTACTSHARES_USERS, [
+                        'id' => $oldShareUserIds,
                     ])
                     ->execute();
             }

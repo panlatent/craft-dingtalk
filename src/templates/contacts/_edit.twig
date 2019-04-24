@@ -8,28 +8,36 @@
 ] %}
 {% set tabs = [
     {label: "Settings"|t('dingtalk'), url: '#settings'},
+    {label: "Shares"|t('dingtalk'), url: '#shares'},
 ] %}
 
+{% set isNewContact = contact.id ? false : true %}
+
 {% import "_includes/forms" as forms %}
+
+{% block actionButton %}
+    <div class="btngroup">
+        <input type="submit" class="btn submit" value="{{ 'Save'|t('app') }}">
+
+        <div class="btn submit menubtn"></div>
+        <div class="menu">
+            {% if not isNewContact %}
+                <hr>
+                <ul>
+                    <li><a class="formsubmit error" data-action="dingtalk/contacts/delete-contact" data-confirm="{{ 'Are you sure you want to delete this contact?'|t('dingtalk') }}" data-redirect="{{ 'dingtalk/contacts#'|hash }}">{{ 'Delete'|t('app') }}</a></li>
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
 
 {% block content %}
     <input type="hidden" name="action" value="dingtalk/contacts/save-contact">
     <input type="hidden" name="contactId" value="{{ contact.id }}">
-    {% if contact.id %}
-        <input type="hidden" name="corporationId" value="{{ contact.corporationId }}">
-    {% endif %}
+    <input type="hidden" name="corporationId" value="{{ contact.corporationId }}">
     {{ redirectInput('dingtalk/contacts') }}
 
     <div id="settings">
-
-{#        {{ forms.selectField({#}
-{#            label: "Corporation"|t('dingtalk'),#}
-{#            id: "corporationId",#}
-{#            name: "corporationId",#}
-{#            value: contact.corporationId,#}
-{#            options: [],#}
-{#            errors: contact.getErrors('corporationId'),#}
-{#        }) }}#}
 
         {{ forms.textField({
             label: "Name"|t('dingtalk'),
@@ -51,9 +59,10 @@
             label: "Follower"|t('dingtalk'),
             id: "followerId",
             name: "followerId",
-            elements: [contact.follower],
+            elements: isNewContact ? [] : [contact.follower],
             errors: contact.getErrors('followerId'),
             elementType: "panlatent\\craft\\dingtalk\\elements\\User",
+            sources: ['corporation:' ~ contact.corporationId],
             limit: 1,
         }) }}
 
@@ -100,6 +109,30 @@
         <hr>
 
         <h3>标签</h3>
+
+        {% include "dingtalk/_includes/contactlabels" with {
+            corporationId: contact.corporationId,
+            contact: contact,
+        } only %}
+
+    </div>
+
+    <div id="shares" class="hidden">
+
+        {% include "dingtalk/_includes/departments" with {
+            corporationId: contact.corporationId,
+            selectedDepartments: contact.shareDepartments,
+        } only %}
+
+        {{ forms.elementSelectField({
+            label: "Share Users"|t('dingtalk'),
+            id: "shareUsers",
+            name: "shareUsers",
+            elements: contact.shareUsers,
+            errors: contact.getErrors('shareUsers'),
+            elementType: "panlatent\\craft\\dingtalk\\elements\\User",
+            sources: ['corporation:' ~ contact.corporationId],
+        }) }}
 
     </div>
 

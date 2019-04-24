@@ -337,6 +337,7 @@ class Contacts extends Component
 
         if ($runValidation && !$contact->validate()) {
             Craft::info('Contact not saved due to validation error: ' . Json::encode($contact->getErrors()), __METHOD__);
+            return false;
         }
 
         $transaction = Craft::$app->getDb()->beginTransaction();
@@ -419,8 +420,8 @@ class Contacts extends Component
             'state_code' => (string)$contact->stateCode,
             'company_name' => (string)$contact->companyName,
             'label_ids' => ArrayHelper::getColumn($contact->getLabels(), 'sourceId'),
-            'share_dept_ids' => [],
-            'share_user_ids' => [],
+            'share_dept_ids' => ArrayHelper::getColumn($contact->getShareDepartments(), 'dingDepartmentId'),
+            'share_user_ids' => ArrayHelper::getColumn($contact->getShareUsers(), 'userId'),
         ];
 
         if (!$contact->id && !$contact->userId) {

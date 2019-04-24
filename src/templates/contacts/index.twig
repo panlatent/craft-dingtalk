@@ -5,5 +5,14 @@
 {% set selectedSubnavItem = "contacts" %}
 
 {% block actionButton %}
-    <a href="{{ url('dingtalk/contacts/new') }}" class="btn submit icon add">{{ 'New contact'|t('dingtalk') }}</a>
+    <div class="btngroup">
+        <div class="btn submit menubtn icon add ">{{ 'New contact'|t('dingtalk') }}</div>
+        <div class="menu">
+            <ul>
+            {% for corporation in craft.dingtalk.corporations.allCorporations %}
+                <li><a href="{{ url('dingtalk/contacts/new', {corporationId: corporation.id}) }}" class="formsubmit">{{ corporation.name }}</a></li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
 {% endblock %}

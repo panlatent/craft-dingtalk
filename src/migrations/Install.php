@@ -209,6 +209,36 @@ class Install extends Migration
         $this->addForeignKey(null, '{{%dingtalk_contactlabels_contacts}}', 'labelId', '{{%dingtalk_contactlabels}}', 'id', 'CASCADE');
         $this->addForeignKey(null, '{{%dingtalk_contactlabels_contacts}}', 'contactId', '{{%dingtalk_contacts}}', 'id', 'CASCADE');
 
+        $this->createTable('{{%dingtalk_contactshares_users}}', [
+            'id' => $this->primaryKey(),
+            'contactId' => $this->integer()->notNull(),
+            'userId' => $this->integer()->notNull(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
+        $this->createIndex(null, '{{%dingtalk_contactshares_users}}', 'contactId');
+        $this->createIndex(null, '{{%dingtalk_contactshares_users}}', 'userId');
+        $this->createIndex(null, '{{%dingtalk_contactshares_users}}', ['contactId', 'userId'], true);
+        $this->addForeignKey(null, '{{%dingtalk_contactshares_users}}', 'contactId', '{{%dingtalk_contacts}}', 'id', 'CASCADE');
+        $this->addForeignKey(null, '{{%dingtalk_contactshares_users}}', 'userId', '{{%dingtalk_users}}', 'id', 'CASCADE');
+
+        $this->createTable('{{%dingtalk_contactshares_departments}}', [
+            'id' => $this->primaryKey(),
+            'contactId' => $this->integer()->notNull(),
+            'departmentId' => $this->integer()->notNull(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
+        $this->createIndex(null, '{{%dingtalk_contactshares_departments}}', 'contactId');
+        $this->createIndex(null, '{{%dingtalk_contactshares_departments}}', 'departmentId');
+        $this->createIndex(null, '{{%dingtalk_contactshares_departments}}', ['contactId', 'departmentId'], true);
+        $this->addForeignKey(null, '{{%dingtalk_contactshares_departments}}', 'contactId', '{{%dingtalk_contacts}}', 'id', 'CASCADE');
+        $this->addForeignKey(null, '{{%dingtalk_contactshares_departments}}', 'departmentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
+
         // Robots
         // =====================================================================
 
@@ -321,6 +351,8 @@ class Install extends Migration
         $this->dropTableIfExists('{{%dingtalk_processes}}');
         $this->dropTableIfExists('{{%dingtalk_robotwebhooks}}');
         $this->dropTableIfExists('{{%dingtalk_robots}}');
+        $this->dropTableIfExists('{{%dingtalk_contactshares_departments}}');
+        $this->dropTableIfExists('{{%dingtalk_contactshares_users}}');
         $this->dropTableIfExists('{{%dingtalk_contactlabels_contacts');
         $this->dropTableIfExists('{{%dingtalk_contacts}}');
         $this->dropTableIfExists('{{%dingtalk_contactlabels}}');
