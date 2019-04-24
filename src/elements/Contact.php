@@ -14,7 +14,6 @@ use craft\elements\db\ElementQueryInterface;
 use craft\helpers\UrlHelper;
 use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\elements\db\ContactQuery;
-use panlatent\craft\dingtalk\elements\db\UserQuery;
 use panlatent\craft\dingtalk\models\ContactLabel;
 use panlatent\craft\dingtalk\models\Department;
 use panlatent\craft\dingtalk\Plugin;
@@ -265,16 +264,12 @@ class Contact extends Element
         $rules[] = [['corporationId', 'name', 'mobile', 'followerId', 'stateCode'], 'required'];
         $rules[] = [['userId', 'position', 'companyName', 'address', 'remark'], 'string'];
         $rules[] = [['mobile'], function() {
-            $id = (new Query())
-                ->select('id')
-                ->from(Table::CONTACTS)
-                ->where([
-                    'corporationId' => $this->corporationId,
-                    'mobile' => $this->mobile,
-                ])
-                ->scalar();
+            $contact = Contact::find()
+                ->corporationId($this->corporationId)
+                ->mobile($this->mobile)
+                ->one();
 
-            if ($id && $id != $this->id) {
+            if ($contact && $contact->id != $this->id) {
                 $this->addError('mobile', Craft::t('dingtalk', 'Contact mobile already exists.'));
             }
         }];
