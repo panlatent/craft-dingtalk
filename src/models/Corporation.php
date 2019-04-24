@@ -247,7 +247,7 @@ class Corporation extends Model
      */
     public function getRootDepartment()
     {
-        return ArrayHelper::firstWhere($this->getDepartments(), 'root', true);
+        return ArrayHelper::firstWhere($this->getDepartments(), 'parentId', null);
     }
 
     /**
