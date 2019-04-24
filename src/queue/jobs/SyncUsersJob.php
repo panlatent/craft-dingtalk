@@ -242,7 +242,10 @@ class SyncUsersJob extends BaseJob
 
         // Remove abandoned users.
         /** @var User[] $leavedUsers */
-        $leavedUsers = User::find()->where(['not in', 'dingtalk_users.id', $incumbentIds])->all();
+        $leavedUsers = User::find()
+            ->corporationId($this->corporationId)
+            ->andWhere(['not in', 'dingtalk_users.id', $incumbentIds])
+            ->all();
 
         if (!empty($leavedUsers)) {
             foreach ($leavedUsers as $leavedUser) {
