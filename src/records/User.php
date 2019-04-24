@@ -30,6 +30,7 @@ use craft\db\ActiveRecord;
  * @property string $email
  * @property bool $isActive
  * @property string $mobile
+ * @property string $stateCode
  * @property string $orgEmail
  * @property \DateTime $hiredDate
  * @property \DateTime $leavedDate

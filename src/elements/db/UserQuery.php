@@ -67,6 +67,11 @@ class UserQuery extends ElementQuery
     /**
      * @var string[]|string|null
      */
+    public $stateCode;
+
+    /**
+     * @var string[]|string|null
+     */
     public $jobNumber;
 
     /**
@@ -169,6 +174,17 @@ class UserQuery extends ElementQuery
     public function mobile($value)
     {
         $this->mobile = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string[]|string|null $value
+     * @return $this
+     */
+    public function stateCode($value)
+    {
+        $this->stateCode = $value;
 
         return $this;
     }
@@ -282,6 +298,7 @@ class UserQuery extends ElementQuery
             'dingtalk_users.jobNumber',
             'dingtalk_users.email',
             'dingtalk_users.mobile',
+            'dingtalk_users.stateCode',
             'dingtalk_users.isHide',
             'dingtalk_users.isLeaved',
             'dingtalk_users.orgEmail',
@@ -325,6 +342,10 @@ class UserQuery extends ElementQuery
 
         if ($this->mobile) {
             $this->subQuery->andWhere(Db::parseParam('dingtalk_users.mobile', $this->mobile));
+        }
+
+        if ($this->stateCode) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_users.stateCode', $this->stateCode));
         }
 
         if ($this->jobNumber) {

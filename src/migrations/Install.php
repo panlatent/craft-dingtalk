@@ -93,6 +93,7 @@ class Install extends Migration
             'jobNumber' => $this->string(255),
             'email' => $this->string(255),
             'mobile' => $this->string(255),
+            'stateCode' => $this->string()->defaultValue('86'),
             'isActive' => $this->boolean()->notNull()->defaultValue(true),
             'isAdmin' => $this->boolean()->notNull()->defaultValue(false),
             'isBoss' => $this->boolean()->notNull()->defaultValue(false),

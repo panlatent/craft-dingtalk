@@ -21,6 +21,7 @@ use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\models\Department;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\records\User as UserRecord;
+use panlatent\craft\dingtalk\validators\MobileValidator;
 use yii\db\Query;
 
 /**
@@ -271,6 +272,11 @@ class User extends Element
     public $mobile;
 
     /**
+     * @var string|null 区域码
+     */
+    public $stateCode;
+
+    /**
      * @var string|null 员工的企业邮箱，如果员工已经开通了企业邮箱，接口会返回，否则不会返回（ISV不可见）
      */
     public $orgEmail;
@@ -319,7 +325,8 @@ class User extends Element
         $rules = parent::rules();
 
         $rules = array_merge($rules, [
-            [['userId', 'name'], 'required'],
+            [['userId', 'name', 'mobile'], 'required'],
+            [['mobile'], MobileValidator::class, 'stateCodeAttribute' => 'stateCode'],
             [['hiredDate', 'leavedDate'], DateTimeValidator::class],
         ]);
 
@@ -504,6 +511,7 @@ class User extends Element
         $record->email = $this->email;
         $record->orgEmail = $this->orgEmail;
         $record->mobile = $this->mobile;
+        $record->stateCode = $this->stateCode;
         $record->hiredDate = $this->hiredDate;
         $record->leavedDate = $this->leavedDate;
         $record->remark = $this->remark;
