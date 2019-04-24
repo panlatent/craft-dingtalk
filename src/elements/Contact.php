@@ -87,8 +87,6 @@ class Contact extends Element
 
         $contacts = Plugin::getInstance()->getContacts();
 
-        //
-
         // Labels
         foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
             $sources[] = ['heading' => $corporation->name];
@@ -261,8 +259,9 @@ class Contact extends Element
     public function rules()
     {
         $rules = parent::rules();
-        $rules[] = [['corporationId', 'name', 'mobile', 'followerId', 'stateCode'], 'required'];
+        $rules[] = [['corporationId', 'name', 'mobile', 'followerId', 'labels'], 'required'];
         $rules[] = [['userId', 'position', 'companyName', 'address', 'remark'], 'string'];
+        $rules[] = [['stateCode'], 'default', 'value' => '86'];
         $rules[] = [['mobile'], function() {
             $contact = Contact::find()
                 ->corporationId($this->corporationId)
@@ -511,10 +510,10 @@ class Contact extends Element
 
         if ($this->_shareDepartments) {
             $oldShareDepartmentIds = (new Query())
-                ->select('departmentId')
+                ->select('id')
                 ->from(Table::CONTACTSHARES_DEPARTMENTS)
                 ->where(['contactId' => $this->id])
-                ->indexBy('id')
+                ->indexBy('departmentId')
                 ->column();
 
             foreach ($this->getShareDepartments() as $department) {

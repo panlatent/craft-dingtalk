@@ -131,13 +131,19 @@ class SyncExternalContactsJob extends BaseJob
             }
 
             if (!empty($result['share_dept_ids'])) {
-                $contact->shareDepartments = Plugin::getInstance()->getDepartments()->findDepartments([
-                    'dingDepartmentId' => $result['share_dept_ids']
-                ]);
+                $contact->shareDepartments = Plugin::getInstance()
+                    ->getDepartments()
+                    ->findDepartments([
+                        'corporationId' => $this->corporationId,
+                        'dingDepartmentId' => $result['share_dept_ids']
+                    ]);
             }
 
             if (!empty($result['share_user_ids'])) {
-                $contact->shareUsers = User::find()->userId($result['share_user_ids'])->all();
+                $contact->shareUsers = User::find()
+                    ->corporationId($this->corporationId)
+                    ->userId($result['share_user_ids'])
+                    ->all();
             }
 
             if (!$elements->saveElement($contact)) {
