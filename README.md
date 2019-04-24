@@ -1,5 +1,5 @@
-DintTalk plugin for Craft 3
-====================================
+DintTalk for CraftCMS 3
+=========================
 [![Build Status](https://travis-ci.org/panlatent/craft-dingtalk.svg)](https://travis-ci.org/panlatent/craft-dingtalk)
 [![Coverage Status](https://coveralls.io/repos/github/panlatent/craft-dingtalk/badge.svg?branch=master)](https://coveralls.io/github/panlatent/craft-dingtalk?branch=master)
 [![Latest Stable Version](https://poser.pugx.org/panlatent/craft-dingtalk/v/stable.svg)](https://packagist.org/packages/panlatent/craft-dingtalk)
@@ -10,7 +10,7 @@ DintTalk plugin for Craft 3
 [![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](https://www.yiiframework.com/)
 
 CraftCMS 3 钉钉插件能将 [钉钉](https://www.dingtalk.com/) 开放的能力整合至 CraftCSM 中，
-并提供再次开发的基础构件。
+借助 CraftCMS 强大的架构，可快速搭建企业级办公系统。
 
 这个插件目前集成了钉钉通讯录、智能办公、钉钉群机器人以及审批。更多支持细节和变更请查看 [更新日志](CHANGELOG.md)。
 
