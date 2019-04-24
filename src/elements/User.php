@@ -392,18 +392,10 @@ class User extends Element
     }
 
     /**
-     * @param Department|int|null $department
+     * @param Department|null $department
      */
-    public function setPrimaryDepartment($department = null)
+    public function setPrimaryDepartment(Department $department = null)
     {
-        if (is_int($department) || ctype_digit($department)) {
-            $department = Plugin::getInstance()->getDepartments()->getDepartmentById($department);
-        }
-
-        if (!$department instanceof Department && $department !== null) {
-            throw new DepartmentException('Primary department must be a department instance');
-        }
-
         $this->_primaryDepartment = $department;
     }
 
@@ -516,20 +508,9 @@ class User extends Element
         $record->leavedDate = $this->leavedDate;
         $record->remark = $this->remark;
         $record->sortOrder = $this->sortOrder;
-
         $record->save(false);
 
-        if ($this->_primaryDepartment) {
-            if (empty($this->_departments)) {
-                $this->_departments = [$this->_primaryDepartment];
-            } else {
-                if (!in_array($this->_primaryDepartment, $this->_departments)) {
-                    $this->_departments[] = $this->_primaryDepartment;
-                }
-            }
-        }
 
-        // Save user relation departments. If is empty array, delete all department relations.
         if ($this->_departments !== null) {
             $db = Craft::$app->getDb();
 
@@ -540,13 +521,20 @@ class User extends Element
                 ->indexBy('departmentId')
                 ->column();
 
+            $primaryDepartment = $this->getPrimaryDepartment();
             foreach ($this->_departments as $department) {
+                if ($primaryDepartment) {
+                    $isPrimary = $department->id == $primaryDepartment->id;
+                } else {
+                    $isPrimary = count($this->_departments) == 1;
+                }
+
                 $db->createCommand()
                     ->upsert(Table::USERDEPARTMENTS, [
                         'userId' => $this->id,
                         'departmentId' => $department->id,
                     ], [
-                        'primary' => $department === $this->_primaryDepartment,
+                        'primary' => $isPrimary,
                     ])
                     ->execute();
 

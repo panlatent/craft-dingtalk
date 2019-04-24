@@ -10,6 +10,7 @@ namespace panlatent\craft\dingtalk\models;
 
 use Craft;
 use craft\base\Model;
+use craft\helpers\ArrayHelper;
 use craft\validators\HandleValidator;
 use panlatent\craft\dingtalk\elements\Approval;
 use panlatent\craft\dingtalk\elements\db\ApprovalQuery;
@@ -98,6 +99,11 @@ class Corporation extends Model
      * @var string|null
      */
     private $_callbackAesKey;
+
+    /**
+     * @var Department[]|null
+     */
+    private $_departments;
 
     // Public Methods
     // =========================================================================
@@ -223,11 +229,17 @@ class Corporation extends Model
      */
     public function getDepartments(): array
     {
-        return Plugin::getInstance()
+        if ($this->_departments !== null) {
+            return $this->_departments;
+        }
+
+        $this->_departments = Plugin::getInstance()
             ->getDepartments()
             ->findDepartments([
                 'corporationId' => $this->id,
             ]);
+
+        return $this->_departments;
     }
 
     /**
@@ -235,12 +247,7 @@ class Corporation extends Model
      */
     public function getRootDepartment()
     {
-        return Plugin::getInstance()
-            ->getDepartments()
-            ->findDepartment([
-                'corporationId' => $this->id,
-                'root' => true,
-            ]);
+        return ArrayHelper::firstWhere($this->getDepartments(), 'root', true);
     }
 
     /**

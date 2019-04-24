@@ -275,7 +275,9 @@ class SyncUsersJob extends BaseJob
         }
 
         if (!empty($data['mainDeptId'])) {
-            $user->primaryDepartment = ArrayHelper::remove($data, 'mainDeptId');
+            $departments = $this->getCorporation()->getDepartments();
+            $department = ArrayHelper::firstWhere($departments, 'dingDepartmentId', ArrayHelper::remove($data, 'mainDeptId'));
+            $user->primaryDepartment = $department;
         }
 
         if (!empty($data['hiredDate'])) {
