@@ -58,7 +58,7 @@ class Install extends Migration
         $this->createTable('{{%dingtalk_departments}}', [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
-            'dingDepartmentId', $this->integer()->notNull(),
+            'dingDepartmentId' => $this->integer()->notNull(),
             'name' => $this->string(255)->notNull(),
             'parentId' => $this->integer(),
             'settings' => $this->text(),
@@ -298,7 +298,7 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_users}}', 'corporationId');
+        $this->createIndex(null, '{{%dingtalk_processes}}', 'corporationId');
         $this->createIndex(null, '{{%dingtalk_processes}}', ['fieldLayoutId']);
         $this->createIndex(null, '{{%dingtalk_processes}}', ['name'], true);
         $this->createIndex(null, '{{%dingtalk_processes}}', ['handle'], true);
