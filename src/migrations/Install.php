@@ -313,6 +313,7 @@ class Install extends Migration
 
         $this->createTable('{{%dingtalk_approvals}}', [
             'id' => $this->primaryKey(),
+            'corporationId' => $this->integer()->notNull(),
             'processId' => $this->integer()->notNull(),
             'businessId' => $this->string(21)->notNull(),
             'instanceId' => $this->string(36)->notNull(),
@@ -335,10 +336,12 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
+        $this->createIndex(null, '{{%dingtalk_processes}}', 'corporationId');
         $this->createIndex(null, '{{%dingtalk_approvals}}', ['processId']);
         $this->createIndex(null, '{{%dingtalk_approvals}}', ['instanceId'], true);
 
         $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'id', '{{%elements}}', 'id', 'CASCADE');
+        $this->addForeignKey(null, '{{%dingtalk_processes}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
         $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'processId', '{{%dingtalk_processes}}', 'id', 'CASCADE');
         $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'originatorUserId', '{{%dingtalk_users}}', 'id', 'CASCADE');
         $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'originatorDepartmentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
