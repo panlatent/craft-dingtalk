@@ -336,12 +336,12 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_processes}}', 'corporationId');
+        $this->createIndex(null, '{{%dingtalk_approvals}}', 'corporationId');
         $this->createIndex(null, '{{%dingtalk_approvals}}', ['processId']);
         $this->createIndex(null, '{{%dingtalk_approvals}}', ['instanceId'], true);
 
         $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'id', '{{%elements}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_processes}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
+        $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
         $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'processId', '{{%dingtalk_processes}}', 'id', 'CASCADE');
         $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'originatorUserId', '{{%dingtalk_users}}', 'id', 'CASCADE');
         $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'originatorDepartmentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
