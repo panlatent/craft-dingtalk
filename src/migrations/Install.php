@@ -358,7 +358,7 @@ class Install extends Migration
         $this->dropTableIfExists('{{%dingtalk_robots}}');
         $this->dropTableIfExists('{{%dingtalk_contactshares_departments}}');
         $this->dropTableIfExists('{{%dingtalk_contactshares_users}}');
-        $this->dropTableIfExists('{{%dingtalk_contactlabels_contacts');
+        $this->dropTableIfExists('{{%dingtalk_contactlabels_contacts}}');
         $this->dropTableIfExists('{{%dingtalk_contacts}}');
         $this->dropTableIfExists('{{%dingtalk_contactlabels}}');
         $this->dropTableIfExists('{{%dingtalk_contactlabelgroups}}');
