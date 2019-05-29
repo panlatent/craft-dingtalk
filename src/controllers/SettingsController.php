@@ -22,6 +22,9 @@ use yii\web\Response;
  */
 class SettingsController extends Controller
 {
+    // Public Methods
+    // =========================================================================
+
     /**
      * 保存插件设置
      *
@@ -32,21 +35,18 @@ class SettingsController extends Controller
         $this->requirePostRequest();
 
         $params = Craft::$app->getRequest()->getBodyParams();
-        $data = $params['settings'];
 
-        $settings = Plugin::getInstance()->getSettings();
-        $settings->callbackUrlRule = $data['callbackUrlRule'] ?? $settings->callbackUrlRule;
-
-        if (!$settings->validate()) {
+        $settings = Plugin::$dingtalk->getSettings();
+        if ($settings->load($params, 'settings') && !$settings->validate()) {
             Craft::$app->getSession()->setError(Craft::t('dingtalk', 'Couldn’t save settings.'));
 
-            return $this->renderTemplate('dingtalk/settings/general/index', compact('settings'));
+            return $this->renderTemplate('dingtalk/settings/general/index', $params);
         }
 
-        if (!Craft::$app->getPlugins()->savePluginSettings(Plugin::getInstance(), $settings->toArray())) {
+        if (!Craft::$app->getPlugins()->savePluginSettings(Plugin::$dingtalk, $settings->toArray())) {
             Craft::$app->getSession()->setError(Craft::t('dingtalk', 'Couldn’t save settings.'));
 
-            return $this->renderTemplate('dingtalk/settings/general/index', compact('settings'));
+            return $this->renderTemplate('dingtalk/settings/general/index', $params);
         }
 
         Craft::$app->getSession()->setNotice(Craft::t('dingtalk', 'Settings saved.'));
@@ -64,7 +64,7 @@ class SettingsController extends Controller
         $uid = Craft::$app->getRequest()->getBodyParam('categoryGroupUid');
         $categoryGroup = Craft::$app->getCategories()->getGroupByUid($uid);
 
-        $settings = Plugin::getInstance()->getSettings();
+        $settings = Plugin::$dingtalk->getSettings();
         $settings->externalContactCategoryGroupUid = $categoryGroup->uid;
 
         if (!$this->_saveSettings($settings)) {
@@ -86,14 +86,14 @@ class SettingsController extends Controller
     private function _saveSettings(Settings $settings, bool $runValidation = true)
     {
         if ($settings === null) {
-            $settings = Plugin::getInstance()->getSettings();
+            $settings = Plugin::$dingtalk->getSettings();
         }
 
         if ($runValidation && !$settings->validate()) {
             return false;
         }
 
-        if (!Craft::$app->getPlugins()->savePluginSettings(Plugin::getInstance(), $settings->toArray())) {
+        if (!Craft::$app->getPlugins()->savePluginSettings(Plugin::$dingtalk, $settings->toArray())) {
             return false;
         }
 

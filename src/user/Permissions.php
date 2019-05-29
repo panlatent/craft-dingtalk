@@ -16,10 +16,11 @@ namespace panlatent\craft\dingtalk\user;
  */
 abstract class Permissions
 {
-    const MANAGE_CORPORATIONS = 'dingtalk-manageCorporations';
     const MANAGE_APPROVALS = 'dingtalk-manageApprovals';
+    const MANAGE_ATTENDANCES = 'dingtalk-manageAttendances';
+    const MANAGE_CORPORATIONS = 'dingtalk-manageCorporations';
     const MANAGE_CONTACTS = 'dingtalk-manageContacts';
     const MANAGE_ROBOTS = 'dingtalk-manageRobots';
-    const MANAGE_USERS = 'dingtalk-manageUsers';
+    const MANAGE_EMPLOYEES = 'dingtalk-manageUsers';
     const MANAGE_SETTINGS = 'dingtalk-manageSettings';
 }

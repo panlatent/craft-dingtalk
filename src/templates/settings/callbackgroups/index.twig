@@ -1,0 +1,39 @@
+{% extends "dingtalk/_layouts/settings" %}
+
+{% import "_includes/forms" as forms %}
+
+{% block actionButton %}
+    <a href="{{ url('dingtalk/settings/callbackgroups/new') }}"  class="btn submit icon add">{{ "New callback group"|t('dingtalk') }}</a>
+{% endblock %}
+
+{% block content %}
+    {% set groups = craft.dingtalk.callbacks.getAllGroups() %}
+
+    {% if groups|length %}
+        <table id="groups" class="data fullwidth collapsible">
+            <thead>
+                <tr>
+                    <th scope="col">{{ 'Name'|t('app') }}</th>
+                    <th class="thin"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in groups %}
+                    <tr data-id="{{ group.id }}" data-uid="{{ group.uid }}" data-name="{{ group.name }}">
+                        <th scope="row" data-title="{{ 'Name'|t('app') }}"><a href="{{ url('dingtalk/settings/callbackgroups/' ~ group.id) }}">{{ group.name }}</a></th>
+                        <td class="thin"><a class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+{% endblock %}
+
+{% js %}
+var adminTable = new Craft.AdminTable({
+    tableSelector: '#groups',
+    noItemsSelector: '#nogroups',
+    deleteAction: 'dingtalk/callbacks/delete-group',
+});
+{% endjs %}

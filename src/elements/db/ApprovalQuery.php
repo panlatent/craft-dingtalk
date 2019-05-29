@@ -25,7 +25,7 @@ class ApprovalQuery extends ElementQuery
     // Traits
     // =========================================================================
 
-    use CorporationQuery;
+    use CorporationQueryTrait;
 
     // Properties
     // =========================================================================
@@ -39,6 +39,31 @@ class ApprovalQuery extends ElementQuery
      * @var string[]|string|null
      */
     public $instanceId;
+
+    /**
+     * @var int[]|int|null
+     */
+    public $originatorUserId;
+
+    /**
+     * @var int[]|int|null
+     */
+    public $originatorDepartmentId;
+
+    /**
+     * @var bool|null
+     */
+    public $isAgree;
+
+    /**
+     * @var mixed|null
+     */
+    public $startDate;
+
+    /**
+     * @var mixed|null
+     */
+    public $finishDate;
 
     // Public Methods
     // =========================================================================
@@ -61,6 +86,61 @@ class ApprovalQuery extends ElementQuery
     public function instanceId($value)
     {
         $this->instanceId = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param int[]|int|null $value
+     * @return $this
+     */
+    public function originatorUserId($value)
+    {
+        $this->originatorUserId = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param int[]|int|null $value
+     * @return $this
+     */
+    public function originatorDepartmentId($value)
+    {
+        $this->originatorDepartmentId = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param  bool|null $value
+     * @return ApprovalQuery
+     */
+    public function isAgree(bool $value = null)
+    {
+        $this->isAgree = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed $value
+     * @return $this
+     */
+    public function startDate($value)
+    {
+        $this->startDate = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param mixed $value
+     * @return $this
+     */
+    public function finishDate($value)
+    {
+        $this->finishDate = $value;
 
         return $this;
     }
@@ -99,6 +179,26 @@ class ApprovalQuery extends ElementQuery
 
         if ($this->instanceId) {
             $this->subQuery->andWhere(Db::parseParam('dingtalk_approvals.instanceId', $this->instanceId));
+        }
+
+        if ($this->originatorUserId) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_approvals.originatorUserId', $this->originatorUserId));
+        }
+
+        if ($this->originatorDepartmentId) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_approvals.originatorDepartmentId', $this->originatorDepartmentId));
+        }
+
+        if ($this->isAgree !== null) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_approvals.isAgree', (bool)$this->isAgree));
+        }
+
+        if ($this->startDate) {
+            $this->subQuery->andWhere(Db::parseDateParam('dingtalk_approvals.startDate', $this->startDate));
+        }
+
+        if ($this->finishDate) {
+            $this->subQuery->andWhere(Db::parseDateParam('dingtalk_approvals.finishDate', $this->finishDate));
         }
 
         $this->_applyCorporationParam('dingtalk_approvals.corporationId');

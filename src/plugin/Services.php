@@ -18,7 +18,7 @@ use panlatent\craft\dingtalk\services\Messages;
 use panlatent\craft\dingtalk\services\Processes;
 use panlatent\craft\dingtalk\services\Robots;
 use panlatent\craft\dingtalk\services\SmartWorks;
-use panlatent\craft\dingtalk\services\Users;
+use panlatent\craft\dingtalk\services\Employees;
 
 /**
  * Trait ServiceTrait
@@ -34,7 +34,7 @@ use panlatent\craft\dingtalk\services\Users;
  * @property-read Processes $processes
  * @property-read Robots $robots
  * @property-read SmartWorks $smartWorks
- * @property-read Users $users
+ * @property-read Employees $users
  * @author Panlatent <panlatent@gmail.com>
  */
 trait Services
@@ -119,7 +119,7 @@ trait Services
     }
 
     /**
-     * @return Users
+     * @return Employees
      */
     public function getUsers()
     {
@@ -142,7 +142,7 @@ trait Services
             'processes' => Processes::class,
             'robots' => Robots::class,
             'smartWorks' => SmartWorks::class,
-            'users' => Users::class,
+            'users' => Employees::class,
         ]);
     }
 }

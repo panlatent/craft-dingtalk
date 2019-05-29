@@ -113,7 +113,7 @@ class ContactLabel extends Model
             throw new InvalidConfigException();
         }
 
-        $this->_group = Plugin::getInstance()->getContacts()->getLabelGroupById($this->groupId);
+        $this->_group = Plugin::$dingtalk->getContacts()->getLabelGroupById($this->groupId);
         if ($this->_group === null) {
             throw new InvalidConfigException();
         }

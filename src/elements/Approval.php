@@ -107,7 +107,7 @@ class Approval extends Element
 
         $sources[] = ['heading' => '审批流程'];
 
-        $processes = Plugin::getInstance()->processes->getAllProcesses();
+        $processes = Plugin::$dingtalk->processes->getAllProcesses();
         foreach ($processes as $process) {
             /** @var Process $process */
             $sources[] = [
@@ -270,6 +270,30 @@ class Approval extends Element
     /**
      * @inheritdoc
      */
+    public function fields()
+    {
+        $fields = parent::fields();
+        $fields[] = 'formValues';
+
+        return $fields;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function extraFields()
+    {
+        $fields = parent::extraFields();
+        $fields[] = 'process';
+        $fields[] = 'originatorUser';
+        $fields[] = 'originatorDepartment';
+
+        return $fields;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getStatus()
     {
         if ($this->archived) {
@@ -309,7 +333,7 @@ class Approval extends Element
             throw new InvalidConfigException();
         }
 
-        return Plugin::getInstance()->processes->getProcessById($this->processId);
+        return Plugin::$dingtalk->processes->getProcessById($this->processId);
     }
 
     /**
@@ -333,7 +357,7 @@ class Approval extends Element
             throw new InvalidConfigException();
         }
 
-        return Plugin::getInstance()->departments->getDepartmentById($this->originatorDepartmentId);
+        return Plugin::$dingtalk->departments->getDepartmentById($this->originatorDepartmentId);
     }
 
     /**
@@ -411,6 +435,8 @@ class Approval extends Element
                 return $this->$attribute ? '<span data-icon="check"></span>' : '';
             case 'status':
                 return Craft::t('dingtalk', ucwords($this->$attribute));
+            case 'originatorUser':
+                return Craft::$app->getView()->renderTemplate('_elements/element', ['element' => $this->getOriginatorUser()]);
         }
 
         return parent::tableAttributeHtml($attribute);

@@ -26,7 +26,7 @@ class ContactQuery extends ElementQuery
     // Traits
     // =========================================================================
 
-    use CorporationQuery;
+    use CorporationQueryTrait;
 
     // Properties
     // =========================================================================

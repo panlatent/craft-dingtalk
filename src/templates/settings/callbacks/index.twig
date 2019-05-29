@@ -1,25 +1,44 @@
 {% extends "dingtalk/_layouts/settings" %}
 
-{% set callback = craft.dingtalk.callbacks.getCallBack() %}
-
 {% import "_includes/forms" as forms %}
 
-{% block contextMenu %}
-    {% include "dingtalk/_includes/corporationmenu" with {
-        corporations: craft.dingtalk.corporations.getAllCorporations()
-    } %}
+{% block actionButton %}
+    <a href="{{ url('dingtalk/settings/callbacks/new') }}"  class="btn submit icon add">{{ "New callback"|t('dingtalk') }}</a>
 {% endblock %}
 
 {% block content %}
-    {% if callback is null %}
-        <h4>{{ '本企业还没有注册业务事件回调！' }}</h4>
+    {% set callbacks = craft.dingtalk.callbacks.getAllCallbacks() %}
+
+    {% if callbacks|length %}
+        <table id="callbacks" class="data fullwidth collapsible">
+            <thead>
+                <tr>
+                    <th scope="col">{{ 'Name'|t('app') }}</th>
+                    <th scope="col">{{ 'Handle'|t('app') }}</th>
+                    <th scope="col">{{ 'Code'|t('dingtalk') }}</th>
+                    <th scope="col">{{ 'Group'|t('app') }}</th>
+                    <th class="thin"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for callback in callbacks %}
+                    <tr data-id="{{ callback.id }}" data-uid="{{ callback.uid }}" data-name="{{ callback.name }}">
+                        <th scope="row" data-title="{{ 'Name'|t('app') }}"><a href="{{ url('dingtalk/settings/callbacks/' ~ callback.id) }}">{{ callback.name }}</a></th>
+                        <td>{{ callback.handle }}</td>
+                        <td>{{ callback.code }}</td>
+                        <td>{{ callback.group }}</td>
+                        <td class="thin"><a class="delete icon" title="{{ 'Delete'|t('app') }}" role="button"></a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
-
-    <form method="post" accept-charset="UTF-8">
-        <input type="hidden" name="action" value="dingtalk/settings/save-settings">
-        {{ csrfInput() }}
-
-
-        <button class="btn submit">{{ 'Save'|t('app') }}</button>
-    </form>
 {% endblock %}
+
+{% js %}
+var adminTable = new Craft.AdminTable({
+    tableSelector: '#callbacks',
+    noItemsSelector: '#nocallbacks',
+    deleteAction: 'dingtalk/callbacks/delete-callback',
+});
+{% endjs %}

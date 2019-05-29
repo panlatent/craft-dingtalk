@@ -23,9 +23,6 @@ use panlatent\craft\dingtalk\db\Table;
  * @property string $corpSecret
  * @property bool $hasUrls
  * @property string $url
- * @property bool $callbackEnabled
- * @property string $callbackToken
- * @property string $callbackAesKey
  * @property bool $enabled
  * @property bool $archived
  * @property int $sortOrder

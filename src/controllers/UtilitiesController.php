@@ -10,11 +10,11 @@ namespace panlatent\craft\dingtalk\controllers;
 
 use Craft;
 use craft\web\Controller;
+use panlatent\craft\dingtalk\jobs\SyncApprovalsJob;
+use panlatent\craft\dingtalk\jobs\SyncEmployeesJob;
+use panlatent\craft\dingtalk\jobs\SyncContactsJob;
 use panlatent\craft\dingtalk\models\SyncUtilityForm;
 use panlatent\craft\dingtalk\Plugin;
-use panlatent\craft\dingtalk\queue\jobs\SyncApprovalsJob;
-use panlatent\craft\dingtalk\queue\jobs\SyncUsersJob;
-use panlatent\craft\dingtalk\queue\jobs\SyncExternalContactsJob;
 use yii\web\Response;
 
 /**
@@ -31,8 +31,8 @@ class UtilitiesController extends Controller
         $this->requirePermission('sendDingTalkRobotMessages');
 
         $request = Craft::$app->getRequest();
-        $messages = Plugin::getInstance()->messages;
-        $robots = Plugin::getInstance()->robots;
+        $messages = Plugin::$dingtalk->messages;
+        $robots = Plugin::$dingtalk->robots;
 
         $robotId = $request->getBodyParam('robotId');
         $messageType = $request->getBodyParam('messageType');
@@ -67,7 +67,7 @@ class UtilitiesController extends Controller
         $this->requirePermission('syncDingTalkContacts');
         $this->requirePostRequest();
 
-        $corporations = Plugin::getInstance()->getCorporations();
+        $corporations = Plugin::$dingtalk->getCorporations();
         $request = Craft::$app->getRequest();
 
         $form = new SyncUtilityForm();
@@ -109,18 +109,22 @@ class UtilitiesController extends Controller
             foreach ($types as $type) {
                 switch ($type) {
                     case 'users':
-                        Craft::$app->getQueue()->push(new SyncUsersJob([
+                        Craft::$app->getQueue()->push(new SyncEmployeesJob([
                             'corporationId' => $corporation->id,
                             'withSmartWorks' => $request->getBodyParam('withSmartWorks'),
                         ]));
                         break;
                     case 'externalcontacts':
-                        Craft::$app->getQueue()->push(new SyncExternalContactsJob([
+                        Craft::$app->getQueue()->push(new SyncContactsJob([
                             'corporationId' => $corporation->id,
                         ]));
                         break;
                     case 'approvals':
-                        Craft::$app->getQueue()->push(new SyncApprovalsJob([]));
+                        foreach ($corporation->getProcesses() as $process) {
+                            Craft::$app->getQueue()->push(new SyncApprovalsJob([
+                                'process' => $process,
+                            ]));
+                        }
                         break;
                 }
             }

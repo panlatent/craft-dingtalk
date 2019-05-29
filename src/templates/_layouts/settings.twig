@@ -3,15 +3,24 @@
 {% set title = 'DingTalk Settings'|t('dingtalk') %}
 {% set selectedSubnavItem = 'settings' %}
 
-{% set navItems = {} %}
+{% set corporationMenu = corporationMenu is defined ? corporationMenu : false %}
 
+{% block contextMenu %}
+    {% if corporationMenu %}
+        {% include "dingtalk/_includes/corporationmenu" with {
+
+        } %}
+    {% endif %}
+{% endblock %}
+
+{% set navItems = {} %}
 
 {% if currentUser.admin %}
     {% set navItems = {
         'general': { title: "General"|t('dingtalk') },
         'corporations': { title: "Corporations"|t('dingtalk') },
         'staff': { heading: "Staffs"|t('dingtalk') },
-        'users': { title: "Users"|t('dingtalk') },
+        'employees': { title: "Employees"|t('dingtalk') },
         'departments': { title: "Departments"|t('dingtalk') },
         'externalcontacts': { title: "External Contacts"|t('dingtalk')},
         'userauth': { title: "User Auth"|t('dingtalk') },
@@ -19,10 +28,17 @@
         'notifications': { title: "Notifications"|t('dingtalk') },
         'messages': { title: "Messages"|t('dingtalk') },
         'robots': { title: "Robots"|t('dingtalk') },
+
+        'callbacksheading': { heading: "Callbacks"|t('dingtalk') },
+        'callbackgroups': { title: "Callback Groups"|t('dingtalk') },
+        'callbacks': { title: "Callbacks"|t('dingtalk') },
+        'callbackrequests': { title: "Callback Requests"|t('dingtalk') },
+
         'others': { heading: "Others"|t('dingtalk') },
+        'processes': { title: "Processes"|t('dingtalk') },
         'approvals': { title: "Approvals"|t('dingtalk') },
         'workrecords': { title: "Workrecords"|t('dingtalk') },
-        'attendance': { title: "Attendances"|t('dingtalk') },
+        'attendances': { title: "Attendances"|t('dingtalk') },
         'checkins': { title: "Checkins"|t('dingtalk') },
         'reports': { title: "Reports"|t('dingtalk') },
         'blackboards': { title: "Blackboards"|t('dingtalk') },
@@ -32,7 +48,7 @@
         'fielstorage': { title: "Fiel Storage"|t('dingtalk') },
         'integrations': { heading: "Integrations"|t('dingtalk') },
         'login': { title: "Login"|t('dingtalk') },
-        'callbacks': { title: "Callbacks"|t('dingtalk') },
+
     } %}
 {% endif %}
 

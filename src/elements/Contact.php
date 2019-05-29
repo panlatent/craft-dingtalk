@@ -73,7 +73,7 @@ class Contact extends Element
         ];
 
         $sources[] = ['heading' => Craft::t('dingtalk', 'Corporations')];
-        foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
+        foreach (Plugin::$dingtalk->getCorporations()->getAllCorporations() as $corporation) {
             $sources[] = [
                 'key' => $corporation->handle,
                 'label' => $corporation->name,
@@ -85,10 +85,10 @@ class Contact extends Element
 
         $sources[] = ['heading' => Craft::t('dingtalk', 'Labels')];
 
-        $contacts = Plugin::getInstance()->getContacts();
+        $contacts = Plugin::$dingtalk->getContacts();
 
         // Labels
-        foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
+        foreach (Plugin::$dingtalk->getCorporations()->getAllCorporations() as $corporation) {
             $sources[] = ['heading' => $corporation->name];
 
             foreach ($contacts->getCorporationLabelGroups($corporation->id) as $group) {
@@ -329,26 +329,6 @@ class Contact extends Element
     }
 
     /**
-     * @inheritdoc
-     */
-    public function getTableAttributeHtml(string $attribute): string
-    {
-        if ($attribute === 'follower') {
-            return '<a href="' . $this->getFollower()->getCpEditUrl() . '">' . (string)$this->getFollower() . '</a>';
-        } elseif ($attribute == 'labels') {
-            $labelHtml = [];
-
-            foreach ($this->getLabels() as $label) {
-                $labelHtml[] = '<span style="color: ' . $label->getGroup()->color .'">' . $label->name . '</span>';
-            }
-
-            return implode(',', $labelHtml);
-        }
-
-        return parent::getTableAttributeHtml($attribute);
-    }
-
-    /**
      * @return User
      */
     public function getFollower(): User
@@ -385,7 +365,7 @@ class Contact extends Element
             return [];
         }
 
-        $this->_labels = Plugin::getInstance()
+        $this->_labels = Plugin::$dingtalk
             ->getContacts()
             ->getLabelsByContactId($this->id);
 
@@ -413,7 +393,7 @@ class Contact extends Element
             return [];
         }
 
-        $this->_shareDepartments = Plugin::getInstance()->getDepartments()
+        $this->_shareDepartments = Plugin::$dingtalk->getDepartments()
             ->findDepartments([
                 'shareContactOf' => $this,
             ]);
@@ -573,11 +553,35 @@ class Contact extends Element
     public function beforeDelete(): bool
     {
         if ($this->deleteWithRemote) {
-            if (!Plugin::getInstance()->getContacts()->deleteRemoteContact($this)) {
+            if (!Plugin::$dingtalk->getContacts()->deleteRemoteContact($this)) {
                 return false;
             }
         }
 
         return parent::beforeDelete();
+    }
+
+    // Protected Methods
+    // =========================================================================
+
+    /**
+     * @inheritdoc
+     */
+    protected function tableAttributeHtml(string $attribute): string
+    {
+        switch ($attribute) {
+            case 'follower':
+                return Craft::$app->getView()->renderTemplate('_elements/element', ['element' => $this->getFollower()]);
+            case 'labels':
+                $labelHtml = [];
+
+                foreach ($this->getLabels() as $label) {
+                    $labelHtml[] = '<span style="color: ' . $label->getGroup()->color .'">' . $label->name . '</span>';
+                }
+
+                return implode(',', $labelHtml);
+        }
+
+        return parent::tableAttributeHtml($attribute);
     }
 }

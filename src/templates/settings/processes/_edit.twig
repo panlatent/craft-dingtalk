@@ -1,0 +1,66 @@
+{% extends "_layouts/cp" %}
+
+{% set fullPageForm = true %}
+{% set tabs = [
+    {label: 'Settings'|t('app'), url: '#settings'},
+    {label: 'Field Layout'|t('app'), url: '#fieldlayout'},
+] %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <input type="hidden" name="action" value="dingtalk/processes/save-process">
+    {% if not isNewProcess %}<input type="hidden" name="processId" value="{{ process.id }}">{% endif %}
+    {{ redirectInput('dingtalk/settings/processes') }}
+    {{ csrfInput() }}
+
+    <div id="settings">
+        {{ forms.selectField({
+            label: "Corporation"|t('dingtalk'),
+            name: 'corporationId',
+            options: corporationOptions,
+            value: process.corporationId,
+            errors: process.getErrors('corporationId'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Name'|t('app'),
+            required: true,
+            name: 'name',
+            value: process.name,
+            errors: process.getErrors('name'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Handle'|t('app'),
+            required: true,
+            name: 'handle',
+            value: process.handle,
+            errors: process.getErrors('handle'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Code'|t('dingtalk'),
+            required: true,
+            name: 'code',
+            value: process.code,
+            errors: process.getErrors('code'),
+        }) }}
+
+        <hr>
+
+        {{ forms.selectField({
+            label: 'Type'|t('app'),
+            name: 'type',
+            value: className(process),
+            options: processOptions,
+        }) }}
+    </div>
+
+    <div id="fieldlayout" class="hidden">
+        {% include "_includes/fieldlayoutdesigner" with {
+            fieldLayout: null
+        } %}
+    </div>
+
+{% endblock %}

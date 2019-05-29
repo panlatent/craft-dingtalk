@@ -10,7 +10,6 @@ namespace panlatent\craft\dingtalk\services;
 
 use Craft;
 use craft\helpers\ArrayHelper;
-use craft\helpers\StringHelper;
 use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\errors\CorporationException;
 use panlatent\craft\dingtalk\events\CorporationEvent;
@@ -30,6 +29,9 @@ class Corporations extends Component
 {
     // Constants
     // =========================================================================
+
+    // Events
+    // -------------------------------------------------------------------------
 
     /**
      * @event CorporationEvent The event that is triggered before a corporation is saved.
@@ -55,50 +57,68 @@ class Corporations extends Component
     // =========================================================================
 
     /**
-     * @var bool
-     */
-    private $_fetchedAllCorporations = false;
-
-    /**
      * @var Corporation[]|null
      */
-    private $_corporationsById;
-
-    /**
-     * @var Corporation[]|null
-     */
-    private $_corporationsByHandle;
-
-    /**
-     * @var Corporation|null
-     */
-    private $_primaryCorporation;
+    private $_corporations;
 
     // Public Methods
     // =========================================================================
 
     /**
+     * @return int
+     */
+    public function getTotalCorporations(): int
+    {
+        return count($this->getAllCorporations());
+    }
+
+    /**
+     * Return all corporations.
+     *
      * @return Corporation[]
      */
     public function getAllCorporations(): array
     {
-        if ($this->_fetchedAllCorporations) {
-            return array_values($this->_corporationsById);
+        if ($this->_corporations !== null) {
+            return $this->_corporations;
         }
 
-        $this->_corporationsById = [];
-        $this->_corporationsByHandle = [];
+        $this->_corporations = [];
 
-        $results = $this->_createQuery()->all();
+        $results = $this->_createQuery()
+            ->addSelect([
+                'cbsUrl' => 'cbs.url',
+                'cbsToken' => 'cbs.token',
+                'cbsAesKey' => 'cbs.aesKey',
+                'cbsEnabled' => 'cbs.enabled',
+            ])
+            ->leftJoin(['cbs' => Table::CORPORATIONCALLBACKSETTINGS], '[[cbs.corporationId]]=[[corporations.id]]')
+            ->all();
+
         foreach ($results as $result) {
-            $corporation = $this->createCorporation($result);
-            $this->_corporationsById[$corporation->id] = $corporation;
-            $this->_corporationsByHandle[$corporation->name] = $corporation;
+            $callbackSettings = [
+                'url' => $result['cbsUrl'],
+                'token' => $result['cbsToken'],
+                'aesKey' => $result['cbsAesKey'],
+                'enabled' => $result['cbsEnabled'],
+                'callbackIds' => (new Query())
+                    ->select('callbackId')
+                    ->from(Table::CORPORATIONCALLBACKS)
+                    ->where([
+                        'corporationId' => $result['id']
+                    ])
+                    ->column()
+            ];
+
+            unset($result['cbsUrl'], $result['cbsToken'], $result['cbsAesKey'], $result['cbsEnabled']);
+
+            $corporation = new Corporation($result);
+            $corporation->setCallbackSettings($callbackSettings);
+
+            $this->_corporations[] = $corporation;
         }
 
-        $this->_fetchedAllCorporations = true;
-
-        return array_values($this->_corporationsById);
+        return $this->_corporations;
     }
 
     /**
@@ -107,19 +127,7 @@ class Corporations extends Component
      */
     public function getCorporationById(int $corporationId)
     {
-        if ($this->_corporationsById && array_key_exists($corporationId, $this->_corporationsById)) {
-            return $this->_corporationsById[$corporationId];
-        }
-
-        if ($this->_fetchedAllCorporations) {
-            return null;
-        }
-
-        $result = $this->_createQuery()
-            ->where(['id' => $corporationId])
-            ->one();
-
-        return $this->_corporationsById[$corporationId] = $result ? $this->createCorporation($result): null;
+        return ArrayHelper::firstWhere($this->getAllCorporations(), 'id', $corporationId);
     }
 
     /**
@@ -128,19 +136,7 @@ class Corporations extends Component
      */
     public function getCorporationByHandle(string $handle)
     {
-        if ($this->_corporationsByHandle && array_key_exists($handle, $this->_corporationsByHandle)) {
-            return $this->_corporationsByHandle[$handle];
-        }
-
-        if ($this->_fetchedAllCorporations) {
-            return null;
-        }
-
-        $result = $this->_createQuery()
-            ->where(['handle' => $handle])
-            ->one();
-
-        return $this->_corporationsByHandle[$handle] = $result ? $this->createCorporation($result): null;
+        return ArrayHelper::firstWhere($this->getAllCorporations(), 'handle', $handle);
     }
 
     /**
@@ -149,15 +145,7 @@ class Corporations extends Component
      */
     public function getCorporationByCorpId(string $corpId)
     {
-        if ($this->_fetchedAllCorporations) {
-            return ArrayHelper::firstWhere($this->_corporationsById, 'corpId', $corpId);
-        }
-
-        $result = $this->_createQuery()
-            ->where(['corpId' => $corpId])
-            ->one();
-
-        return $result ? $this->createCorporation($result) : null;
+        return ArrayHelper::firstWhere($this->getAllCorporations(), 'corpId', $corpId);
     }
 
     /**
@@ -165,23 +153,12 @@ class Corporations extends Component
      */
     public function getPrimaryCorporation()
     {
-        if ($this->_primaryCorporation !== null) {
-            return $this->_primaryCorporation;
-        }
-
-        $corporationId = $this->_createQuery()
-            ->select('id')
-            ->where(['primary' => true])
-            ->scalar();
-
-        if (!$corporationId) {
-            return null;
-        }
-
-        return $this->_primaryCorporation = $this->getCorporationById($corporationId);
+        return ArrayHelper::firstWhere($this->getAllCorporations(), 'primary', true);
     }
 
     /**
+     * Create a corporation.
+     *
      * @param mixed $config
      * @return Corporation
      */
@@ -201,7 +178,7 @@ class Corporations extends Component
      */
     public function saveCorporation(Corporation $corporation, bool $runValidation = true): bool
     {
-        $isNewCorporation = $corporation->getIsNew();
+        $isNewCorporation = !$corporation->id;
 
         if ($this->hasEventHandlers(self::EVENT_BEFORE_SAVE_CORPORATION)) {
             $this->trigger(self::EVENT_BEFORE_SAVE_CORPORATION, new CorporationEvent([
@@ -215,38 +192,29 @@ class Corporations extends Component
             return false;
         }
 
-        $oldPrimaryCorporationId = $this->getPrimaryCorporation()->id ?? false;
+        /** @var Corporation|null $oldPrimaryCorporation */
+        $oldPrimaryCorporation = $this->getPrimaryCorporation();
 
-        $transaction = Craft::$app->getDb()->beginTransaction();
+        $db = Craft::$app->getDb();
+
+        $transaction = $db->beginTransaction();
         try {
             if (!$isNewCorporation) {
                 $record = CorporationRecord::findOne(['id' => $corporation->id]);
-                if (!$corporation) {
-                    throw new CorporationException("No corporation exists with the ID: “{$corporation->id}“.");
+                if (!$record) {
+                    throw new CorporationException("No corporation exists due ID: “{$corporation->id}“");
                 }
             } else {
                 $record = new CorporationRecord();
             }
 
-            if ($isNewCorporation) {
-                if (empty($corporation->callbackToken)) {
-                    $corporation->callbackToken = StringHelper::randomString(16, true);
-                }
-                if (empty($corporation->callbackAesKey)) {
-                    $corporation->callbackAesKey = StringHelper::randomString(43);
-                }
-            }
-
-            $record->primary = $oldPrimaryCorporationId ? (bool)$corporation->primary : true;
+            $record->primary = $oldPrimaryCorporation ? (bool)$corporation->primary : true;
             $record->name = $corporation->name;
             $record->handle = $corporation->handle;
             $record->corpId = $corporation->corpId;
             $record->corpSecret = $corporation->corpSecret;
             $record->hasUrls = (bool)$corporation->hasUrls;
             $record->url = $corporation->url;
-            $record->callbackEnabled = $corporation->callbackEnabled;
-            $record->callbackToken = $corporation->callbackToken;
-            $record->callbackAesKey = $corporation->callbackAesKey;
 
             $record->save(false);
 
@@ -254,15 +222,61 @@ class Corporations extends Component
                 $corporation->id = $record->id;
             }
 
-            if ($oldPrimaryCorporationId && $corporation->primary && $oldPrimaryCorporationId !== $corporation->id) {
+
+            if ($oldPrimaryCorporation && $corporation->primary && $oldPrimaryCorporation->id !== $corporation->id) {
                 Craft::$app->getDb()->createCommand()
-                    ->update('{{%dingtalk_corporations}}', [
+                    ->update(Table::CORPORATIONS, [
                         'primary' => false,
                     ], [
-                        'id' => $oldPrimaryCorporationId,
+                        'id' => $oldPrimaryCorporation->id,
                     ])
                     ->execute();
             }
+
+            $callbackSettings = $corporation->getCallbackSettings();
+
+            $db->createCommand()
+                ->upsert(Table::CORPORATIONCALLBACKSETTINGS, [
+                    'corporationId' => $corporation->id,
+                ], [
+                    'url' => $callbackSettings->url,
+                    'token' => $callbackSettings->token,
+                    'aesKey' => $callbackSettings->aesKey,
+                    'enabled' => (bool)$callbackSettings->enabled,
+                ])
+                ->execute();
+
+            $oldCallbackIds = [];
+            if (!$isNewCorporation) {
+                $oldCallbackIds = (new Query())
+                    ->select('callbackId')
+                    ->from(Table::CORPORATIONCALLBACKS)
+                    ->where(['corporationId' => $corporation->id])
+                    ->indexBy('id')
+                    ->column();
+            }
+
+            foreach ($callbackSettings->callbackIds as $callbackId) {
+                if ($isNewCorporation || !in_array($callbackId, $oldCallbackIds)) {
+                    $db->createCommand()
+                        ->insert(Table::CORPORATIONCALLBACKS, [
+                            'corporationId' => $corporation->id,
+                            'callbackId' => $callbackId,
+                        ])
+                        ->execute();
+                }
+            }
+
+            if (!$isNewCorporation) {
+                $deletedCallbackIds = array_diff($oldCallbackIds, $callbackSettings->callbackIds);
+
+                $db->createCommand()
+                    ->delete(Table::CORPORATIONCALLBACKS, [
+                        'id' => array_values($deletedCallbackIds)
+                    ])
+                    ->execute();
+            }
+
 
             $transaction->commit();
         } catch (Throwable $exception) {
@@ -271,8 +285,8 @@ class Corporations extends Component
             throw $exception;
         }
 
-        $this->_corporationsById[$corporation->id] = $corporation;
-        $this->_corporationsByHandle[$corporation->handle] = $corporation;
+        $this->_corporations = null;
+        $this->getAllCorporations();
 
         if ($this->hasEventHandlers(self::EVENT_AFTER_SAVE_CORPORATION)) {
             $this->trigger(self::EVENT_AFTER_SAVE_CORPORATION, new CorporationEvent([
@@ -298,10 +312,6 @@ class Corporations extends Component
             ]));
         }
 
-        if (!$corporation->beforeDelete()) {
-            return false;
-        }
-
         $db = Craft::$app->getDb();
 
         $transaction = $db->beginTransaction();
@@ -316,8 +326,6 @@ class Corporations extends Component
 
             throw $exception;
         }
-
-        $corporation->afterDelete();
 
         if ($this->hasEventHandlers(self::EVENT_AFTER_DELETE_CORPORATION)) {
             $this->trigger(self::EVENT_AFTER_DELETE_CORPORATION, new CorporationEvent([
@@ -366,8 +374,17 @@ class Corporations extends Component
     private function _createQuery(): Query
     {
         return (new Query())
-            ->select(['id', 'primary', 'name', 'handle', 'corpId', 'corpSecret', 'hasUrls', 'url', 'callbackEnabled', 'callbackToken', 'callbackAesKey'])
-            ->from(Table::CORPORATIONS)
-            ->orderBy(['sortOrder' => SORT_ASC, 'dateCreated' => SORT_ASC]);
+            ->select([
+                'corporations.id',
+                'corporations.primary',
+                'corporations.name',
+                'corporations.handle',
+                'corporations.corpId',
+                'corporations.corpSecret',
+                'corporations.hasUrls',
+                'corporations.url'
+            ])
+            ->from(['corporations' => Table::CORPORATIONS])
+            ->orderBy(['sortOrder' => SORT_ASC]);
     }
 }

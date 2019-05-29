@@ -34,8 +34,8 @@ class RobotMessages extends Utility
 
     public static function contentHtml(): string
     {
-        $robots = Plugin::getInstance()->robots;
-        $messages = Plugin::getInstance()->messages;
+        $robots = Plugin::$dingtalk->robots;
+        $messages = Plugin::$dingtalk->messages;
 
         /** @var Robot[] $allRobots */
         $allRobots = $robots->getAllRobots();

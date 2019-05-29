@@ -9,24 +9,24 @@
 namespace panlatent\craft\dingtalk\controllers;
 
 use Craft;
+use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\base\ProcessInterface;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\processes\BasicProcess;
-use panlatent\craft\dingtalk\queue\jobs\SyncApprovalsJob;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
+/**
+ * Class ProcessesController
+ *
+ * @package panlatent\craft\dingtalk\controllers
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class ProcessesController extends Controller
 {
-    public function actionIndex(): Response
-    {
-        $allProcesses = Plugin::getInstance()->processes->getAllProcesses();
-
-        return $this->renderTemplate('dingtalk/processes/_index', [
-            'processes' => $allProcesses,
-        ]);
-    }
+    // Public Methods
+    // =========================================================================
 
     /**
      * Edit a process.
@@ -37,7 +37,7 @@ class ProcessesController extends Controller
      */
     public function actionEditProcess(int $processId = null, ProcessInterface $process = null): Response
     {
-        $processes = Plugin::getInstance()->processes;
+        $processes = Plugin::$dingtalk->processes;
 
         $allProcessTypes = $processes->getAllProcessTypes();
 
@@ -65,18 +65,34 @@ class ProcessesController extends Controller
             ];
         }
 
+        $corporationOptions = [];
+        foreach (Plugin::$dingtalk->getCorporations()->getAllCorporations() as $corporation) {
+            $corporationOptions[] = [
+                'label' => $corporation->name,
+                'value' => $corporation->id,
+            ];
+        }
+
         if ($isNewProcess) {
             $title = Craft::t('dingtalk', 'New process');
         } else {
             $title = Craft::t('dingtalk', 'Edit process');
         }
 
-        return $this->renderTemplate('dingtalk/processes/_edit', [
+        $crumbs = [
+            ['label' => Craft::t('dingtalk', 'DingTalk'), 'url' => UrlHelper::cpUrl('dingtalk')],
+            ['label' => Craft::t('dingtalk', 'Settings'), 'url' => UrlHelper::cpUrl('dingtalk/settings')],
+            ['label' => Craft::t('dingtalk', 'Processes'), 'url' => UrlHelper::cpUrl('dingtalk/settings/processes')],
+        ];
+
+        return $this->renderTemplate('dingtalk/settings/processes/_edit', [
             'isNewProcess' => $isNewProcess,
             'process' => $process,
             'processOptions' => $processOptions,
             'processInstances' => $processInstances,
+            'corporationOptions' => $corporationOptions,
             'title' => $title,
+            'crumbs' => $crumbs,
         ]);
     }
 
@@ -88,11 +104,12 @@ class ProcessesController extends Controller
         $this->requirePostRequest();
 
         $request = Craft::$app->getRequest();
-        $processes = Plugin::getInstance()->processes;
+        $processes = Plugin::$dingtalk->processes;
 
 
         $process = $processes->createProcess([
             'id' => $request->getBodyParam('processId'),
+            'corporationId' => $request->getBodyParam('corporationId'),
             'type' => $request->getBodyParam('type'),
             'name' => $request->getBodyParam('name'),
             'handle' => $request->getBodyParam('handle'),
@@ -123,7 +140,7 @@ class ProcessesController extends Controller
         $this->requirePostRequest();
         $this->requireAcceptsJson();
 
-        $processes = Plugin::getInstance()->processes;
+        $processes = Plugin::$dingtalk->processes;
 
         $processId = Craft::$app->getRequest()->getRequiredBodyParam('id');
         $process = $processes->getProcessById($processId);
@@ -145,7 +162,7 @@ class ProcessesController extends Controller
      */
     public function actionEditProcessSync(int $processId): Response
     {
-        $processes = Plugin::getInstance()->processes;
+        $processes = Plugin::$dingtalk->processes;
 
         $process = $processes->getProcessById($processId);
         if (!$process) {
@@ -156,24 +173,4 @@ class ProcessesController extends Controller
             'process' => $process,
         ]);
     }
-
-    public function actionSyncProcessAction()
-    {
-        $this->requirePostRequest();
-
-        $request = Craft::$app->getRequest();
-
-        $processId = $request->getBodyParam('processId');
-        $process = Plugin::getInstance()->processes->getProcessById($processId);
-        if (!$process) {
-            throw new NotFoundHttpException();
-        }
-
-        Craft::$app->getQueue()->push(new SyncApprovalsJob([
-            'process' => $process,
-            'startTime' => $request->getBodyParam('startTime'),
-            'endTime' => $request->getBodyParam('endTime'),
-        ]));
-    }
-
 }

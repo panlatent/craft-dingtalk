@@ -49,7 +49,7 @@ trait CorporationTrait
             return null;
         }
 
-        $this->_corporation = Plugin::getInstance()->getCorporations()->getCorporationById($this->corporationId);
+        $this->_corporation = Plugin::$dingtalk->getCorporations()->getCorporationById($this->corporationId);
 
         return $this->_corporation;
     }

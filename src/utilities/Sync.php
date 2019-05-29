@@ -53,7 +53,7 @@ class Sync extends Utility
     public static function contentHtml(): string
     {
         $corporationOptions = [];
-        foreach (Plugin::getInstance()->getCorporations()->getAllCorporations() as $corporation) {
+        foreach (Plugin::$dingtalk->getCorporations()->getAllCorporations() as $corporation) {
             $corporationOptions[] = [
                 'label' => $corporation->name,
                 'value' => $corporation->id,

@@ -34,7 +34,7 @@ class RobotsController extends Controller
     {
         $this->requirePermission('manageDingTalkRobots');
 
-        $robots = Plugin::getInstance()->robots;
+        $robots = Plugin::$dingtalk->robots;
 
         /** @var Robot $robot */
         if ($robot === null) {
@@ -88,7 +88,7 @@ class RobotsController extends Controller
         $this->requirePermission('manageDingTalkRobots');
 
         $request = Craft::$app->getRequest();
-        $robots = Plugin::getInstance()->robots;
+        $robots = Plugin::$dingtalk->robots;
 
         $type = $request->getBodyParam('type');
 
@@ -124,7 +124,7 @@ class RobotsController extends Controller
         $this->requireAcceptsJson();
         $this->requirePermission('manageDingTalkRobots');
 
-        $robots = Plugin::getInstance()->robots;
+        $robots = Plugin::$dingtalk->robots;
         $robotId = Craft::$app->request->getBodyParam('id');
         if (!($robot = $robots->getRobotById($robotId))) {
             return $this->asJson(['success' => false]);

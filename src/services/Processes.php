@@ -15,7 +15,9 @@ use craft\helpers\Component as ComponentHelper;
 use craft\helpers\Json;
 use panlatent\craft\dingtalk\base\Process;
 use panlatent\craft\dingtalk\base\ProcessInterface;
+use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\errors\ProcessException;
+use panlatent\craft\dingtalk\events\ProcessEvent;
 use panlatent\craft\dingtalk\processes\BasicProcess;
 use panlatent\craft\dingtalk\processes\MissingProcess;
 use panlatent\craft\dingtalk\records\Process as ProcessRecord;
@@ -30,7 +32,41 @@ use yii\db\Query;
  */
 class Processes extends Component
 {
+    // Constants
+    // =========================================================================
+
+    const PROJECT_CONFIG_KEY = 'dingtalk.processes';
+
+    // Event
+    // -------------------------------------------------------------------------
+
+    /**
+     * @event RegisterComponentTypesEvent
+     */
     const EVENT_REGISTER_PROCESS_TYPES = 'registerProcessTypes';
+
+    /**
+     * @event ProcessEvent The event that is triggered before a process is saved.
+     */
+    const EVENT_BEFORE_SAVE_PROCESS = 'beforeSaveProcess';
+
+    /**
+     * @event ProcessEvent The event that is triggered after a process is saved.
+     */
+    const EVENT_AFTER_SAVE_PROCESS = 'afterSaveProcess';
+
+    /**
+     * @event ProcessEvent The event that is triggered before a process is deleted.
+     */
+    const EVENT_BEFORE_DELETE_PROCESS = 'beforeDeleteProcess';
+
+    /**
+     * @event ProcessEvent The event that is triggered after a process is deleted.
+     */
+    const EVENT_AFTER_DELETE_PROCESS = 'afterDeleteProcess';
+
+    // Properties
+    // =========================================================================
 
     /**
      * @var bool
@@ -46,6 +82,9 @@ class Processes extends Component
      * @var ProcessInterface[]|null
      */
     private $_processesByHandle;
+
+    // Public Methods
+    // =========================================================================
 
     /**
      * @return string[]
@@ -162,6 +201,13 @@ class Processes extends Component
         /** @var Process $process */
         $isNewProcess = $process->getIsNew();
 
+        if ($this->hasEventHandlers(self::EVENT_BEFORE_SAVE_PROCESS)) {
+            $this->trigger(self::EVENT_BEFORE_SAVE_PROCESS, new ProcessEvent([
+                'process' => $process,
+                'isNew' => $isNewProcess,
+            ]));
+        }
+
         if (!$process->beforeSave($isNewProcess)) {
             return false;
         }
@@ -174,25 +220,27 @@ class Processes extends Component
         $transaction = Craft::$app->getDb()->beginTransaction();
         try {
             if (!$isNewProcess) {
-                $processRecord = ProcessRecord::findOne(['id' => $process->id]);
-                if (!$processRecord) {
+                $record = ProcessRecord::findOne(['id' => $process->id]);
+                if (!$record) {
                     throw new ProcessException("No volume exists with the ID “{$process->id}”");
                 }
             } else {
-                $processRecord = new ProcessRecord();
+                $record = new ProcessRecord();
             }
 
-            $processRecord->name = $process->name;
-            $processRecord->handle = $process->handle;
-            $processRecord->code = $process->code;
-            $processRecord->type = get_class($process);
-            $processRecord->settings = Json::encode($process->getSettings());
-            $processRecord->sortOrder = $process->sortOrder;
+            $record->corporationId = $process->corporationId;
+            $record->fieldLayoutId = $process->fieldLayoutId;
+            $record->name = $process->name;
+            $record->handle = $process->handle;
+            $record->code = $process->code;
+            $record->type = get_class($process);
+            $record->settings = Json::encode($process->getSettings());
+            $record->sortOrder = $process->sortOrder;
 
-            $processRecord->save(false);
+            $record->save(false);
 
             if ($isNewProcess) {
-                $process->id = $processRecord->id;
+                $process->id = $record->id;
             }
 
             $transaction->commit();
@@ -204,6 +252,15 @@ class Processes extends Component
 
         $this->_processesById[$process->id] = $process;
         $this->_processesByHandle[$process->handle] = $process;
+
+        $process->afterSave($isNewProcess);
+
+        if ($this->hasEventHandlers(self::EVENT_AFTER_SAVE_PROCESS)) {
+            $this->trigger(self::EVENT_AFTER_SAVE_PROCESS, new ProcessEvent([
+                'process' => $process,
+                'isNew' => $isNewProcess,
+            ]));
+        }
 
         return true;
     }
@@ -233,14 +290,17 @@ class Processes extends Component
         return true;
     }
 
+    // Private Methods
+    // =========================================================================
+
     /**
      * @return Query
      */
     private function _createProcessQuery(): Query
     {
         return (new Query())
-            ->select(['id', 'fieldLayoutId', 'name', 'handle', 'type', 'code', 'settings'])
-            ->from('{{%dingtalk_processes}}')
+            ->select(['id', 'corporationId', 'fieldLayoutId', 'name', 'handle', 'type', 'code', 'settings'])
+            ->from(Table::PROCESSES)
             ->orderBy('sortOrder');
     }
 }

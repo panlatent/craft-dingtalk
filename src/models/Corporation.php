@@ -11,11 +11,15 @@ namespace panlatent\craft\dingtalk\models;
 use Craft;
 use craft\base\Model;
 use craft\helpers\ArrayHelper;
+use craft\helpers\StringHelper;
 use craft\validators\HandleValidator;
+use panlatent\craft\dingtalk\base\ProcessInterface;
 use panlatent\craft\dingtalk\elements\Approval;
+use panlatent\craft\dingtalk\elements\Contact;
 use panlatent\craft\dingtalk\elements\db\ApprovalQuery;
-use panlatent\craft\dingtalk\elements\db\UserQuery;
-use panlatent\craft\dingtalk\elements\User;
+use panlatent\craft\dingtalk\elements\db\ContactQuery;
+use panlatent\craft\dingtalk\elements\db\EmployeeQuery;
+use panlatent\craft\dingtalk\elements\Employee;
 use panlatent\craft\dingtalk\Plugin;
 use panlatent\craft\dingtalk\supports\Remote;
 use Throwable;
@@ -24,19 +28,21 @@ use Throwable;
  * Class Corporation
  *
  * @package panlatent\craft\dingtalk\models
- * @property-read bool $isNew
- * @property string $callbackToken
- * @property string $callbackAesKey
  * @property-read bool $isRegisteredCallback
  * @property-read Department[] $departments
  * @property-read Department $rootDepartment
  * @property-read Remote $remote
- * @property-read ApprovalQuery $approvals
- * @property-read UserQuery $users
+ * @property-read ApprovalQuery|null $approvals
+ * @property-read ContactQuery|null $contacts
+ * @property-read EmployeeQuery|null $employees
+ * @property CorporationCallbackSettings $callbackSettings
  * @author Panlatent <panlatent@gmail.com>
  */
 class Corporation extends Model
 {
+    // Traits
+    // =========================================================================
+
     // Properties
     // =========================================================================
 
@@ -81,9 +87,14 @@ class Corporation extends Model
     public $url;
 
     /**
-     * @var bool
+     * @var int|null
      */
-    public $callbackEnabled = false;
+    public $sortOrder;
+
+    /**
+     * @var string|null UID
+     */
+    public $uid;
 
     /**
      * @var Remote
@@ -91,19 +102,14 @@ class Corporation extends Model
     private $_remote;
 
     /**
-     * @var string|null
-     */
-    private $_callbackToken;
-
-    /**
-     * @var string|null
-     */
-    private $_callbackAesKey;
-
-    /**
      * @var Department[]|null
      */
     private $_departments;
+
+    /**
+     * @var CorporationCallbackSettings|null
+     */
+    private $_callbackSettings;
 
     // Public Methods
     // =========================================================================
@@ -123,8 +129,8 @@ class Corporation extends Model
     {
         $rules = parent::rules();
         $rules[] = [['name', 'handle', 'corpId', 'corpSecret', 'hasUrls'], 'required'];
-        $rules[] = [['name', 'corpId', 'corpSecret', 'callbackToken', 'callbackAesKey'], 'string'];
-        $rules[] = [['primary', 'hasUrls', 'callbackEnabled'], 'boolean'];
+        $rules[] = [['name', 'corpId', 'corpSecret'], 'string'];
+        $rules[] = [['primary', 'hasUrls'], 'boolean'];
         $rules[] = [['handle'], HandleValidator::class];
 
         return $rules;
@@ -136,32 +142,23 @@ class Corporation extends Model
     public function fields()
     {
         $fields = parent::fields();
-        unset($fields['corpId'], $fields['corpSecret'], $fields['callbackEnabled']);
+        unset($fields['corpId'], $fields['corpSecret']);
 
         return $fields;
     }
 
     /**
-     * @return bool
+     * @inheritdoc
      */
-    public function getIsNew(): bool
+    public function attributeLabels()
     {
-        return !$this->id;
-    }
-
-    /**
-     * @return Remote
-     */
-    public function getRemote(): Remote
-    {
-        if ($this->_remote !== null) {
-            return $this->_remote;
-        }
-
-        return $this->_remote = new Remote([
-            'corpId' => $this->getCorpId(),
-            'corpSecret' => $this->getCorpSecret(),
-        ]);
+        return [
+            'name' => Craft::t('dingtalk', 'Corporation Name'),
+            'handle' => Craft::t('app', 'handle'),
+            'corpId' => Craft::t('dingtalk', 'Corp ID'),
+            'corpSecret' => Craft::t('dingtalk', 'Corp Secret'),
+            'primary' => Craft::t('dingtalk', 'Primary'),
+        ];
     }
 
     /**
@@ -181,35 +178,72 @@ class Corporation extends Model
     }
 
     /**
-     * @return string|null
+     * @param mixed $criteria
+     * @return ApprovalQuery|null
      */
-    public function getCallbackToken()
+    public function getApprovals($criteria = null): ApprovalQuery
     {
-        return Craft::parseEnv($this->_callbackToken);
+        if (!$this->id) {
+            return null;
+        }
+
+        $query = Approval::find();
+        if ($criteria) {
+            Craft::configure($query, $criteria);
+        }
+
+        return $query->corporationId($this->id);
     }
 
     /**
-     * @param string|null $callbackToken
+     * @param mixed $criteria
+     * @return ContactQuery|null
      */
-    public function setCallbackToken(string $callbackToken = null)
+    public function getContacts($criteria = null): ContactQuery
     {
-        $this->_callbackToken = $callbackToken;
+        if (!$this->id) {
+            return null;
+        }
+
+        $query = Contact::find();
+        if ($criteria) {
+            Craft::configure($query, $criteria);
+        }
+
+        return $query->corporationId($this->id);
     }
 
     /**
-     * @return string|null
+     * @param mixed $criteria
+     * @return EmployeeQuery|null
      */
-    public function getCallbackAesKey()
+    public function getEmployees($criteria = null): EmployeeQuery
     {
-        return Craft::parseEnv($this->_callbackAesKey);
+        if (!$this->id) {
+            return null;
+        }
+
+        $query = Employee::find();
+        if ($criteria) {
+            Craft::configure($query, $criteria);
+        }
+
+        return $query->corporationId($this->id);
     }
 
     /**
-     * @param string|null $callbackAesKey
+     * @return Remote
      */
-    public function setCallbackAesKey(string $callbackAesKey = null)
+    public function getRemote(): Remote
     {
-        $this->_callbackAesKey = $callbackAesKey;
+        if ($this->_remote !== null) {
+            return $this->_remote;
+        }
+
+        return $this->_remote = new Remote([
+            'corpId' => $this->getCorpId(),
+            'corpSecret' => $this->getCorpSecret(),
+        ]);
     }
 
     /**
@@ -233,7 +267,7 @@ class Corporation extends Model
             return $this->_departments;
         }
 
-        $this->_departments = Plugin::getInstance()
+        $this->_departments = Plugin::$dingtalk
             ->getDepartments()
             ->findDepartments([
                 'corporationId' => $this->id,
@@ -251,37 +285,45 @@ class Corporation extends Model
     }
 
     /**
-     * @return ApprovalQuery
+     * @return ProcessInterface[]
      */
-    public function getApprovals(): ApprovalQuery
+    public function getProcesses(): array
     {
-        return Approval::find()
-            ->corporationId($this->id);
+        return ArrayHelper::filterByValue(Plugin::$dingtalk->getProcesses()->getAllProcesses(), 'corporationId', $this->id);
     }
 
     /**
-     * @return UserQuery
+     * @return CorporationCallbackSettings
      */
-    public function getUsers(): UserQuery
+    public function getCallbackSettings()
     {
-        return User::find()
-            ->corporationId($this->id);
-    }
-
-    /**
-     * @return bool
-     */
-    public function beforeDelete(): bool
-    {
-        if ($this->getUsers()->exists()) {
-            return false;
+        if ($this->_callbackSettings !== null) {
+            return $this->_callbackSettings;
         }
 
-        return true;
+        $this->setCallbackSettings();
+
+        return $this->_callbackSettings;
     }
 
-    public function afterDelete()
+    /**
+     * @param mixed $settings
+     */
+    public function setCallbackSettings($settings = [])
     {
+        if (is_array($settings)) {
+            $settings = new CorporationCallbackSettings($settings);
+        }
 
+        if (!$this->id) {
+            if ($settings->token === null) {
+                $settings->token = StringHelper::randomString(16, true);
+            }
+            if ($settings->aesKey === null) {
+                $settings->aesKey = StringHelper::randomString(43);
+            }
+        }
+
+        $this->_callbackSettings = $settings;
     }
 }

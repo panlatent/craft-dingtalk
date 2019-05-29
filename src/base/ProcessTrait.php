@@ -8,8 +8,19 @@
 
 namespace panlatent\craft\dingtalk\base;
 
+/**
+ * Trait ProcessTrait
+ *
+ * @package panlatent\craft\dingtalk\base
+ * @author Panlatent <panlatent@gmail.com>
+ */
 trait ProcessTrait
 {
+    /**
+     * @var int|null
+     */
+    public $corporationId;
+
     /**
      * @var int|null
      */

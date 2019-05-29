@@ -9,6 +9,8 @@
 namespace panlatent\craft\dingtalk\migrations;
 
 use craft\db\Migration;
+use craft\db\Table as CraftTable;
+use panlatent\craft\dingtalk\db\Table;
 
 /**
  * Class Install
@@ -18,15 +20,38 @@ use craft\db\Migration;
  */
 class Install extends Migration
 {
+    // Public Methods
+    // =========================================================================
+
     /**
      * @inheritdoc
      */
     public function safeUp()
     {
-        // Corporations
-        // =====================================================================
+         $this->createTables();
+         $this->createIndexes();
+         $this->addForeignKeys();
 
-        $this->createTable('{{%dingtalk_corporations}}', [
+         return true;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function safeDown()
+    {
+        $this->dropTables();
+    }
+
+    /**
+     * Create tables.
+     */
+    public function createTables()
+    {
+        // Corporations
+        // ---------------------------------------------------------------------
+
+        $this->createTable(Table::CORPORATIONS, [
             'id' => $this->primaryKey(),
             'primary' => $this->boolean()->notNull(),
             'name' => $this->string()->notNull(),
@@ -35,9 +60,6 @@ class Install extends Migration
             'corpSecret' => $this->string()->notNull(),
             'hasUrls' => $this->boolean()->notNull()->defaultValue(1),
             'url' => $this->string(),
-            'callbackEnabled' => $this->boolean()->notNull()->defaultValue(false),
-            'callbackToken' => $this->string(),
-            'callbackAesKey' => $this->string(),
             'enabled' => $this->boolean()->notNull()->defaultValue(true),
             'archived' => $this->boolean()->notNull()->defaultValue(false),
             'sortOrder' => $this->smallInteger(),
@@ -46,16 +68,68 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_corporations}}', 'name');
-        $this->createIndex(null, '{{%dingtalk_corporations}}', 'handle', true);
-        $this->createIndex(null, '{{%dingtalk_corporations}}', 'corpId', true);
-        $this->createIndex(null, '{{%dingtalk_corporations}}', 'enabled');
-        $this->createIndex(null, '{{%dingtalk_corporations}}', ['sortOrder', 'dateCreated']);
+        $this->createTable(Table::CORPORATIONCALLBACKSETTINGS, [
+            'id' => $this->primaryKey(),
+            'corporationId' => $this->integer()->notNull(),
+            'url' => $this->string(),
+            'token' => $this->string()->notNull(),
+            'aesKey' => $this->string()->notNull(),
+            'enabled' => $this->boolean()->notNull()->defaultValue(false),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
+        $this->createTable(Table::CORPORATIONCALLBACKS, [
+            'corporationId' => $this->integer()->notNull(),
+            'callbackId' => $this->integer()->notNull(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
+        // Callbacks
+        // ---------------------------------------------------------------------
+
+        $this->createTable(Table::CALLBACKGROUPS, [
+            'id' => $this->primaryKey(),
+            'name' => $this->string()->notNull(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
+        $this->createTable(Table::CALLBACKS, [
+            'id' => $this->primaryKey(),
+            'groupId' => $this->integer()->notNull(),
+            'name' => $this->string()->notNull(),
+            'handle' => $this->string()->notNull(),
+            'code' => $this->string()->notNull(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
+        $this->createTable(Table::CALLBACKREQUESTS, [
+            'id' => $this->primaryKey(),
+            'callbackId' => $this->integer()->notNull(),
+            'corporationId' => $this->integer(),
+            'url' => $this->string()->notNull(),
+            'data' => $this->text(),
+            'postDate' => $this->dateTime()->notNull(),
+            'attempts' => $this->tinyInteger(),
+            'handled' => $this->boolean()->notNull()->defaultValue(false),
+            'handledDate' => $this->date(),
+            'handleFailedReason' => $this->string(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
 
         // Departments
-        // =====================================================================
+        // ---------------------------------------------------------------------
 
-        $this->createTable('{{%dingtalk_departments}}', [
+        $this->createTable(Table::DEPARTMENTS, [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
             'dingDepartmentId' => $this->integer()->notNull(),
@@ -69,20 +143,10 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_departments}}', 'corporationId');
-        $this->createIndex(null, '{{%dingtalk_departments}}', 'dingDepartmentId');
-        $this->createIndex(null, '{{%dingtalk_departments}}', ['corporationId', 'dingDepartmentId'], true);
-        $this->createIndex(null, '{{%dingtalk_departments}}', 'name');
-        $this->createIndex(null, '{{%dingtalk_departments}}', ['archived', 'dateCreated']);
-        $this->createIndex(null, '{{%dingtalk_departments}}', 'sortOrder');
+        // Employees
+        // ---------------------------------------------------------------------
 
-        $this->addForeignKey(null, '{{%dingtalk_departments}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_departments}}', 'parentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
-
-        // Users
-        // =====================================================================
-
-        $this->createTable('{{%dingtalk_users}}', [
+        $this->createTable(Table::EMPLOYEES, [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
             'userId' => $this->string(32)->notNull(),
@@ -110,19 +174,9 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_users}}', 'corporationId');
-        $this->createIndex(null, '{{%dingtalk_users}}', 'userId');
-        $this->createIndex(null, '{{%dingtalk_users}}', ['corporationId', 'userId'], true);
-        $this->createIndex(null, '{{%dingtalk_users}}', ['name']);
-        $this->createIndex(null, '{{%dingtalk_users}}', ['mobile']);
-
-        $this->addForeignKey(null, '{{%dingtalk_users}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_users}}', 'id', '{{%elements}}', 'id', 'CASCADE', null);
-
-        // Create user departments
-        $this->createTable('{{%dingtalk_userdepartments}}', [
+        $this->createTable(Table::EMPLOYEEDEPARTMENTS, [
             'id' => $this->primaryKey(),
-            'userId' => $this->integer()->notNull(),
+            'employeeId' => $this->integer()->notNull(),
             'departmentId' => $this->integer()->notNull(),
             'primary' => $this->boolean()->notNull()->defaultValue(false),
             'dateCreated' => $this->dateTime()->notNull(),
@@ -130,18 +184,19 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['userId']);
-        $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['departmentId']);
-        $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['userId', 'departmentId'], true);
-        $this->createIndex(null, '{{%dingtalk_userdepartments}}', ['primary']);
-
-        $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'userId', '{{%dingtalk_users}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_userdepartments}}', 'departmentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
+//        $this->createTable('{{%dingtalk_employeeextra', [
+//            'id' => $this->primaryKey(),
+//            'employeeId' => $this->integer()->notNull(),
+//
+//            'dateCreated' => $this->dateTime()->notNull(),
+//            'dateUpdated' => $this->dateTime()->notNull(),
+//            'uid' => $this->uid(),
+//        ]);
 
         // Contacts
-        // =========================================================================
+        // ---------------------------------------------------------------------
 
-        $this->createTable('{{%dingtalk_contactlabelgroups}}', [
+        $this->createTable(Table::CONTACTLABELGROUPS, [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
             'name' => $this->string()->notNull(),
@@ -151,11 +206,7 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_contactlabelgroups}}', 'corporationId');
-        $this->createIndex(null, '{{%dingtalk_contactlabelgroups}}', ['corporationId', 'name'], true);
-        $this->addForeignKey(null, '{{%dingtalk_contactlabelgroups}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
-
-        $this->createTable('{{%dingtalk_contactlabels}}', [
+        $this->createTable(Table::CONTACTLABELS, [
             'id' => $this->primaryKey(),
             'groupId' => $this->integer()->notNull(),
             'name' => $this->string()->notNull(),
@@ -165,17 +216,10 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_contactlabels}}', 'groupId');
-        $this->createIndex(null, '{{%dingtalk_contactlabels}}', 'name');
-        $this->createIndex(null, '{{%dingtalk_contactlabels}}', 'sourceId');
-        $this->createIndex(null, '{{%dingtalk_contactlabels}}', ['groupId', 'name'], true);
-        $this->createIndex(null, '{{%dingtalk_contactlabels}}', ['groupId', 'sourceId'], true);
-        $this->addForeignKey(null, '{{%dingtalk_contactlabels}}', 'groupId', '{{%dingtalk_contactlabelgroups}}', 'id', 'CASCADE');
-
-        $this->createTable('{{%dingtalk_contacts}}', [
+        $this->createTable(Table::CONTACTS, [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
-            'userId' => $this->string()->notNull(),
+            'employeeId' => $this->string()->notNull(),
             'name' => $this->string()->notNull(),
             'mobile' => $this->string()->notNull(),
             'followerId' => $this->integer()->notNull(),
@@ -189,15 +233,7 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_contacts}}', 'corporationId');
-        $this->createIndex(null, '{{%dingtalk_contacts}}', 'userId', true);
-        $this->createIndex(null, '{{%dingtalk_contacts}}', 'name');
-        $this->createIndex(null, '{{%dingtalk_contacts}}', 'mobile');
-        $this->createIndex(null, '{{%dingtalk_contacts}}', 'followerId');
-        $this->addForeignKey(null, '{{%dingtalk_contacts}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_contacts}}', 'followerId', '{{%dingtalk_users}}', 'id');
-
-        $this->createTable('{{%dingtalk_contactlabels_contacts}}', [
+        $this->createTable(Table::CONTACTLABELS_CONTACTS, [
             'id' => $this->primaryKey(),
             'labelId' => $this->integer()->notNull(),
             'contactId' => $this->integer()->notNull(),
@@ -206,12 +242,7 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_contactlabels_contacts}}', 'contactId');
-        $this->createIndex(null, '{{%dingtalk_contactlabels_contacts}}', ['labelId', 'contactId'], true);
-        $this->addForeignKey(null, '{{%dingtalk_contactlabels_contacts}}', 'labelId', '{{%dingtalk_contactlabels}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_contactlabels_contacts}}', 'contactId', '{{%dingtalk_contacts}}', 'id', 'CASCADE');
-
-        $this->createTable('{{%dingtalk_contactshares_users}}', [
+        $this->createTable(Table::CONTACTSHARES_USERS, [
             'id' => $this->primaryKey(),
             'contactId' => $this->integer()->notNull(),
             'userId' => $this->integer()->notNull(),
@@ -220,13 +251,7 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_contactshares_users}}', 'contactId');
-        $this->createIndex(null, '{{%dingtalk_contactshares_users}}', 'userId');
-        $this->createIndex(null, '{{%dingtalk_contactshares_users}}', ['contactId', 'userId'], true);
-        $this->addForeignKey(null, '{{%dingtalk_contactshares_users}}', 'contactId', '{{%dingtalk_contacts}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_contactshares_users}}', 'userId', '{{%dingtalk_users}}', 'id', 'CASCADE');
-
-        $this->createTable('{{%dingtalk_contactshares_departments}}', [
+        $this->createTable(Table::CONTACTSHARES_DEPARTMENTS, [
             'id' => $this->primaryKey(),
             'contactId' => $this->integer()->notNull(),
             'departmentId' => $this->integer()->notNull(),
@@ -235,16 +260,10 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_contactshares_departments}}', 'contactId');
-        $this->createIndex(null, '{{%dingtalk_contactshares_departments}}', 'departmentId');
-        $this->createIndex(null, '{{%dingtalk_contactshares_departments}}', ['contactId', 'departmentId'], true);
-        $this->addForeignKey(null, '{{%dingtalk_contactshares_departments}}', 'contactId', '{{%dingtalk_contacts}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_contactshares_departments}}', 'departmentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
-
         // Robots
-        // =====================================================================
+        // ---------------------------------------------------------------------
 
-        $this->createTable('{{%dingtalk_robots}}', [
+        $this->createTable(Table::ROBOTS, [
             'id' => $this->primaryKey(),
             'name' => $this->string(255)->notNull(),
             'handle' => $this->string(255)->notNull(),
@@ -255,11 +274,7 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_robots}}', ['handle'], true);
-        $this->createIndex(null, '{{%dingtalk_robots}}', ['name']);
-        $this->createIndex(null, '{{%dingtalk_robots}}', ['type']);
-
-        $this->createTable('{{%dingtalk_robotwebhooks}}', [
+        $this->createTable(Table::ROBOTWEBHOOKS, [
             'id' => $this->primaryKey(),
             'robotId' => $this->integer()->notNull(),
             'name' => $this->string()->notNull(),
@@ -274,16 +289,10 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_robotwebhooks}}', 'robotId');
-        $this->createIndex(null, '{{%dingtalk_robotwebhooks}}', 'name');
-        $this->createIndex(null, '{{%dingtalk_robotwebhooks}}', 'enabled');
-
-        $this->addForeignKey(null, '{{%dingtalk_robotwebhooks}}', 'robotId', '{{%dingtalk_robots}}', 'id', 'CASCADE');
-
         // Processes
-        // =====================================================================
+        // ---------------------------------------------------------------------
 
-        $this->createTable('{{%dingtalk_processes}}', [
+        $this->createTable(Table::PROCESSES, [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
             'fieldLayoutId' => $this->integer(),
@@ -298,20 +307,10 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%dingtalk_processes}}', 'corporationId');
-        $this->createIndex(null, '{{%dingtalk_processes}}', ['fieldLayoutId']);
-        $this->createIndex(null, '{{%dingtalk_processes}}', ['name'], true);
-        $this->createIndex(null, '{{%dingtalk_processes}}', ['handle'], true);
-        $this->createIndex(null, '{{%dingtalk_processes}}', ['type']);
-        $this->createIndex(null, '{{%dingtalk_processes}}', ['code'], true);
-
-        $this->addForeignKey(null, '{{%dingtalk_processes}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_processes}}', 'fieldLayoutId', '{{%fieldlayouts}}', 'id', 'SET NULL');
-
         // Approvals
-        // =====================================================================
+        // ---------------------------------------------------------------------
 
-        $this->createTable('{{%dingtalk_approvals}}', [
+        $this->createTable(Table::APPROVALS, [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
             'processId' => $this->integer()->notNull(),
@@ -335,36 +334,141 @@ class Install extends Migration
             'dateUpdated' => $this->dateTime()->notNull(),
             'uid' => $this->uid(),
         ]);
-
-        $this->createIndex(null, '{{%dingtalk_approvals}}', 'corporationId');
-        $this->createIndex(null, '{{%dingtalk_approvals}}', ['processId']);
-        $this->createIndex(null, '{{%dingtalk_approvals}}', ['instanceId'], true);
-
-        $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'id', '{{%elements}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'corporationId', '{{%dingtalk_corporations}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'processId', '{{%dingtalk_processes}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'originatorUserId', '{{%dingtalk_users}}', 'id', 'CASCADE');
-        $this->addForeignKey(null, '{{%dingtalk_approvals}}', 'originatorDepartmentId', '{{%dingtalk_departments}}', 'id', 'CASCADE');
     }
 
     /**
-     * @inheritdoc
+     * Create indexes.
      */
-    public function safeDown()
+    public function createIndexes()
     {
-        $this->dropTableIfExists('{{%dingtalk_approvals}}');
-        $this->dropTableIfExists('{{%dingtalk_processes}}');
-        $this->dropTableIfExists('{{%dingtalk_robotwebhooks}}');
-        $this->dropTableIfExists('{{%dingtalk_robots}}');
-        $this->dropTableIfExists('{{%dingtalk_contactshares_departments}}');
-        $this->dropTableIfExists('{{%dingtalk_contactshares_users}}');
-        $this->dropTableIfExists('{{%dingtalk_contactlabels_contacts}}');
-        $this->dropTableIfExists('{{%dingtalk_contacts}}');
-        $this->dropTableIfExists('{{%dingtalk_contactlabels}}');
-        $this->dropTableIfExists('{{%dingtalk_contactlabelgroups}}');
-        $this->dropTableIfExists('{{%dingtalk_userdepartments}}');
-        $this->dropTableIfExists('{{%dingtalk_users}}');
-        $this->dropTableIfExists('{{%dingtalk_departments}}');
-        $this->dropTableIfExists('{{%dingtalk_corporations}}');
+        $this->createIndex(null, Table::APPROVALS, 'corporationId');
+        $this->createIndex(null, Table::APPROVALS, ['processId']);
+        $this->createIndex(null, Table::APPROVALS, ['instanceId'], true);
+        $this->createIndex(null, Table::CALLBACKGROUPS, 'name', true);
+        $this->createIndex(null, Table::CALLBACKREQUESTS, 'callbackId');
+        $this->createIndex(null, Table::CALLBACKREQUESTS, 'corporationId');
+        $this->createIndex(null, Table::CALLBACKREQUESTS, ['handled', 'dateCreated']);
+        $this->createIndex(null, Table::CALLBACKS, 'groupId');
+        $this->createIndex(null, Table::CALLBACKS, 'handle', true);
+        $this->createIndex(null, Table::CALLBACKS, 'code', true);
+        $this->createIndex(null, Table::CONTACTLABELGROUPS, 'corporationId');
+        $this->createIndex(null, Table::CONTACTLABELGROUPS, ['corporationId', 'name'], true);
+        $this->createIndex(null, Table::CONTACTLABELS, 'groupId');
+        $this->createIndex(null, Table::CONTACTLABELS, 'name');
+        $this->createIndex(null, Table::CONTACTLABELS, 'sourceId');
+        $this->createIndex(null, Table::CONTACTLABELS, ['groupId', 'name'], true);
+        $this->createIndex(null, Table::CONTACTLABELS, ['groupId', 'sourceId'], true);
+        $this->createIndex(null, Table::CONTACTS, 'corporationId');
+        $this->createIndex(null, Table::CONTACTS, 'employeeId', true);
+        $this->createIndex(null, Table::CONTACTS, 'name');
+        $this->createIndex(null, Table::CONTACTS, 'mobile');
+        $this->createIndex(null, Table::CONTACTS, 'followerId');
+        $this->createIndex(null, Table::CONTACTLABELS_CONTACTS, 'contactId');
+        $this->createIndex(null, Table::CONTACTLABELS_CONTACTS, ['labelId', 'contactId'], true);
+        $this->createIndex(null, Table::CONTACTSHARES_USERS, 'contactId');
+        $this->createIndex(null, Table::CONTACTSHARES_USERS, 'userId');
+        $this->createIndex(null, Table::CONTACTSHARES_USERS, ['contactId', 'userId'], true);
+        $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, 'contactId');
+        $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, 'departmentId');
+        $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, ['contactId', 'departmentId'], true);
+        $this->createIndex(null, Table::CORPORATIONS, 'name');
+        $this->createIndex(null, Table::CORPORATIONS, 'handle', true);
+        $this->createIndex(null, Table::CORPORATIONS, 'corpId', true);
+        $this->createIndex(null, Table::CORPORATIONS, 'enabled');
+        $this->createIndex(null, Table::CORPORATIONS, ['sortOrder', 'dateCreated']);
+        $this->createIndex(null, Table::CORPORATIONCALLBACKSETTINGS, 'corporationId', true);
+        $this->createIndex(null, Table::CORPORATIONCALLBACKS, 'corporationId');
+        $this->createIndex(null, Table::CORPORATIONCALLBACKS, 'callbackId');
+        $this->createIndex(null, Table::CORPORATIONCALLBACKS, ['corporationId', 'callbackId'], true);
+        $this->createIndex(null, Table::DEPARTMENTS, 'corporationId');
+        $this->createIndex(null, Table::DEPARTMENTS, 'dingDepartmentId');
+        $this->createIndex(null, Table::DEPARTMENTS, ['corporationId', 'dingDepartmentId'], true);
+        $this->createIndex(null, Table::DEPARTMENTS, 'name');
+        $this->createIndex(null, Table::DEPARTMENTS, ['archived', 'dateCreated']);
+        $this->createIndex(null, Table::DEPARTMENTS, 'sortOrder');
+        $this->createIndex(null, Table::EMPLOYEES, 'corporationId');
+        $this->createIndex(null, Table::EMPLOYEES, 'userId');
+        $this->createIndex(null, Table::EMPLOYEES, ['corporationId', 'userId'], true);
+        $this->createIndex(null, Table::EMPLOYEES, ['name']);
+        $this->createIndex(null, Table::EMPLOYEES, ['mobile']);
+        $this->createIndex(null, Table::EMPLOYEEDEPARTMENTS, ['employeeId']);
+        $this->createIndex(null, Table::EMPLOYEEDEPARTMENTS, ['departmentId']);
+        $this->createIndex(null, Table::EMPLOYEEDEPARTMENTS, ['employeeId', 'departmentId'], true);
+        $this->createIndex(null, Table::EMPLOYEEDEPARTMENTS, ['primary']);
+        $this->createIndex(null, Table::PROCESSES, 'corporationId');
+        $this->createIndex(null, Table::PROCESSES, ['fieldLayoutId']);
+        $this->createIndex(null, Table::PROCESSES, ['name'], true);
+        $this->createIndex(null, Table::PROCESSES, ['handle'], true);
+        $this->createIndex(null, Table::PROCESSES, ['type']);
+        $this->createIndex(null, Table::PROCESSES, ['code'], true);
+        $this->createIndex(null, Table::ROBOTS, ['handle'], true);
+        $this->createIndex(null, Table::ROBOTS, ['name']);
+        $this->createIndex(null, Table::ROBOTS, ['type']);
+        $this->createIndex(null, Table::ROBOTWEBHOOKS, 'robotId');
+        $this->createIndex(null, Table::ROBOTWEBHOOKS, 'name');
+        $this->createIndex(null, Table::ROBOTWEBHOOKS, 'enabled');
+    }
+
+    /**
+     * Add foreign keys.
+     */
+    public function addForeignKeys()
+    {
+        $this->addForeignKey(null, Table::APPROVALS, 'id', CraftTable::ELEMENTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::APPROVALS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::APPROVALS, 'processId', Table::PROCESSES, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::APPROVALS, 'originatorUserId', Table::EMPLOYEES, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::APPROVALS, 'originatorDepartmentId', Table::DEPARTMENTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CALLBACKREQUESTS, 'callbackId', Table::CALLBACKS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CALLBACKREQUESTS, 'corporationId', Table::CORPORATIONS, 'id', 'SET NULL');
+        $this->addForeignKey(null, Table::CALLBACKS, 'groupId', Table::CALLBACKGROUPS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTLABELGROUPS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTLABELS, 'groupId', Table::CONTACTLABELGROUPS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTS, 'followerId', Table::EMPLOYEES, 'id');
+        $this->addForeignKey(null, Table::CONTACTLABELS_CONTACTS, 'labelId', Table::CONTACTLABELS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTLABELS_CONTACTS, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTSHARES_USERS, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTSHARES_USERS, 'userId', Table::EMPLOYEES, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTSHARES_DEPARTMENTS, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTSHARES_DEPARTMENTS, 'departmentId', Table::DEPARTMENTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CORPORATIONCALLBACKSETTINGS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CORPORATIONCALLBACKS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CORPORATIONCALLBACKS, 'callbackId', Table::CALLBACKS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::DEPARTMENTS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::DEPARTMENTS, 'parentId', Table::DEPARTMENTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::EMPLOYEES, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::EMPLOYEES, 'id', CraftTable::ELEMENTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::EMPLOYEEDEPARTMENTS, 'employeeId', Table::EMPLOYEES, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::EMPLOYEEDEPARTMENTS, 'departmentId', Table::DEPARTMENTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::PROCESSES, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::PROCESSES, 'fieldLayoutId', CraftTable::FIELDLAYOUTS, 'id', 'SET NULL');
+        $this->addForeignKey(null, Table::ROBOTWEBHOOKS, 'robotId', Table::ROBOTS, 'id', 'CASCADE');
+    }
+
+    /**
+     * Drop tables.
+     */
+    public function dropTables()
+    {
+        $this->dropTableIfExists(Table::APPROVALS);
+        $this->dropTableIfExists(Table::PROCESSES);
+        $this->dropTableIfExists(Table::ROBOTWEBHOOKS);
+        $this->dropTableIfExists(Table::ROBOTS);
+        $this->dropTableIfExists(Table::CONTACTSHARES_DEPARTMENTS);
+        $this->dropTableIfExists(Table::CONTACTSHARES_USERS);
+        $this->dropTableIfExists(Table::CONTACTLABELS_CONTACTS);
+        $this->dropTableIfExists(Table::CONTACTS);
+        $this->dropTableIfExists(Table::CONTACTLABELS);
+        $this->dropTableIfExists(Table::CONTACTLABELGROUPS);
+        $this->dropTableIfExists(Table::EMPLOYEEDEPARTMENTS);
+        $this->dropTableIfExists(Table::EMPLOYEES);
+        $this->dropTableIfExists(Table::DEPARTMENTS);
+        $this->dropTableIfExists(Table::CORPORATIONCALLBACKS);
+        $this->dropTableIfExists(Table::CALLBACKREQUESTS);
+        $this->dropTableIfExists(Table::CALLBACKS);
+        $this->dropTableIfExists(Table::CALLBACKGROUPS);
+        $this->dropTableIfExists(Table::CORPORATIONCALLBACKSETTINGS);
+        $this->dropTableIfExists(Table::CORPORATIONS);
     }
 }

@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/) and this p
 ### Fixed
 - 修复了通讯录不能正确筛选已离职状态的人员
 - 修复从数据库查询部门时，模型丢失 `sortOrder` 和 `archived` 属性
+- 修复 `Install` 迁移错误引起的无法安装和卸载插件
 
 ## 0.1.10 - 2018-12-09
 ### Added

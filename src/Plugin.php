@@ -9,6 +9,7 @@
 namespace panlatent\craft\dingtalk;
 
 use Craft;
+use craft\errors\DeprecationException;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\helpers\UrlHelper;
@@ -19,9 +20,10 @@ use craft\services\UserPermissions;
 use craft\services\Utilities;
 use craft\web\twig\variables\CraftVariable;
 use panlatent\craft\dingtalk\elements\Approval;
-use panlatent\craft\dingtalk\elements\User;
+use panlatent\craft\dingtalk\elements\Contact;
+use panlatent\craft\dingtalk\elements\Employee;
 use panlatent\craft\dingtalk\fields\Contacts;
-use panlatent\craft\dingtalk\fields\Users;
+use panlatent\craft\dingtalk\fields\Employees;
 use panlatent\craft\dingtalk\models\Settings;
 use panlatent\craft\dingtalk\plugin\Routes;
 use panlatent\craft\dingtalk\plugin\Services;
@@ -29,6 +31,7 @@ use panlatent\craft\dingtalk\user\Permissions;
 use panlatent\craft\dingtalk\utilities\RobotMessages;
 use panlatent\craft\dingtalk\utilities\Sync;
 use panlatent\craft\dingtalk\web\twig\CraftVariableBehavior;
+use panlatent\craft\dingtalk\widgets\Blackboard;
 use panlatent\craft\dingtalk\widgets\DingTalk as DingTalkWidget;
 use yii\base\Event;
 
@@ -47,13 +50,30 @@ class Plugin extends \craft\base\Plugin
 
     use Routes, Services;
 
+    // Static Methods
+    // =========================================================================
+
+    /**
+     * @deprecated
+     * @see $dingtalk
+     */
+    public static function getInstance()
+    {
+        throw new DeprecationException();
+    }
+
     // Properties
     // =========================================================================
 
     /**
-     * @var string
+     * @var static|null
      */
-    public $schemaVersion = '0.2.0-alpha.8';
+    public static $dingtalk;
+
+    /**
+     * @inheritdoc
+     */
+    public $schemaVersion = '1.0.0-alpha';
 
     /**
      * @inheritdoc
@@ -66,7 +86,7 @@ class Plugin extends \craft\base\Plugin
     public $hasCpSection = true;
 
     /**
-     * @var string
+     * @inheritdoc
      */
     public $t9nCategory = 'dingtalk';
 
@@ -79,7 +99,7 @@ class Plugin extends \craft\base\Plugin
     public function init()
     {
         parent::init();
-
+        self::$dingtalk = $this;
         Craft::setAlias('@dingtalk', $this->getBasePath());
         $this->name = Craft::t('dingtalk', 'DingTalk');
 
@@ -101,14 +121,25 @@ class Plugin extends \craft\base\Plugin
     {
         $ret = parent::getCpNavItem();
 
+        if (!empty($this->getSettings()->cpSectionName)) {
+            $ret['label'] = $this->getSettings()->cpSectionName;
+        }
+
         $ret['subnav']['dashboard'] = [
             'label' => Craft::t('dingtalk', 'Dashboard'),
             'url' => 'dingtalk/dashboard'
         ];
 
-        if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_USERS)) {
-            $ret['subnav']['users'] = [
-                'label' => Craft::t('dingtalk', 'Users'),
+        if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_CORPORATIONS)) {
+            $ret['subnav']['corporations'] = [
+                'label' => Craft::t('dingtalk', 'Corporations'),
+                'url' => 'dingtalk/corporations'
+            ];
+        }
+
+        if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_EMPLOYEES)) {
+            $ret['subnav']['employees'] = [
+                'label' => Craft::t('dingtalk', 'Employees'),
                 'url' => 'dingtalk/users'
             ];
         }
@@ -124,6 +155,13 @@ class Plugin extends \craft\base\Plugin
             $ret['subnav']['approvals'] = [
                 'label' => Craft::t('dingtalk', 'Approvals'),
                 'url' => 'dingtalk/approvals'
+            ];
+        }
+
+        if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_ATTENDANCES)) {
+            $ret['subnav']['attendances'] = [
+                'label' => Craft::t('dingtalk', 'Attendances'),
+                'url' => 'dingtalk/attendances'
             ];
         }
 
@@ -149,7 +187,7 @@ class Plugin extends \craft\base\Plugin
      */
     public function getSettingsResponse()
     {
-        return Craft::$app->getResponse()->redirect(UrlHelper::cpUrl('dingtalk/settings/general'));
+        return Craft::$app->getResponse()->redirect(UrlHelper::cpUrl('dingtalk/settings'));
     }
 
     // Protected Methods
@@ -158,7 +196,7 @@ class Plugin extends \craft\base\Plugin
     /**
      * @inheritdoc
      */
-    protected function createSettingsModel(): Settings
+    protected function createSettingsModel()
     {
         return new Settings();
     }
@@ -172,8 +210,9 @@ class Plugin extends \craft\base\Plugin
     private function _registerElementTypes()
     {
         Event::on(Elements::class, Elements::EVENT_REGISTER_ELEMENT_TYPES, function (RegisterComponentTypesEvent $event) {
-            $event->types[] = User::class;
             $event->types[] = Approval::class;
+            $event->types[] = Contact::class;
+            $event->types[] = Employee::class;
         });
     }
 
@@ -184,7 +223,7 @@ class Plugin extends \craft\base\Plugin
     {
         Event::on(Fields::class, Fields::EVENT_REGISTER_FIELD_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = Contacts::class;
-            $event->types[] = Users::class;
+            $event->types[] = Employees::class;
         });
     }
 
@@ -195,6 +234,7 @@ class Plugin extends \craft\base\Plugin
     {
         Event::on(Dashboard::class, Dashboard::EVENT_REGISTER_WIDGET_TYPES, function (RegisterComponentTypesEvent $event) {
             $event->types[] = DingTalkWidget::class;
+            $event->types[] = Blackboard::class;
         });
     }
 
@@ -216,7 +256,7 @@ class Plugin extends \craft\base\Plugin
     {
         Event::on(UserPermissions::class, UserPermissions::EVENT_REGISTER_PERMISSIONS, function (RegisterUserPermissionsEvent $event) {
             $event->permissions[Craft::t('dingtalk', 'DingTalk')] = [
-                'viewDingTalkContacts' => [
+                Permissions::MANAGE_CONTACTS => [
                     'label' => Craft::t('dingtalk', 'View Contacts'),
                     'nested' => [
                         'syncDingTalkContacts' => [
@@ -224,7 +264,7 @@ class Plugin extends \craft\base\Plugin
                         ],
                     ],
                 ],
-                'viewDingTalkApprovals' => [
+                Permissions::MANAGE_APPROVALS => [
                     'label' => Craft::t('dingtalk', 'View Approvals'),
                     'nested' => [
                     ],

@@ -1,18 +1,7 @@
 {% extends "_layouts/cp" %}
 
-{% set isNew = corporationId is defined ? corporationId is not empty : false %}
-{% set corporation = corporation is defined ? corporation : (isNew ? craft.dingtalk.corporations.getCorporationById(corporationId) : craft.dingtalk.corporations.createCorporation([])) %}
-{% set title = isNew ? corporation.name : 'New Corporation'|t('dingtalk') %}
 {% set selectedSubnavItem = "settings" %}
 {% set fullPageForm = true %}
-{% set crumbs = [
-    {label: "DingTalk Settings"|t('dingtalk'), url: url('dingtalk/settings')},
-    {label: "Corporations"|t('dingtalk'), url: url('dingtalk/settings/corporations')},
-] %}
-{% set tabs = [
-    {label: "Settings"|t('app'), url: '#settings'},
-    {label: "Callback"|t('dingtalk'), url: '#callback'}
-] %}
 
 {% import "_includes/forms" as forms %}
 
@@ -91,32 +80,56 @@
 
     </div>
 
-    <div id="callback" class="hidden">
-        {{ forms.lightSwitchField({
-            label: "Enable Callback"|t('dingtalk'),
-            id: 'callbackEnabled',
-            name: 'callbackEnabled',
-            value: corporation.callbackEnabled,
-        }) }}
+    <div id="callbacks" class="hidden">
+        {% namespace 'callbacks' %}
+            {% set callbackSettings = corporation.callbackSettings %}
 
-        {{ forms.autosuggestField({
-            label: 'Token'|t('dingtalk'),
-            id: 'token',
-            name: 'token',
-            value: corporation.callbackToken,
-            suggestEnvVars: true,
-        }) }}
+            {{ forms.lightSwitchField({
+                label: "Enable Callback"|t('dingtalk'),
+                id: 'enabled',
+                name: 'enabled',
+                value: callbackSettings.enabled,
+            }) }}
 
-        {{ forms.autosuggestField({
-            label: 'AES Key'|t('dingtalk'),
-            id: 'aesKey',
-            name: 'aesKey',
-            value: corporation.callbackAesKey,
-            suggestEnvVars: true,
-        }) }}
+            {{ forms.autosuggestField({
+                label: "URL"|t('dingtalk'),
+                id: 'url',
+                name: 'url',
+                value: callbackSettings.url,
+            }) }}
 
-        {{ forms.checkboxGroupField({
-            label: 'Events',
-        }) }}
+            {{ forms.autosuggestField({
+                label: 'Token'|t('dingtalk'),
+                id: 'token',
+                name: 'token',
+                value: callbackSettings.token,
+                suggestEnvVars: true,
+            }) }}
+
+            {{ forms.autosuggestField({
+                label: 'AES Key'|t('dingtalk'),
+                id: 'aesKey',
+                name: 'aesKey',
+                value: callbackSettings.aesKey,
+                suggestEnvVars: true,
+            }) }}
+
+            <hr>
+
+            <h3>{{ 'Events'|t('dingtalk') }}</h3>
+
+            {% for groupOption in callbackGroupOptions %}
+
+                {{ forms.checkboxSelectField({
+                    label: groupOption.label,
+                    name: 'groups[' ~ groupOption.value ~ ']',
+                    values: groupOption.values,
+                    options: groupOption.options,
+                    showAllOption: true,
+                }) }}
+
+            {% endfor %}
+
+        {% endnamespace %}
     </div>
 {% endblock %}

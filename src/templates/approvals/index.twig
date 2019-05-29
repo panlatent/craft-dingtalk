@@ -12,11 +12,3 @@
         urlFormat: urlFormat,
     } %}
 {% endblock %}
-
-{% block sidebar %}
-    {{ parent() }}
-
-    <div class="buttons">
-        <a class="btn add icon" tabindex="0" href="{{ url('dingtalk/processes/new') }}">{{ 'New process'|t('dingtalk') }}</a>
-    </div>
-{% endblock %}

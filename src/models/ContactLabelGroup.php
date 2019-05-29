@@ -85,7 +85,7 @@ class ContactLabelGroup extends Model
             return [];
         }
 
-        $this->_labels = Plugin::getInstance()
+        $this->_labels = Plugin::$dingtalk
             ->getContacts()
             ->getLabelsByGroupId($this->id);
 

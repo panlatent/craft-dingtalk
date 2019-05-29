@@ -8,6 +8,7 @@
 
 namespace panlatent\craft\dingtalk\models;
 
+use Craft;
 use craft\base\Model;
 
 /**
@@ -18,30 +19,39 @@ use craft\base\Model;
  */
 class Settings extends Model
 {
-    /**
-     * @var string|null
-     * @deprecated
-     */
-    public $corpId;
-
-    /**
-     * @var string|null
-     * @deprecated
-     */
-    public $corpSecret;
+    // Properties
+    // =========================================================================
 
     /**
      * @var string|null
      */
-    public $callbackUrlRule;
+    public $cpSectionName;
 
     /**
      * @var string|null
      */
-    public $callbackToken;
+    public $callbackRule;
+
+
+    // Public Methods
+    // =========================================================================
 
     /**
-     * @var string|null
+     * @inheritdoc
      */
-    public $callbackEncodingAesKey;
+    public function rules()
+    {
+        $rules = parent::rules();
+        $rules[] = [['cpSectionName'], 'string'];
+
+        return $rules;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCallbackRule()
+    {
+        return Craft::parseEnv($this->callbackRule);
+    }
 }

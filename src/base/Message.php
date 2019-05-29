@@ -10,9 +10,21 @@ namespace panlatent\craft\dingtalk\base;
 
 use craft\base\SavableComponent;
 
+/**
+ * Class Message
+ *
+ * @package panlatent\craft\dingtalk\base
+ * @author Panlatent <panlatent@gmail.com>
+ */
 abstract class Message extends SavableComponent implements MessageInterface
 {
+    // Traits
+    // =========================================================================
+
     use MessageTrait;
+
+    // Static Methods
+    // =========================================================================
 
     /**
      * @inheritdoc

@@ -67,7 +67,7 @@ class ContactsController extends Controller
         $this->requirePostRequest();
 
         $request = Craft::$app->getRequest();
-        $contacts = Plugin::getInstance()->getContacts();
+        $contacts = Plugin::$dingtalk->getContacts();
 
         $contactId = $request->getBodyParam('contactId');
         $followerId = $request->getBodyParam('followerId.0');
@@ -94,7 +94,7 @@ class ContactsController extends Controller
 
         $shareDepartments = [];
         foreach ($shareDepartmentIds as $shareDepartmentId) {
-            $shareDepartments[] = Plugin::getInstance()
+            $shareDepartments[] = Plugin::$dingtalk
                 ->getDepartments()
                 ->getDepartmentById($shareDepartmentId);
         }

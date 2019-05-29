@@ -1,0 +1,22 @@
+{% extends "_layouts/cp" %}
+
+{% set fullPageForm = true %}
+{% set selectedSubnavItem = 'settings' %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <input type="hidden" name="action" value="dingtalk/callbacks/save-group">
+    {% if not isNewGroup %}<input type="hidden" name="groupId" value="{{ group.id }}">{% endif %}
+    {{ redirectInput('dingtalk/settings/callbackgroups') }}
+
+    {{ forms.textField({
+        label: 'Name'|t('app'),
+        required: true,
+        id: 'name',
+        name: 'name',
+        value: group.name,
+        errors: group.getErrors('name'),
+    }) }}
+
+{% endblock %}

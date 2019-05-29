@@ -8,7 +8,7 @@
 
 namespace panlatent\craft\dingtalk\events;
 
-use panlatent\craft\dingtalk\models\Corporation;
+use panlatent\craft\dingtalk\models\Callback;
 use yii\base\Event;
 
 /**
@@ -23,12 +23,12 @@ class CallbackEvent extends Event
     // =========================================================================
 
     /**
-     * @var Corporation|null
+     * @var Callback|null
      */
-    public $corporation;
+    public $callback;
 
     /**
-     * @var int|null
+     * @var bool
      */
-    public $postDate;
+    public $isNew = false;
 }

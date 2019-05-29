@@ -21,15 +21,15 @@ use yii\base\Event;
 trait Routes
 {
     /**
-     * Register Cp Url Rules.
+     * Register Cp url rules.
      */
     private function _registerCpRoutes()
     {
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function (RegisterUrlRulesEvent $event) {
             $event->rules = array_merge($event->rules, [
+                'dingtalk/approvals/<corporationHandle:{handle}>' => ['template' => 'dingtalk/approvals'],
                 'dingtalk/contacts/new' => 'dingtalk/contacts/edit-contact',
                 'dingtalk/contacts/<contactId:\d+>' => 'dingtalk/contacts/edit-contact',
-                'dingtalk/approvals/<corporationHandle:{handle}>' => ['template' => 'dingtalk/approvals'],
                 'dingtalk/processes' => 'dingtalk/processes',
                 'dingtalk/processes/new' => 'dingtalk/processes/edit-process',
                 'dingtalk/processes/<processId:\d+>' => 'dingtalk/processes/edit-process',
@@ -37,12 +37,20 @@ trait Routes
                 'dingtalk/robots/new' => 'dingtalk/robots/edit-robot',
                 'dingtalk/robots/<robotId:\d+>' => 'dingtalk/robots/edit-robot',
                 'dingtalk/users/<userId:\d+>' => 'dingtalk/users/edit-user',
-                'dingtalk/settings/corporations/new' => ['template' => 'dingtalk/settings/corporations/_edit'],
-                'dingtalk/settings/corporations/<corporationId:\d+>' => ['template' => 'dingtalk/settings/corporations/_edit'],
+                'dingtalk/settings/callbackgroups/new' => 'dingtalk/callbacks/edit-group',
+                'dingtalk/settings/callbackgroups/<groupId:\d+>' => 'dingtalk/callbacks/edit-group',
+                'dingtalk/settings/callbacks/new' => 'dingtalk/callbacks/edit-callback',
+                'dingtalk/settings/callbacks/<callbackId:\d+>' => 'dingtalk/callbacks/edit-callback',
+                'dingtalk/settings/corporations/new' => 'dingtalk/corporations/edit-corporation',
+                'dingtalk/settings/corporations/<corporationId:\d+>' => 'dingtalk/corporations/edit-corporation',
+                'dingtalk/settings/processes/new' => 'dingtalk/processes/edit-process',
             ]);
         });
     }
 
+    /**
+     * Register site url rules.
+     */
     private function _registerSiteRoutes()
     {
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_SITE_URL_RULES, function (RegisterUrlRulesEvent $event) {

@@ -127,7 +127,7 @@ class Department extends Model
             throw new InvalidConfigException("Invalid corporation id");
         }
 
-        $this->_corporation = Plugin::getInstance()
+        $this->_corporation = Plugin::$dingtalk
             ->getCorporations()
             ->getCorporationById($this->corporationId);
 
@@ -151,7 +151,7 @@ class Department extends Model
             return null;
         }
 
-        return $this->_parent = Plugin::getInstance()->departments->getDepartmentById($this->parentId);
+        return $this->_parent = Plugin::$dingtalk->departments->getDepartmentById($this->parentId);
     }
 
     /**
