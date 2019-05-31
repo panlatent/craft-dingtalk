@@ -222,7 +222,6 @@ class Corporations extends Component
                 $corporation->id = $record->id;
             }
 
-
             if ($oldPrimaryCorporation && $corporation->primary && $oldPrimaryCorporation->id !== $corporation->id) {
                 Craft::$app->getDb()->createCommand()
                     ->update(Table::CORPORATIONS, [
@@ -252,7 +251,6 @@ class Corporations extends Component
                     ->select('callbackId')
                     ->from(Table::CORPORATIONCALLBACKS)
                     ->where(['corporationId' => $corporation->id])
-                    ->indexBy('id')
                     ->column();
             }
 
@@ -272,17 +270,21 @@ class Corporations extends Component
 
                 $db->createCommand()
                     ->delete(Table::CORPORATIONCALLBACKS, [
-                        'id' => array_values($deletedCallbackIds)
+                        'corporationId' => $corporation->id,
+                        'callbackId' => $deletedCallbackIds
                     ])
                     ->execute();
             }
-
 
             $transaction->commit();
         } catch (Throwable $exception) {
             $transaction->rollBack();
 
             throw $exception;
+        }
+
+        if ($callbackSettings->enabled) {
+            $corporation->getRemote()->registerCallbacks();
         }
 
         $this->_corporations = null;

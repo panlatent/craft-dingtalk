@@ -46,4 +46,23 @@ class Client extends BaseClient
 
         return $this->httpPostJson('call_back/register_call_back', $params);
     }
+
+    /**
+     * @param array $callBackTag
+     * @param string $token
+     * @param string $aesKey
+     * @param string $url
+     * @return array|\GuzzleHttp\Psr7\Response
+     */
+    public function update(array $callBackTag, string $token, string $aesKey, string $url)
+    {
+        $params = [
+            'call_back_tag' => $callBackTag,
+            'token' => $token,
+            'aes_key' => $aesKey,
+            'url' => $url,
+        ];
+
+        return $this->httpPostJson('call_back/update_call_back', $params);
+    }
 }

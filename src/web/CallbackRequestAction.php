@@ -17,8 +17,10 @@ use DateTime;
 use DateTimeZone;
 use panlatent\craft\dingtalk\Plugin;
 use yii\base\Action;
+use yii\base\InvalidConfigException;
 use yii\web\BadRequestHttpException;
 use yii\web\JsonParser;
+use yii\web\Response;
 
 /**
  * Class CallbackRequestAction
@@ -32,6 +34,21 @@ class CallbackRequestAction extends Action
     // Properties
     // =========================================================================
 
+    /**
+     * @var string|null
+     */
+    public $corpId;
+
+    /**
+     * @var string|null
+     */
+    public $encodingAesKey;
+
+    /**
+     * @var string|null
+     */
+    public $token;
+
     // Public Methods
     // =========================================================================
 
@@ -40,39 +57,53 @@ class CallbackRequestAction extends Action
      */
     public function beforeRun()
     {
+        $this->controller->requirePostRequest();
+
+        $request = Craft::$app->getRequest();
+
         if (!isset($request->parsers['application/json'])) {
-            Craft::$app->getRequest()->setBodyParams((new JsonParser())->parse(file_get_contents('php://input'), ''));
+            $request->setBodyParams((new JsonParser())->parse(file_get_contents('php://input'), ''));
         }
+
+        foreach (Plugin::$dingtalk->getCorporations()->getAllCorporations() as $corporation) {
+            if ($corporation->getCallbackSettings()->getUrl() == $request->getHostInfo() . '/' . $request->getPathInfo()) {
+                $this->corpId = $corporation->getCorpId();
+                $this->encodingAesKey = $corporation->getCallbackSettings()->getAesKey();
+                $this->token = $corporation->getCallbackSettings()->getToken();
+                break;
+            }
+        }
+
+        if ($this->corpId === null || $this->encodingAesKey === null || $this->token === null) {
+            throw new InvalidConfigException();
+        }
+
+        $this->requireSignature();
 
         return parent::beforeRun();
     }
 
     /**
-     * @return array
+     * @return Response
      */
     public function run()
     {
-        $this->controller->requirePostRequest();
-        $this->requireSignature();
-
         $callbacks = Plugin::$dingtalk->getCallbacks();
 
         $encrypt = Craft::$app->getRequest()->getRequiredBodyParam('encrypt');
-        $encodingAesKey = Plugin::$dingtalk->getSettings()->callbackEncodingAesKey;
 
-        $data = $this->_decrypt($encodingAesKey, $encrypt);
-
+        $data = $this->_decrypt($encrypt);
         if ($data['EventType'] === 'check_url') {
-            $encrypt =$this->_encrypt($encodingAesKey, 'success');
-            $timestamp = time();
-            $nonce = StringHelper::randomString();
+            $encrypted = $this->_encrypt('success');
+            $timestamp =  Craft::$app->getRequest()->getQueryParam('timestamp', round(microtime(true) * 1000)); //  ;
+            $nonce = Craft::$app->getRequest()->getQueryParam('nonce', StringHelper::randomString(8)); //;
 
-            return [
-                "msg_signature" => $this->_signature([$encrypt,$timestamp,$nonce]),
-                "timeStamp" => $timestamp,
-                "nonce" => $nonce,
-                "encrypt" => $encrypt,
-            ];
+            return $this->controller->asJson([
+                'timeStamp' => $timestamp,
+                'msg_signature' => $this->_signature($encrypted, $timestamp, $nonce),
+                'encrypt' => $encrypted,
+                'nonce' => $nonce,
+            ]);
         }
 
         $name = ArrayHelper::remove($data, 'EventType');
@@ -85,12 +116,12 @@ class CallbackRequestAction extends Action
             'corporationId' => $corporation->id,
             'name' => $name,
             'data' => $data,
-            'postDate' => new DateTime($timestamp/1000, new DateTimeZone('Asia/Shanghai')),
+            'postDate' => new DateTime($timestamp / 1000, new DateTimeZone('Asia/Shanghai')),
         ]);
 
         $callbacks->saveRequest($request);
 
-        return [];
+        return $this->controller->asJson([]);
     }
 
     // Protected Methods
@@ -108,13 +139,8 @@ class CallbackRequestAction extends Action
         $nonce = $request->getRequiredQueryParam('nonce');
         $timestamp = $request->getRequiredQueryParam('timestamp');
 
-        $token = Plugin::$dingtalk->getSettings()->callbackToken;
-
-        $validateData = [$encrypt, $token, $timestamp, $nonce];
-        sort($validateData);
-
-        if ($signature !== sha1(implode('', $validateData))) {
-            throw new BadRequestHttpException();
+        if ($signature !== $this->_signature($encrypt, $timestamp, $nonce)) {
+            throw new BadRequestHttpException('Invalid request signature');
         }
     }
 
@@ -122,53 +148,54 @@ class CallbackRequestAction extends Action
     // =========================================================================
 
     /**
-     * @param array $data
+     * @param string $encrypt
+     * @param string $timestamp
+     * @param string $nonce
      * @return string
      */
-    private function _signature(array $data)
+    private function _signature(string $encrypt, string $timestamp, string $nonce)
     {
-        $data[] = Plugin::$dingtalk->getSettings()->callbackToken;
+        $data = [
+            $encrypt,
+            $this->token,
+            $timestamp,
+            $nonce,
+        ];
         sort($data);
 
-        return sha1(implode('', $data));
+        return sha1(implode($data));
     }
 
     /**
-     * @param string $encodingAesKey
      * @param string $content
      * @return string
      */
-    private function _encrypt(string $encodingAesKey, string $content)
+    private function _encrypt(string $content)
     {
-        $aesKey = base64_decode($encodingAesKey . '=');
+        $aesKey = base64_decode($this->encodingAesKey . '=');
         $iv = substr($aesKey, 0, 16);
 
-        $msg = StringHelper::randomString(16) . pack('N', strlen($content)) . $content . Plugin::$dingtalk->getSettings()->getCorpId();
+        $msg = StringHelper::randomString(16) . pack('N', strlen($content)) . $content . $this->corpId;
 
-        $encrypt = openssl_encrypt($msg, 'AES-256-CBC', $aesKey, OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING, $iv);
-
-        $padLength = 32 - (strlen($encrypt) % 32);
-        if ($padLength == 0) {
-            $padLength = 32;
-        }
-
+        $padLength = 32 - (strlen($msg) % 32);
         $padChr = chr($padLength);
         $padString = '';
         for ($index = 0; $index < $padLength; $index++) {
             $padString .= $padChr;
         }
 
-        return base64_encode($encrypt . $padString);
+        $encrypted = openssl_encrypt($msg . $padString, 'AES-256-CBC', $aesKey, OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING, $iv);
+
+        return base64_encode($encrypted);
     }
 
     /**
-     * @param string $encodingAesKey
      * @param string $encrypt
      * @return mixed|null
      */
-    private function _decrypt(string $encodingAesKey, string $encrypt)
+    private function _decrypt(string $encrypt)
     {
-        $aesKey = base64_decode($encodingAesKey . '=');
+        $aesKey = base64_decode($this->encodingAesKey . '=');
         $iv = substr($aesKey, 0, 16);
 
         $msg = openssl_decrypt(base64_decode($encrypt), 'AES-256-CBC', $aesKey, OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING, $iv);

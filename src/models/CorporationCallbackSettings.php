@@ -26,16 +26,19 @@ class CorporationCallbackSettings extends Model
 
     /**
      * @var string|null
+     * @internal
      */
     public $url;
 
     /**
      * @var string|null
+     * @internal
      */
     public $token;
 
     /**
      * @var string|null
+     * @internal
      */
     public $aesKey;
 
@@ -75,6 +78,10 @@ class CorporationCallbackSettings extends Model
      */
     public function getUrl()
     {
+        if ($this->url === null || $this->url === '') {
+            return Plugin::$dingtalk->getSettings()->getCallbackUrl();
+        }
+
         return Craft::parseEnv($this->url);
     }
 

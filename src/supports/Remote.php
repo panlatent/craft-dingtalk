@@ -11,6 +11,7 @@ namespace panlatent\craft\dingtalk\supports;
 use Craft;
 use EasyDingTalk\Kernel\Exceptions\ClientError;
 use Generator;
+use panlatent\craft\dingtalk\models\Corporation;
 use Throwable;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
@@ -27,22 +28,29 @@ class Remote extends Component
     // =========================================================================
 
     /**
+     * @var Corporation
+     */
+    protected $corporation;
+
+    /**
      * @var Client|null
      */
-    public $client;
-
-    /**
-     * @var string|null
-     */
-    public $corpId;
-
-    /**
-     * @var string|null
-     */
-    public $corpSecret;
+    protected $client;
 
     // Public Methods
     // =========================================================================
+
+    /**
+     * Remote constructor.
+     *
+     * @param Corporation $corporation
+     * @param array $config
+     */
+    public function __construct(Corporation $corporation, $config = [])
+    {
+        $this->corporation = $corporation;
+        parent::__construct($config);
+    }
 
     /**
      * @inheritdoc
@@ -51,12 +59,24 @@ class Remote extends Component
     {
         parent::init();
 
-        if ($this->client === null) {
-            $this->client = new Client([
-                'corp_id' => $this->corpId,
-                'corp_secret' => $this->corpSecret,
-            ]);
+        $this->client = new Client([
+            'corp_id' => $this->corporation->getCorpId(),
+            'corp_secret' => $this->corporation->getCorpSecret(),
+        ]);
+    }
+
+    /**
+     * @return bool
+     */
+    public function validateAuth(): bool
+    {
+        try {
+            $this->client->auth->scopes();
+        } catch (Throwable $exception) {
+            return false;
         }
+
+        return true;
     }
 
     /**
@@ -388,4 +408,44 @@ class Remote extends Component
 
         return $ret;
     }
+
+    /**
+     * @return bool
+     */
+    public function getIsRegisteredCallbacks(): bool
+    {
+        try {
+            $this->client->callback->get();
+        } catch (Throwable $exception) {
+            if ($exception->getCode() === 71007) {
+                return false;
+            }
+
+            throw $exception;
+        }
+
+        return true;
+    }
+
+    /**
+     * Register corporation event callbacks.
+     *
+     * @return bool
+     */
+    public function registerCallbacks(): bool
+    {
+        $settings = $this->corporation->getCallbackSettings();
+
+        $tags = ArrayHelper::getColumn($settings->getCallbacks(), 'code');
+
+        if ($this->getIsRegisteredCallbacks()) {
+            $this->client->callback->update($tags, $settings->getToken(), $settings->getAesKey(), $settings->getUrl());
+        } else {
+            $this->client->callback->register($tags, $settings->getToken(), $settings->getAesKey(), $settings->getUrl());
+        }
+
+        return true;
+    }
+
+
 }

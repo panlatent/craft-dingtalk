@@ -74,6 +74,7 @@
                 id: 'url',
                 name: 'url',
                 value: corporation.url,
+                errors: corporation.getErrors('url'),
                 suggestEnvVars: true,
             }) }}
         </div>
@@ -88,7 +89,8 @@
                 label: "Enable Callback"|t('dingtalk'),
                 id: 'enabled',
                 name: 'enabled',
-                value: callbackSettings.enabled,
+                on: callbackSettings.enabled,
+                errors: callbackSettings.getErrors('enabled'),
             }) }}
 
             {{ forms.autosuggestField({
@@ -96,6 +98,8 @@
                 id: 'url',
                 name: 'url',
                 value: callbackSettings.url,
+                errors: callbackSettings.getErrors('url'),
+                suggestEnvVars: true,
             }) }}
 
             {{ forms.autosuggestField({
@@ -103,6 +107,7 @@
                 id: 'token',
                 name: 'token',
                 value: callbackSettings.token,
+                errors: callbackSettings.getErrors('token'),
                 suggestEnvVars: true,
             }) }}
 
@@ -111,6 +116,7 @@
                 id: 'aesKey',
                 name: 'aesKey',
                 value: callbackSettings.aesKey,
+                errors: callbackSettings.getErrors('aesKey'),
                 suggestEnvVars: true,
             }) }}
 

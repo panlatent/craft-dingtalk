@@ -132,6 +132,11 @@ class Corporation extends Model
         $rules[] = [['name', 'corpId', 'corpSecret'], 'string'];
         $rules[] = [['primary', 'hasUrls'], 'boolean'];
         $rules[] = [['handle'], HandleValidator::class];
+        $rules[] = [['corpId', 'corpSecret'], function($attribute) {
+            if (!$this->getRemote()->validateAuth()) {
+                $this->addError($attribute, '不合法的 Corp ID 或 Corp Secret');
+            }
+        }];
 
         return $rules;
     }
@@ -240,10 +245,7 @@ class Corporation extends Model
             return $this->_remote;
         }
 
-        return $this->_remote = new Remote([
-            'corpId' => $this->getCorpId(),
-            'corpSecret' => $this->getCorpSecret(),
-        ]);
+        return $this->_remote = new Remote($this);
     }
 
     /**
@@ -251,6 +253,20 @@ class Corporation extends Model
      */
     public function getIsRegisteredCallback(): bool
     {
+        try {
+            return $this->getRemote()->getCallback() !== null;
+        } catch (Throwable $exception) {
+            return false;
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function getCallbackRegisterStatus(): string
+    {
+        $ret = $this->getRemote()->getCallback();
+
         try {
             return $this->getRemote()->getCallback() !== null;
         } catch (Throwable $exception) {
@@ -317,7 +333,7 @@ class Corporation extends Model
 
         if (!$this->id) {
             if ($settings->token === null) {
-                $settings->token = StringHelper::randomString(16, true);
+                $settings->token = StringHelper::randomString(16);
             }
             if ($settings->aesKey === null) {
                 $settings->aesKey = StringHelper::randomString(43);

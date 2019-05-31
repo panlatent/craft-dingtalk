@@ -10,6 +10,7 @@ namespace panlatent\craft\dingtalk\plugin;
 
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
+use panlatent\craft\dingtalk\Plugin;
 use yii\base\Event;
 
 /**
@@ -20,6 +21,9 @@ use yii\base\Event;
  */
 trait Routes
 {
+    // Private Methods
+    // =========================================================================
+
     /**
      * Register Cp url rules.
      */
@@ -54,8 +58,8 @@ trait Routes
     private function _registerSiteRoutes()
     {
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_SITE_URL_RULES, function (RegisterUrlRulesEvent $event) {
-            if ($this->getSettings()->callbackUrlRule !== null) {
-                $event->rules[$this->getSettings()->callbackUrlRule] = 'dingtalk/callbacks/receive-event';
+            if (Plugin::$dingtalk->settings->getCallbackRule() !== null) {
+                $event->rules[Plugin::$dingtalk->settings->getCallbackRule()] = 'dingtalk/callbacks/create-request';
             }
         });
     }

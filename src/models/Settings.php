@@ -10,6 +10,7 @@ namespace panlatent\craft\dingtalk\models;
 
 use Craft;
 use craft\base\Model;
+use craft\helpers\UrlHelper;
 
 /**
  * Class Settings
@@ -32,7 +33,6 @@ class Settings extends Model
      */
     public $callbackRule;
 
-
     // Public Methods
     // =========================================================================
 
@@ -42,7 +42,7 @@ class Settings extends Model
     public function rules()
     {
         $rules = parent::rules();
-        $rules[] = [['cpSectionName'], 'string'];
+        $rules[] = [['cpSectionName', 'callbackRule'], 'string'];
 
         return $rules;
     }
@@ -53,5 +53,13 @@ class Settings extends Model
     public function getCallbackRule()
     {
         return Craft::parseEnv($this->callbackRule);
+    }
+
+    /**
+     * @return string
+     */
+    public function getCallbackUrl()
+    {
+        return UrlHelper::siteUrl(Craft::parseEnv($this->callbackRule));
     }
 }

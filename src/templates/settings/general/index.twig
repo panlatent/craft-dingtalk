@@ -18,16 +18,18 @@
                 id: 'cpSectionName',
                 name: 'cpSectionName',
                 value: settings.cpSectionName,
+                errors: settings.getErrors('cpSectionName'),
+            }) }}
+
+            {{ forms.autosuggestField({
+                label: "Callback Rule"|t('dingtalk'),
+                id: 'callbackRule',
+                name: 'callbackRule',
+                value: settings.callbackRule,
+                errors: settings.getErrors('callbackRule'),
+                suggestEnvVars: true,
             }) }}
         {% endnamespace %}
-
-{#        {{ forms.autosuggestField({#}
-{#            label: "Event Callback URL Rule"|t('dingtalk'),#}
-{#            id: 'callbackUrl',#}
-{#            name: 'settings[callbackUrlRule]',#}
-{#            value: settings.callbackUrlRule,#}
-{#            suggestEnvVars: true,#}
-{#        }) }}#}
 
         <button class="btn submit">{{ 'Save'|t('app') }}</button>
     </form>

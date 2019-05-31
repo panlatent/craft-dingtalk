@@ -14,6 +14,7 @@ use craft\web\Controller;
 use panlatent\craft\dingtalk\models\Callback;
 use panlatent\craft\dingtalk\models\CallbackGroup;
 use panlatent\craft\dingtalk\Plugin;
+use panlatent\craft\dingtalk\web\CallbackRequestAction;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -28,23 +29,35 @@ class CallbacksController extends Controller
     /**
      * @inheritdoc
      */
-   // public $enableCsrfValidation = false;
+    protected $allowAnonymous = [
+        'create-request',
+    ];
+
+
+    // Public Methods
+    // =========================================================================
 
     /**
      * @inheritdoc
      */
-    //protected $allowAnonymous = true;
+    public function actions()
+    {
+        return [
+            'create-request' => CallbackRequestAction::class,
+        ];
+    }
 
     /**
      * @inheritdoc
      */
     public function beforeAction($action)
     {
+        if ($action->id == 'create-request') {
+            $this->enableCsrfValidation = false;
+        }
+
         return parent::beforeAction($action);
     }
-
-    // Private Methods
-    // =========================================================================
 
     // Groups
     // -------------------------------------------------------------------------
