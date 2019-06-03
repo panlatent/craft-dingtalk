@@ -10,6 +10,7 @@ namespace panlatent\craft\dingtalk\services;
 
 use Craft;
 use craft\helpers\Json;
+use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\elements\Contact;
 use panlatent\craft\dingtalk\errors\ContactException;
 use panlatent\craft\dingtalk\events\ContactEvent;
@@ -211,7 +212,7 @@ class Contacts extends Component
     {
         $ids = (new Query())
             ->select(['labelId'])
-            ->from('{{%dingtalk_contactlabels_contacts}}')
+            ->from(Table::CONTACTLABELS)
             ->where(['contactId' => $contactId])
             ->column();
 
@@ -232,7 +233,7 @@ class Contacts extends Component
     {
         $ids = (new Query())
             ->select(['id'])
-            ->from('{{%dingtalk_contactlabels}}')
+            ->from(Table::CONTACTLABELS)
             ->where(['sourceId' => $sourceIds])
             ->column();
 
@@ -389,7 +390,7 @@ class Contacts extends Component
     {
         return (new Query())
             ->select(['id', 'corporationId', 'name', 'color'])
-            ->from('{{%dingtalk_contactlabelgroups}}');
+            ->from(Table::CONTACTLABELGROUPS);
     }
 
     /**
@@ -399,7 +400,7 @@ class Contacts extends Component
     {
         return (new Query())
             ->select(['id', 'groupId', 'name', 'sourceId'])
-            ->from('{{%dingtalk_contactlabels}}');
+            ->from(Table::CONTACTLABELS);
     }
 
     /**

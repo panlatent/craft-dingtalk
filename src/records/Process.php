@@ -9,6 +9,7 @@
 namespace panlatent\craft\dingtalk\records;
 
 use craft\db\ActiveRecord;
+use panlatent\craft\dingtalk\db\Table;
 
 /**
  * Class Process
@@ -32,6 +33,6 @@ class Process extends ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%dingtalk_processes}}';
+        return Table::PROCESSES;
     }
 }

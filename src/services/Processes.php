@@ -276,7 +276,7 @@ class Processes extends Component
 
         $transaction = $db->beginTransaction();
         try {
-            $db->createCommand()->delete('{{%dingtalk_processes}}', [
+            $db->createCommand()->delete(Table::PROCESSES, [
                 'id' => $process->id,
             ])->execute();
 

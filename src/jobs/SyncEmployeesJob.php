@@ -11,6 +11,7 @@ namespace panlatent\craft\dingtalk\jobs;
 use Craft;
 use craft\helpers\ArrayHelper;
 use craft\queue\BaseJob;
+use panlatent\craft\dingtalk\elements\Employee;
 use Throwable;
 
 /**
@@ -101,13 +102,13 @@ class SyncEmployeesJob extends BaseJob
                 }
 
                 foreach ($userResults as $dingUserId => $result) {
-                    $user = User::find()
+                    $user = Employee::find()
                         ->corporationId($this->corporationId)
                         ->userId($dingUserId)
                         ->one();
 
                     if (!$user) {
-                        $user = new User();
+                        $user = new Employee();
                     }
 
                     $userDepartments = [];
@@ -145,8 +146,8 @@ class SyncEmployeesJob extends BaseJob
         }
 
         // Remove abandoned users.
-        /** @var User[] $leavedUsers */
-        $leavedUsers = User::find()
+        /** @var Employee[] $leavedUsers */
+        $leavedUsers = Employee::find()
             ->corporationId($this->corporationId)
             ->andWhere(['not in', 'dingtalk_users.id', $incumbentIds])
             ->isLeaved(false)
@@ -163,10 +164,10 @@ class SyncEmployeesJob extends BaseJob
     }
 
     /**
-     * @param User $user
+     * @param Employee $user
      * @param array $data
      */
-    private function _loadUser(User $user, array $data)
+    private function _loadUser(Employee $user, array $data)
     {
         $isNewUser = !$user->id;
 

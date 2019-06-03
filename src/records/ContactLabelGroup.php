@@ -8,6 +8,7 @@
 
 namespace panlatent\craft\dingtalk\records;
 
+use panlatent\craft\dingtalk\db\Table;
 use yii\db\ActiveRecord;
 
 /**
@@ -27,6 +28,6 @@ class ContactLabelGroup extends ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%dingtalk_contactlabelgroups}}';
+        return Table::CONTACTLABELGROUPS;
     }
 }

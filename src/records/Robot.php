@@ -9,6 +9,7 @@
 namespace panlatent\craft\dingtalk\records;
 
 use craft\db\ActiveRecord;
+use panlatent\craft\dingtalk\db\Table;
 
 /**
  * Class Robot
@@ -28,6 +29,6 @@ class Robot extends ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%dingtalk_robots}}';
+        return Table::ROBOTS;
     }
 }

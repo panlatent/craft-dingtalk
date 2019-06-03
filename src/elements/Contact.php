@@ -25,10 +25,10 @@ use yii\db\Query;
  * Class Contact
  *
  * @package panlatent\craft\dingtalk\elements
- * @property User $follower
+ * @property Employee $follower
  * @property ContactLabel[] $labels
  * @property Department[] $shareDepartments
- * @property User[] $shareUsers
+ * @property Employee[] $shareUsers
  * @author Panlatent <panlatent@gmail.com>
  */
 class Contact extends Element
@@ -223,7 +223,7 @@ class Contact extends Element
     public $deleteWithRemote = true;
 
     /**
-     * @var User|null
+     * @var Employee|null
      */
     private $_follower;
 
@@ -238,7 +238,7 @@ class Contact extends Element
     private $_shareDepartments;
 
     /**
-     * @var User[]|null
+     * @var Employee[]|null
      */
     private $_shareUsers;
 
@@ -329,9 +329,9 @@ class Contact extends Element
     }
 
     /**
-     * @return User
+     * @return Employee
      */
-    public function getFollower(): User
+    public function getFollower(): Employee
     {
         if ($this->_follower !== null) {
             return $this->_follower;
@@ -341,7 +341,7 @@ class Contact extends Element
             throw new InvalidConfigException();
         }
 
-        $this->_follower = User::find()
+        $this->_follower = Employee::find()
             ->id($this->followerId)
             ->one();
 
@@ -410,7 +410,7 @@ class Contact extends Element
     }
 
     /**
-     * @return User[]
+     * @return Employee[]
      */
     public function getShareUsers(): array
     {
@@ -422,7 +422,7 @@ class Contact extends Element
             return [];
         }
 
-        $this->_shareUsers =  User::find()
+        $this->_shareUsers =  Employee::find()
             ->shareContactOf($this)
             ->all();
 
@@ -430,7 +430,7 @@ class Contact extends Element
     }
 
     /**
-     * @param User[] $users
+     * @param Employee[] $users
      */
     public function setShareUsers(array $users)
     {
@@ -478,7 +478,7 @@ class Contact extends Element
             foreach ($this->_labels as $label) {
                 Craft::$app->getDb()
                     ->createCommand()
-                    ->upsert('{{%dingtalk_contactlabels_contacts}}', [
+                    ->upsert(Table::CONTACTLABELS_CONTACTS, [
                         'labelId' => $label->id,
                         'contactId' => $this->id,
                     ])

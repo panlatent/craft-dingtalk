@@ -9,6 +9,7 @@
 namespace panlatent\craft\dingtalk\records;
 
 use craft\db\ActiveRecord;
+use panlatent\craft\dingtalk\db\Table;
 
 /**
  * Class Contact
@@ -34,6 +35,6 @@ class Contact extends ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%dingtalk_contacts}}';
+        return Table::CONTACTS;
     }
 }

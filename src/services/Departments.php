@@ -266,7 +266,7 @@ class Departments extends Component
         $transaction = $db->beginTransaction();
         try {
             $db->createCommand()
-                ->delete('{{%dingtalk_departments}}', [
+                ->delete(Table::DEPARTMENTS, [
                     'id' => $department->id,
                 ])->execute();
 

@@ -15,6 +15,7 @@ use craft\helpers\ArrayHelper;
 use craft\helpers\Component as ComponentHelper;
 use panlatent\craft\dingtalk\base\Robot;
 use panlatent\craft\dingtalk\base\RobotInterface;
+use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\errors\RobotException;
 use panlatent\craft\dingtalk\records\Robot as RobotRecord;
 use panlatent\craft\dingtalk\records\RobotWebhook as RobotWebhookRecord;
@@ -206,7 +207,7 @@ class Robots extends Component
                     ->where(['robotId' => $robot->id])
                     ->column();
 
-                $db->createCommand()->upsert('{{%dingtalk_robotwebhooks}}', [
+                $db->createCommand()->upsert(Table::ROBOTWEBHOOKS, [
                     'robotId' => $robot->id,
                     'name' => $webhook->name,
                     'url' => $webhook->url,
@@ -234,7 +235,7 @@ class Robots extends Component
                 }
 
                 if ($deleteWebhookIds) {
-                    $db->createCommand()->delete('{{%dingtalk_robotwebhooks}}', [
+                    $db->createCommand()->delete(Table::ROBOTWEBHOOKS, [
                         'id' => $deleteWebhookIds,
                     ])->execute();
                 }
@@ -270,7 +271,7 @@ class Robots extends Component
         try {
 
             Craft::$app->db->createCommand()
-                ->delete('{{%dingtalk_robots}}', ['id' => $robot->id])
+                ->delete(Table::ROBOTS, ['id' => $robot->id])
                 ->execute();
 
             $robot->afterDelete();
@@ -292,7 +293,7 @@ class Robots extends Component
     {
         return (new Query())
             ->select(['id', 'handle', 'name', 'type', 'settings'])
-            ->from('{{%dingtalk_robots}}');
+            ->from(Table::ROBOTS);
     }
 
     /**
