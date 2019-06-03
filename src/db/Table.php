@@ -23,9 +23,9 @@ abstract class Table
     const CALLBACKGROUPS = '{{%dingtalk_callbackgroups}}';
     const CALLBACKREQUESTS = '{{%dingtalk_callbackrequests}}';
     const CALLBACKS = '{{%dingtalk_callbacks}}';
-    const CONTACTLABELGROUPS = '{{%dingtalk_contactslabelgroups}}';
-    const CONTACTLABELS = '{{%dingtalk_contactslabels}}';
-    const CONTACTLABELS_CONTACTS = '{{%dingtalk_contactslabelcontacts}}';
+    const CONTACTLABELGROUPS = '{{%dingtalk_contactlabelgroups}}';
+    const CONTACTLABELS = '{{%dingtalk_contactlabels}}';
+    const CONTACTLABELS_CONTACTS = '{{%dingtalk_contactlabels_contacts}}';
     const CONTACTS = '{{%dingtalk_contacts}}';
     const CONTACTSHARES_DEPARTMENTS = '{{%dingtalk_contactshares_departments}}';
     const CONTACTSHARES_USERS = '{{%dingtalk_contactshares_users}}';
