@@ -212,7 +212,7 @@ class Contacts extends Component
     {
         $ids = (new Query())
             ->select(['labelId'])
-            ->from(Table::CONTACTLABELS)
+            ->from(Table::CONTACTLABELS_CONTACTS)
             ->where(['contactId' => $contactId])
             ->column();
 

@@ -166,7 +166,7 @@ class Install extends Migration
         $this->createTable(Table::EMPLOYEES, [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
-            'userId' => $this->string(32)->notNull(),
+            'dingUserId' => $this->string(32)->notNull(),
             'name' => $this->string(64)->notNull(),
             'position' => $this->string(64),
             'tel' => $this->string(64),
@@ -259,10 +259,10 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createTable(Table::CONTACTSHARES_USERS, [
+        $this->createTable(Table::CONTACTSHARES_EMPLOYEES, [
             'id' => $this->primaryKey(),
             'contactId' => $this->integer()->notNull(),
-            'userId' => $this->integer()->notNull(),
+            'employeeId' => $this->integer()->notNull(),
             'dateCreated' => $this->dateTime()->notNull(),
             'dateUpdated' => $this->dateTime()->notNull(),
             'uid' => $this->uid(),
@@ -333,11 +333,11 @@ class Install extends Migration
             'processId' => $this->integer()->notNull(),
             'businessId' => $this->string(21)->notNull(),
             'instanceId' => $this->string(36)->notNull(),
-            'originatorUserId' => $this->integer()->notNull(),
+            'originatorEmployeeId' => $this->integer()->notNull(),
             'originatorDepartmentId' => $this->integer()->notNull(),
             'title' => $this->string(),
-            'approveUserIds' => $this->string(),
-            'ccUserIds' => $this->string(),
+            'approveEmployeeIds' => $this->string(),
+            'ccEmployeeIds' => $this->string(),
             'attachedInstanceIds' => $this->string(),
             'isAgree' => $this->boolean(),
             'bizAction' => $this->enum('bizAction', ['None', 'Modify', 'Revoke']),
@@ -382,9 +382,9 @@ class Install extends Migration
         $this->createIndex(null, Table::CONTACTS, 'followerId');
         $this->createIndex(null, Table::CONTACTLABELS_CONTACTS, 'contactId');
         $this->createIndex(null, Table::CONTACTLABELS_CONTACTS, ['labelId', 'contactId'], true);
-        $this->createIndex(null, Table::CONTACTSHARES_USERS, 'contactId');
-        $this->createIndex(null, Table::CONTACTSHARES_USERS, 'userId');
-        $this->createIndex(null, Table::CONTACTSHARES_USERS, ['contactId', 'userId'], true);
+        $this->createIndex(null, Table::CONTACTSHARES_EMPLOYEES, 'contactId');
+        $this->createIndex(null, Table::CONTACTSHARES_EMPLOYEES, 'employeeId');
+        $this->createIndex(null, Table::CONTACTSHARES_EMPLOYEES, ['contactId', 'employeeId'], true);
         $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, 'contactId');
         $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, 'departmentId');
         $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, ['contactId', 'departmentId'], true);
@@ -406,8 +406,8 @@ class Install extends Migration
         $this->createIndex(null, Table::DEPARTMENTS, ['archived', 'dateCreated']);
         $this->createIndex(null, Table::DEPARTMENTS, 'sortOrder');
         $this->createIndex(null, Table::EMPLOYEES, 'corporationId');
-        $this->createIndex(null, Table::EMPLOYEES, 'userId');
-        $this->createIndex(null, Table::EMPLOYEES, ['corporationId', 'userId'], true);
+        $this->createIndex(null, Table::EMPLOYEES, 'dingUserId');
+        $this->createIndex(null, Table::EMPLOYEES, ['corporationId', 'dingUserId'], true);
         $this->createIndex(null, Table::EMPLOYEES, ['name']);
         $this->createIndex(null, Table::EMPLOYEES, ['mobile']);
         $this->createIndex(null, Table::EMPLOYEEDEPARTMENTS, ['employeeId']);
@@ -436,7 +436,7 @@ class Install extends Migration
         $this->addForeignKey(null, Table::APPROVALS, 'id', CraftTable::ELEMENTS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::APPROVALS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::APPROVALS, 'processId', Table::PROCESSES, 'id', 'CASCADE');
-        $this->addForeignKey(null, Table::APPROVALS, 'originatorUserId', Table::EMPLOYEES, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::APPROVALS, 'originatorEmployeeId', Table::EMPLOYEES, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::APPROVALS, 'originatorDepartmentId', Table::DEPARTMENTS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CALLBACKREQUESTS, 'callbackId', Table::CALLBACKS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CALLBACKREQUESTS, 'corporationId', Table::CORPORATIONS, 'id', 'SET NULL');
@@ -447,8 +447,8 @@ class Install extends Migration
         $this->addForeignKey(null, Table::CONTACTS, 'followerId', Table::EMPLOYEES, 'id');
         $this->addForeignKey(null, Table::CONTACTLABELS_CONTACTS, 'labelId', Table::CONTACTLABELS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CONTACTLABELS_CONTACTS, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
-        $this->addForeignKey(null, Table::CONTACTSHARES_USERS, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
-        $this->addForeignKey(null, Table::CONTACTSHARES_USERS, 'userId', Table::EMPLOYEES, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTSHARES_EMPLOYEES, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CONTACTSHARES_EMPLOYEES, 'employeeId', Table::EMPLOYEES, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CONTACTSHARES_DEPARTMENTS, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CONTACTSHARES_DEPARTMENTS, 'departmentId', Table::DEPARTMENTS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CORPORATIONAPPS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
@@ -476,7 +476,7 @@ class Install extends Migration
         $this->dropTableIfExists(Table::ROBOTWEBHOOKS);
         $this->dropTableIfExists(Table::ROBOTS);
         $this->dropTableIfExists(Table::CONTACTSHARES_DEPARTMENTS);
-        $this->dropTableIfExists(Table::CONTACTSHARES_USERS);
+        $this->dropTableIfExists(Table::CONTACTSHARES_EMPLOYEES);
         $this->dropTableIfExists(Table::CONTACTLABELS_CONTACTS);
         $this->dropTableIfExists(Table::CONTACTS);
         $this->dropTableIfExists(Table::CONTACTLABELS);

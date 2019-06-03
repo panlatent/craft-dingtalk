@@ -104,7 +104,7 @@ class SyncEmployeesJob extends BaseJob
                 foreach ($userResults as $dingUserId => $result) {
                     $user = Employee::find()
                         ->corporationId($this->corporationId)
-                        ->userId($dingUserId)
+                        ->dingUserId($dingUserId)
                         ->one();
 
                     if (!$user) {
@@ -135,7 +135,7 @@ class SyncEmployeesJob extends BaseJob
                     $this->_loadUser($user, $result);
 
                     if (!$elements->saveElement($user)) {
-                        Craft::warning('Couldn’t save dingtalk user with the ID: ' . $user->userId, __METHOD__);
+                        Craft::warning('Couldn’t save dingtalk user with the ID: ' . $user->dingUserId, __METHOD__);
                         continue;
                     }
 
@@ -149,7 +149,7 @@ class SyncEmployeesJob extends BaseJob
         /** @var Employee[] $leavedUsers */
         $leavedUsers = Employee::find()
             ->corporationId($this->corporationId)
-            ->andWhere(['not in', 'dingtalk_users.id', $incumbentIds])
+            ->andWhere(['not in', 'elements.id', $incumbentIds])
             ->isLeaved(false)
             ->all();
 
@@ -172,7 +172,7 @@ class SyncEmployeesJob extends BaseJob
         $isNewUser = !$user->id;
 
         if ($isNewUser && !empty($data['userid'])) {
-            $user->userId = ArrayHelper::remove($data, 'userid');
+            $user->dingUserId = ArrayHelper::remove($data, 'userid');
         }
 
         if (!empty($data['name'])) {

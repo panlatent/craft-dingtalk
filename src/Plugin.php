@@ -140,7 +140,7 @@ class Plugin extends \craft\base\Plugin
         if (Craft::$app->getUser()->checkPermission(Permissions::MANAGE_EMPLOYEES)) {
             $ret['subnav']['employees'] = [
                 'label' => Craft::t('dingtalk', 'Employees'),
-                'url' => 'dingtalk/users'
+                'url' => 'dingtalk/employees'
             ];
         }
 

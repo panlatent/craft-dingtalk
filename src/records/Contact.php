@@ -17,7 +17,7 @@ use panlatent\craft\dingtalk\db\Table;
  * @package panlatent\craft\dingtalk\records
  * @property int $id
  * @property int $corporationId
- * @property string $userId
+ * @property string $employeeId
  * @property string $name
  * @property string $mobile
  * @property int $followerId

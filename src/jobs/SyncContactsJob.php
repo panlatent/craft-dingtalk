@@ -13,6 +13,7 @@ use craft\helpers\ArrayHelper;
 use craft\helpers\Json;
 use craft\queue\BaseJob;
 use panlatent\craft\dingtalk\elements\Contact;
+use panlatent\craft\dingtalk\elements\Employee;
 use panlatent\craft\dingtalk\Plugin;
 use yii\base\Exception;
 
@@ -81,13 +82,13 @@ class SyncContactsJob extends BaseJob
         foreach ($this->getCorporation()->getRemote()->getExternalContacts() as $result) {
             $contact = Contact::find()
                 ->corporationId($this->corporationId)
-                ->userId($result['userid'])
+                ->employeeId($result['userid'])
                 ->one();
 
             if (!$contact) {
                 $contact = new Contact();
                 $contact->corporationId = $this->corporationId;
-                $contact->userId = $result['userid'];
+                $contact->employeeId = $result['userid'];
             }
 
             if (empty($result['follower_user_id'])) {
@@ -96,9 +97,9 @@ class SyncContactsJob extends BaseJob
                 continue;
             }
 
-            $follower = User::find()
+            $follower = Employee::find()
                 ->corporationId($this->corporationId)
-                ->userId($result['follower_user_id'])
+                ->dingUserId($result['follower_user_id'])
                 ->one();
 
             if (!$follower) {
@@ -129,9 +130,9 @@ class SyncContactsJob extends BaseJob
             }
 
             if (!empty($result['share_user_ids'])) {
-                $contact->shareUsers = User::find()
+                $contact->shareUsers = Employee::find()
                     ->corporationId($this->corporationId)
-                    ->userId($result['share_user_ids'])
+                    ->dingUserId($result['share_user_ids'])
                     ->all();
             }
 

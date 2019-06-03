@@ -195,7 +195,7 @@ class Employee extends Element
     /**
      * @var string|null 员工唯一标识ID（不可修改）
      */
-    public $userId;
+    public $dingUserId;
 
     /**
      * @var string|null 成员名称
@@ -326,7 +326,7 @@ class Employee extends Element
         $rules = parent::rules();
 
         $rules = array_merge($rules, [
-            [['userId', 'name', 'mobile'], 'required'],
+            [['corporationId', 'dingUserId', 'name', 'mobile'], 'required'],
             [['mobile'], MobileValidator::class, 'stateCodeAttribute' => 'stateCode'],
             [['hiredDate', 'leavedDate'], DateTimeValidator::class],
         ]);
@@ -386,7 +386,7 @@ class Employee extends Element
             ->select('departmentId')
             ->from(Table::EMPLOYEEDEPARTMENTS)
             ->where([
-                'userId' => $this->id,
+                'employeeId' => $this->id,
                 'primary' => true,
             ])
             ->scalar();
@@ -418,7 +418,7 @@ class Employee extends Element
         $departmentIds = (new Query())
             ->select('departmentId')
             ->from(Table::EMPLOYEEDEPARTMENTS)
-            ->where(['userId' => $this->id])
+            ->where(['employeeId' => $this->id])
             ->column();
 
         $this->setDepartments($departmentIds);
@@ -505,7 +505,7 @@ class Employee extends Element
         }
 
         $record->corporationId = $this->corporationId;
-        $record->userId = $this->userId;
+        $record->dingUserId = $this->dingUserId;
         $record->name = $this->name;
         $record->position = $this->position;
         $record->tel = $this->tel;
@@ -533,7 +533,7 @@ class Employee extends Element
             $oldDepartmentIds = (new Query())
                 ->select('departmentId')
                 ->from(Table::EMPLOYEEDEPARTMENTS)
-                ->where(['userId' => $this->id])
+                ->where(['employeeId' => $this->id])
                 ->indexBy('departmentId')
                 ->column();
 
@@ -547,7 +547,7 @@ class Employee extends Element
 
                 $db->createCommand()
                     ->upsert(Table::EMPLOYEEDEPARTMENTS, [
-                        'userId' => $this->id,
+                        'employeeId' => $this->id,
                         'departmentId' => $department->id,
                     ], [
                         'primary' => $isPrimary,
@@ -562,7 +562,7 @@ class Employee extends Element
             if (!empty($oldDepartmentIds)) {
                 $db->createCommand()
                     ->delete(Table::EMPLOYEEDEPARTMENTS, [
-                        'userId' => $this->id,
+                        'employeeId' => $this->id,
                         'departmentId' => $oldDepartmentIds,
                     ])
                     ->execute();

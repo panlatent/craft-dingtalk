@@ -8,6 +8,7 @@
 
 namespace panlatent\craft\dingtalk\jobs;
 
+use Craft;
 use craft\helpers\ArrayHelper;
 use craft\queue\BaseJob;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
@@ -71,7 +72,9 @@ class SyncDepartmentsJob extends BaseJob
             $department->archived = false;
             $department->sortOrder = $sortOrder;
 
-            $departments->saveDepartment($department);
+            if (!$departments->saveDepartment($department)) {
+                Craft::warning("Couldn’t save department.", __METHOD__);
+            }
 
             $allDepartments[] = $department;
 

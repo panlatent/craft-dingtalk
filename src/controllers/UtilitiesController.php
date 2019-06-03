@@ -11,6 +11,7 @@ namespace panlatent\craft\dingtalk\controllers;
 use Craft;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\jobs\SyncApprovalsJob;
+use panlatent\craft\dingtalk\jobs\SyncDepartmentsJob;
 use panlatent\craft\dingtalk\jobs\SyncEmployeesJob;
 use panlatent\craft\dingtalk\jobs\SyncContactsJob;
 use panlatent\craft\dingtalk\models\SyncUtilityForm;
@@ -101,14 +102,19 @@ class UtilitiesController extends Controller
         }
 
         if ($types === '*') {
-            $types = ['users', 'externalcontacts', 'approvals'];
+            $types = ['departments', 'users', 'externalcontacts', 'approvals'];
         }
 
         foreach ($selectedCorporations as $corporation) {
 
             foreach ($types as $type) {
                 switch ($type) {
+                    case 'departments':
                     case 'users':
+                        Craft::$app->getQueue()->push(new SyncDepartmentsJob([
+                            'corporationId' => $corporation->id
+                        ]));
+
                         Craft::$app->getQueue()->push(new SyncEmployeesJob([
                             'corporationId' => $corporation->id,
                             'withSmartWorks' => $request->getBodyParam('withSmartWorks'),

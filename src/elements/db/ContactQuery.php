@@ -34,7 +34,7 @@ class ContactQuery extends ElementQuery
     /**
      * @var string[]|string|null
      */
-    public $userId;
+    public $employeeId;
 
     /**
      * @var string[]|string|null
@@ -73,9 +73,9 @@ class ContactQuery extends ElementQuery
      * @param string[]|string|null $value
      * @return $this
      */
-    public function userId($value)
+    public function employeeId($value)
     {
-        $this->userId = $value;
+        $this->employeeId = $value;
 
         return $this;
     }
@@ -155,7 +155,7 @@ class ContactQuery extends ElementQuery
 
         $this->query->addSelect([
             'dingtalk_contacts.corporationId',
-            'dingtalk_contacts.userId',
+            'dingtalk_contacts.employeeId',
             'dingtalk_contacts.name',
             'dingtalk_contacts.mobile',
             'dingtalk_contacts.followerId',
@@ -166,8 +166,8 @@ class ContactQuery extends ElementQuery
             'dingtalk_contacts.remark',
         ]);
 
-        if ($this->userId) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_contacts.userId', $this->userId));
+        if ($this->employeeId) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_contacts.employeeId', $this->employeeId));
         }
 
         if ($this->name) {

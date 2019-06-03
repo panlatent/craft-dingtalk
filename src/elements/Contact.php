@@ -143,7 +143,7 @@ class Contact extends Element
     {
         return [
             'name',
-            'userId',
+            'employeeId',
             'mobile',
             'companyName',
             'position',
@@ -175,7 +175,7 @@ class Contact extends Element
     /**
      * @var string|null
      */
-    public $userId;
+    public $employeeId;
 
     /**
      * @var string|null
@@ -260,7 +260,7 @@ class Contact extends Element
     {
         $rules = parent::rules();
         $rules[] = [['corporationId', 'name', 'mobile', 'followerId', 'labels'], 'required'];
-        $rules[] = [['userId', 'position', 'companyName', 'address', 'remark'], 'string'];
+        $rules[] = [['employeeId', 'position', 'companyName', 'address', 'remark'], 'string'];
         $rules[] = [['stateCode'], 'default', 'value' => '86'];
         $rules[] = [['mobile'], function() {
             $contact = Contact::find()
@@ -463,7 +463,7 @@ class Contact extends Element
 
         $record->corporationId = $this->corporationId;
         $record->name = $this->name;
-        $record->userId = $this->userId;
+        $record->employeeId = $this->employeeId;
         $record->mobile = $this->mobile;
         $record->followerId = $this->followerId;
         $record->stateCode = $this->stateCode;
@@ -517,28 +517,28 @@ class Contact extends Element
         }
 
         if ($this->_shareUsers) {
-            $oldShareUserIds = (new Query())
-                ->select('userId')
-                ->from(Table::CONTACTSHARES_USERS)
+            $oldShareEmployeeIds = (new Query())
+                ->select('employeeId')
+                ->from(Table::CONTACTSHARES_EMPLOYEES)
                 ->where(['contactId' => $this->id])
                 ->indexBy('id')
                 ->column();
 
             foreach ($this->_shareUsers as $user) {
                 $db->createCommand()
-                    ->upsert(Table::CONTACTSHARES_USERS, [
+                    ->upsert(Table::CONTACTSHARES_EMPLOYEES, [
                         'contactId' => $this->id,
-                        'userId' => $user->id,
+                        'employeeId' => $user->id,
                     ])
                     ->execute();
 
-                unset($oldShareUserIds[$user->id]);
+                unset($oldShareEmployeeIds[$user->id]);
             }
 
-            if ($oldShareUserIds) {
+            if ($oldShareEmployeeIds) {
                 $db->createCommand()
-                    ->delete(Table::CONTACTSHARES_USERS, [
-                        'id' => $oldShareUserIds,
+                    ->delete(Table::CONTACTSHARES_EMPLOYEES, [
+                        'id' => $oldShareEmployeeIds,
                     ])
                     ->execute();
             }

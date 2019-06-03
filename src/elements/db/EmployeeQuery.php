@@ -12,7 +12,7 @@ use craft\elements\db\ElementQuery;
 use craft\helpers\Db;
 use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\elements\Contact;
-use panlatent\craft\dingtalk\elements\User;
+use panlatent\craft\dingtalk\elements\Employee;
 use panlatent\craft\dingtalk\helpers\DepartmentHelper;
 use panlatent\craft\dingtalk\Plugin;
 
@@ -20,8 +20,8 @@ use panlatent\craft\dingtalk\Plugin;
  * Class EmployeeQuery
  *
  * @package panlatent\craft\dingtalk\elements\db
- * @method User|null one($db = null)
- * @method User[] all($db = null)
+ * @method Employee|null one($db = null)
+ * @method Employee[] all($db = null)
  * @author Panlatent <panlatent@gmail.com>
  */
 class EmployeeQuery extends ElementQuery
@@ -37,7 +37,7 @@ class EmployeeQuery extends ElementQuery
     /**
      * @var string[]|string|null
      */
-    public $userId;
+    public $dingUserId;
 
     /**
      * @var string[]|string|null
@@ -116,9 +116,9 @@ class EmployeeQuery extends ElementQuery
      * @param string[]|string|null $value
      * @return $this
      */
-    public function userId($value)
+    public function dingUserId($value)
     {
-        $this->userId = $value;
+        $this->dingUserId = $value;
 
         return $this;
     }
@@ -282,33 +282,33 @@ class EmployeeQuery extends ElementQuery
      */
     public function beforePrepare(): bool
     {
-        $this->joinElementTable('dingtalk_employs');
+        $this->joinElementTable('dingtalk_employees');
 
         $this->query->select([
-            'dingtalk_employs.corporationId',
-            'dingtalk_employs.userId',
-            'dingtalk_employs.name',
-            'dingtalk_employs.position',
-            'dingtalk_employs.tel',
-            'dingtalk_employs.isAdmin',
-            'dingtalk_employs.isBoss',
-            'dingtalk_employs.isLeader',
-            'dingtalk_employs.isActive',
-            'dingtalk_employs.avatar',
-            'dingtalk_employs.jobNumber',
-            'dingtalk_employs.email',
-            'dingtalk_employs.mobile',
-            'dingtalk_employs.stateCode',
-            'dingtalk_employs.isHide',
-            'dingtalk_employs.isLeaved',
-            'dingtalk_employs.orgEmail',
-            'dingtalk_employs.hiredDate',
-            'dingtalk_employs.leavedDate',
-            'dingtalk_employs.remark',
+            'dingtalk_employees.corporationId',
+            'dingtalk_employees.dingUserId',
+            'dingtalk_employees.name',
+            'dingtalk_employees.position',
+            'dingtalk_employees.tel',
+            'dingtalk_employees.isAdmin',
+            'dingtalk_employees.isBoss',
+            'dingtalk_employees.isLeader',
+            'dingtalk_employees.isActive',
+            'dingtalk_employees.avatar',
+            'dingtalk_employees.jobNumber',
+            'dingtalk_employees.email',
+            'dingtalk_employees.mobile',
+            'dingtalk_employees.stateCode',
+            'dingtalk_employees.isHide',
+            'dingtalk_employees.isLeaved',
+            'dingtalk_employees.orgEmail',
+            'dingtalk_employees.hiredDate',
+            'dingtalk_employees.leavedDate',
+            'dingtalk_employees.remark',
         ]);
 
-        if ($this->userId) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.userId', $this->userId));
+        if ($this->dingUserId) {
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.dingUserId', $this->dingUserId));
         }
 
         if ($this->departmentId) {
@@ -324,42 +324,42 @@ class EmployeeQuery extends ElementQuery
                 }
             }
 
-            $this->subQuery->innerJoin('dingtalk_userdepartments', 'dingtalk_userdepartments.userId=dingtalk_employs.id');
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_userdepartments.departmentId', $departmentIds));
+            $this->subQuery->innerJoin(['ed' => Table::EMPLOYEEDEPARTMENTS], '[[ed.employId]]=[[dingtalk_employees.id]]');
+            $this->subQuery->andWhere(Db::parseParam('ed.departmentId', $departmentIds));
         }
 
         if ($this->name) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.name', $this->name));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.name', $this->name));
         }
 
         if ($this->position) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.position', $this->position));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.position', $this->position));
         }
 
         if ($this->tel) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.tel', $this->tel));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.tel', $this->tel));
         }
 
         if ($this->mobile) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.mobile', $this->mobile));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.mobile', $this->mobile));
         }
 
         if ($this->stateCode) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.stateCode', $this->stateCode));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.stateCode', $this->stateCode));
         }
 
         if ($this->jobNumber) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.jobNumber', $this->jobNumber));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.jobNumber', $this->jobNumber));
         }
 
         if ($this->shareContactOf) {
             $contactId = $this->shareContactOf instanceof Contact ? $this->shareContactOf->id : $this->shareContactOf;
-            $this->subQuery->rightJoin(Table::CONTACTSHARES_USERS . ' contactshares_users', '[[contactshares_users.userId]] = [[dingtalk_employs.id]]');
-            $this->subQuery->andWhere(Db::parseParam('contactshares_users.contactId', $contactId));
+            $this->subQuery->rightJoin(['csu' => Table::CONTACTSHARES_EMPLOYEES], '[[csu.userId]] = [[dingtalk_employees.id]]');
+            $this->subQuery->andWhere(Db::parseParam('csu.contactId', $contactId));
         }
 
         $this->_prepareStatusConditions();
-        $this->_applyCorporationParam('dingtalk_employs.corporationId');
+        $this->_applyCorporationParam('dingtalk_employees.corporationId');
 
         return parent::beforePrepare();
     }
@@ -370,10 +370,10 @@ class EmployeeQuery extends ElementQuery
     protected function statusCondition(string $status)
     {
         switch ($status) {
-            case User::STATUS_IN_SERVICE:
-                return ['dingtalk_employs.isLeaved' => false];
-            case User::STATUS_LEAVED:
-                return ['dingtalk_employs.isLeaved' => true];
+            case Employee::STATUS_IN_SERVICE:
+                return ['dingtalk_employees.isLeaved' => false];
+            case Employee::STATUS_LEAVED:
+                return ['dingtalk_employees.isLeaved' => true];
             default:
                 return parent::statusCondition($status);
         }
@@ -385,27 +385,27 @@ class EmployeeQuery extends ElementQuery
     private function _prepareStatusConditions()
     {
         if ($this->isActive !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.isActive', $this->isActive));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.isActive', $this->isActive));
         }
 
         if ($this->isAdmin !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.isAdmin', $this->isAdmin));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.isAdmin', $this->isAdmin));
         }
 
         if ($this->isBoss !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.isBoss', $this->isBoss));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.isBoss', $this->isBoss));
         }
 
         if ($this->isLeader !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.isLeader', $this->isLeader));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.isLeader', $this->isLeader));
         }
 
         if ($this->isHide !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.isHide', $this->isHide));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.isHide', $this->isHide));
         }
 
         if ($this->isLeaved !== null) {
-            $this->subQuery->andWhere(Db::parseParam('dingtalk_employs.isLeaved', $this->isLeaved));
+            $this->subQuery->andWhere(Db::parseParam('dingtalk_employees.isLeaved', $this->isLeaved));
         }
     }
 }

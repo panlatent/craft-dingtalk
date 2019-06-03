@@ -28,7 +28,7 @@ abstract class Table
     const CONTACTLABELS_CONTACTS = '{{%dingtalk_contactlabels_contacts}}';
     const CONTACTS = '{{%dingtalk_contacts}}';
     const CONTACTSHARES_DEPARTMENTS = '{{%dingtalk_contactshares_departments}}';
-    const CONTACTSHARES_USERS = '{{%dingtalk_contactshares_users}}';
+    const CONTACTSHARES_EMPLOYEES = '{{%dingtalk_contactshares_employees}}';
     const CORPORATIONS = '{{%dingtalk_corporations}}';
     const CORPORATIONAPPS = '{{%dingtalk_corporationapps}}';
     const CORPORATIONCALLBACKSETTINGS = '{{%dingtalk_corporationcallbacksettings}}';

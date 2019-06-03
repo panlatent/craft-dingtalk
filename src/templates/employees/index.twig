@@ -1,9 +1,9 @@
 {% extends "_layouts/elementindex" %}
 
-{% set title = "Users"|t('app') %}
-{% set elementType = 'panlatent\\craft\\dingtalk\\elements\\User' %}
-{% set selectedSubnavItem = 'users' %}
+{% set title = "Employees"|t('app') %}
+{% set elementType = 'panlatent\\craft\\dingtalk\\elements\\Employee' %}
+{% set selectedSubnavItem = 'employees' %}
 
 {% block actionButton %}
-    <a class="btn submit add icon">{{ "New user"|t('dingtalk') }}</a>
+    <a class="btn submit add icon">{{ "New employee"|t('dingtalk') }}</a>
 {% endblock %}
