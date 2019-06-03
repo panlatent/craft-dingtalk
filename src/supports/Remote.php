@@ -447,5 +447,30 @@ class Remote extends Component
         return true;
     }
 
+    public function sendWorkNoticeMessageToUsers(string $agentId, array $userIds, $message)
+    {
+        $this->client->async_message->send([
+            'agent_id' => $agentId,
+            'userid_list' => $userIds,
+            'msg' => $message,
+        ]);
+    }
 
+    public function sendWorkNoticeMessageToDepartments(string $agentId, array $departmentIds, $message)
+    {
+        $this->client->async_message->send([
+            'agent_id' => $agentId,
+            'dept_id_list' => $departmentIds,
+            'msg' => $message,
+        ]);
+    }
+
+    public function sendWorkNoticeMessageToCorporation(string $agentId, $message)
+    {
+        $this->client->async_message->send([
+            'agent_id' => $agentId,
+            'to_all_user' => true,
+            'msg' => $message,
+        ]);
+    }
 }

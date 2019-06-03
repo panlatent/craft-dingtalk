@@ -26,7 +26,7 @@ class FeedCard extends Message
     /**
      * @return array
      */
-    public function getRequestBody()
+    public function getRequestPayload()
     {
         $links = array_map(function($link) {
             return [

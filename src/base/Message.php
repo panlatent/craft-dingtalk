@@ -50,11 +50,14 @@ abstract class Message extends SavableComponent implements MessageInterface
         return false;
     }
 
+    // Public Methods
+    // =========================================================================
+
     /**
-     * @inheritdoc
+     * @return string
      */
     public function __toString()
     {
-        return $this->content;
+        return (string)$this->content;
     }
 }

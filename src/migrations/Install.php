@@ -68,6 +68,23 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
+        $this->createTable(Table::CORPORATIONAPPS, [
+            'id' => $this->primaryKey(),
+            'corporationId' => $this->integer()->notNull(),
+            'name' => $this->string()->notNull(),
+            'agentId' => $this->string()->notNull(),
+            'icon' => $this->string()->notNull(),
+            'description' => $this->string(),
+            'homepage' => $this->string(),
+            'pcHomepage' => $this->string(),
+            'adminUrl' => $this->string(),
+            'isSelfBuilt' => $this->boolean()->notNull()->defaultValue(false),
+            'enabled' => $this->boolean()->notNull()->defaultValue(false),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
         $this->createTable(Table::CORPORATIONCALLBACKSETTINGS, [
             'id' => $this->primaryKey(),
             'corporationId' => $this->integer()->notNull(),
@@ -342,8 +359,8 @@ class Install extends Migration
     public function createIndexes()
     {
         $this->createIndex(null, Table::APPROVALS, 'corporationId');
-        $this->createIndex(null, Table::APPROVALS, ['processId']);
-        $this->createIndex(null, Table::APPROVALS, ['instanceId'], true);
+        $this->createIndex(null, Table::APPROVALS, 'processId');
+        $this->createIndex(null, Table::APPROVALS, 'instanceId', true);
         $this->createIndex(null, Table::CALLBACKGROUPS, 'name', true);
         $this->createIndex(null, Table::CALLBACKREQUESTS, 'callbackId');
         $this->createIndex(null, Table::CALLBACKREQUESTS, 'corporationId');
@@ -376,6 +393,8 @@ class Install extends Migration
         $this->createIndex(null, Table::CORPORATIONS, 'corpId', true);
         $this->createIndex(null, Table::CORPORATIONS, 'enabled');
         $this->createIndex(null, Table::CORPORATIONS, ['sortOrder', 'dateCreated']);
+        $this->createIndex(null, Table::CORPORATIONAPPS, 'corporationId');
+        $this->createIndex(null, Table::CORPORATIONAPPS, 'agentId', true);
         $this->createIndex(null, Table::CORPORATIONCALLBACKSETTINGS, 'corporationId', true);
         $this->createIndex(null, Table::CORPORATIONCALLBACKS, 'corporationId');
         $this->createIndex(null, Table::CORPORATIONCALLBACKS, 'callbackId');
@@ -432,6 +451,7 @@ class Install extends Migration
         $this->addForeignKey(null, Table::CONTACTSHARES_USERS, 'userId', Table::EMPLOYEES, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CONTACTSHARES_DEPARTMENTS, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CONTACTSHARES_DEPARTMENTS, 'departmentId', Table::DEPARTMENTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CORPORATIONAPPS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CORPORATIONCALLBACKSETTINGS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CORPORATIONCALLBACKS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CORPORATIONCALLBACKS, 'callbackId', Table::CALLBACKS, 'id', 'CASCADE');
@@ -469,6 +489,7 @@ class Install extends Migration
         $this->dropTableIfExists(Table::CALLBACKS);
         $this->dropTableIfExists(Table::CALLBACKGROUPS);
         $this->dropTableIfExists(Table::CORPORATIONCALLBACKSETTINGS);
+        $this->dropTableIfExists(Table::CORPORATIONAPPS);
         $this->dropTableIfExists(Table::CORPORATIONS);
     }
 }

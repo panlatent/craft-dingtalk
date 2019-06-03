@@ -41,7 +41,7 @@
         "changelogUrl": "https://raw.githubusercontent.com/panlatent/craft-dingtalk/master/CHANGELOG.md",
         "class": "panlatent\\craft\\dingtalk\\Plugin",
         "branch-alias": {
-            "dev-master": "0.2.x-dev"
+            "dev-master": "1.0.x-dev"
         }
     } 
 }

@@ -20,9 +20,27 @@ use panlatent\craft\dingtalk\messages\MissingMessage;
 use panlatent\craft\dingtalk\messages\Text;
 use yii\base\Component;
 
+/**
+ * Class Messages
+ *
+ * @package panlatent\craft\dingtalk\services
+ * @author Panlatent <panlatent@gmail.com>
+ */
 class Messages extends Component
 {
-    const EVENT_REGISTER_MESSAGE_TYPES = 'reigsterMessageTypes';
+    // Constants
+    // =========================================================================
+
+    // Events
+    // -------------------------------------------------------------------------
+    const EVENT_REGISTER_MESSAGE_TYPES = 'registerMessageTypes';
+
+    // Properties
+    // =========================================================================
+
+
+    // Public Methods
+    // =========================================================================
 
     /**
      * @return string[]
@@ -41,11 +59,20 @@ class Messages extends Component
             'types' => $types,
         ]);
 
-        $this->trigger(static::EVENT_REGISTER_MESSAGE_TYPES, $event);
+        $this->trigger(self::EVENT_REGISTER_MESSAGE_TYPES, $event);
 
         return $event->types;
     }
 
+    public function sendMessage(MessageInterface $message)
+    {
+
+    }
+
+    /**
+     * @param mixed $config
+     * @return MessageInterface
+     */
     public function createMessage($config): MessageInterface
     {
         if (is_string($config)) {
@@ -60,5 +87,10 @@ class Messages extends Component
         }
 
         return $message;
+    }
+
+    public function saveMessage(MessageInterface $message, bool $runValidation = true): bool
+    {
+        return true;
     }
 }

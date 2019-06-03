@@ -8,34 +8,21 @@
 
 namespace panlatent\craft\dingtalk\base;
 
+use craft\base\SavableComponent;
+use craft\base\SavableComponentInterface;
+
 /**
- * Trait MessageTrait
+ * Class Channel
  *
  * @package panlatent\craft\dingtalk\base
  * @author Panlatent <panlatent@gmail.com>
  */
-trait MessageTrait
+abstract class Channel extends SavableComponent implements SavableComponentInterface
 {
-    // Properties
+    // Traits
     // =========================================================================
 
-    /**
-     * @var string|null
-     */
-    public $title;
+    use ChannelTrait;
 
-    /**
-     * @var string|null
-     */
-    public $content;
 
-    /**
-     * @var bool
-     */
-    public $isAtAll = false;
-
-    /**
-     * @var string[]
-     */
-    public $atMobiles = [];
 }

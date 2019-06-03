@@ -14,6 +14,7 @@ use craft\helpers\ArrayHelper;
 use craft\helpers\StringHelper;
 use craft\validators\HandleValidator;
 use panlatent\craft\dingtalk\base\ProcessInterface;
+use panlatent\craft\dingtalk\base\MessageInterface;
 use panlatent\craft\dingtalk\elements\Approval;
 use panlatent\craft\dingtalk\elements\Contact;
 use panlatent\craft\dingtalk\elements\db\ApprovalQuery;
@@ -323,7 +324,19 @@ class Corporation extends Model
     }
 
     /**
-     * @param mixed $settings
+     * @param MessageInterface $message
+     */
+    public function sendMessage(MessageInterface $message)
+    {
+        Plugin::$dingtalk->getMessages()->sendMessage($message);
+
+        $this->remote->sendWorkNoticeMessage([
+
+        ]);
+    }
+
+    /**
+     * @param array $settings
      */
     public function setCallbackSettings($settings = [])
     {

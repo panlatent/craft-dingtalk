@@ -31,7 +31,7 @@ class Link extends Message
     /**
      * @return array
      */
-    public function getRequestBody()
+    public function getRequestPayload()
     {
         return [
             'msgtype' => 'link',

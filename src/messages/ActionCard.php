@@ -61,7 +61,7 @@ class ActionCard extends Message
     /**
      * @return array
      */
-    public function getRequestBody()
+    public function getRequestPayload()
     {
         $actionCard = [
             'title' => $this->title,

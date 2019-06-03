@@ -13,7 +13,7 @@ use panlatent\craft\dingtalk\base\Message;
 
 class Markdown extends Message
 {
-    public function getRequestBody()
+    public function getRequestPayload()
     {
         return [
             'msgtype' => 'markdown',

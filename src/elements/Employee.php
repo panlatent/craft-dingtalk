@@ -14,6 +14,7 @@ use craft\elements\db\ElementQueryInterface;
 use craft\helpers\UrlHelper;
 use craft\validators\DateTimeValidator;
 use DateTime;
+use panlatent\craft\dingtalk\base\MessageInterface;
 use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\elements\db\EmployeeQuery;
 use panlatent\craft\dingtalk\errors\DepartmentException;
@@ -480,6 +481,15 @@ class Employee extends Element
     public function getThumbUrl(int $size)
     {
         return $this->avatar ?: null;
+    }
+
+    /**
+     * @param string $chatId
+     * @param MessageInterface $message
+     */
+    public function sendMessage(string $chatId, MessageInterface $message)
+    {
+
     }
 
     /**

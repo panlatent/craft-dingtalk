@@ -9,33 +9,48 @@
 namespace panlatent\craft\dingtalk\base;
 
 /**
- * Trait MessageTrait
+ * Trait AppTrait
  *
  * @package panlatent\craft\dingtalk\base
  * @author Panlatent <panlatent@gmail.com>
  */
-trait MessageTrait
+trait AppTrait
 {
     // Properties
     // =========================================================================
 
     /**
-     * @var string|null
+     * @var int|null
      */
-    public $title;
+    public $id;
 
     /**
      * @var string|null
      */
-    public $content;
+    public $name;
 
     /**
-     * @var bool
+     * @var string|null
      */
-    public $isAtAll = false;
+    public $handle;
 
     /**
-     * @var string[]
+     * @var string|null
      */
-    public $atMobiles = [];
+    public $agentId;
+
+    /**
+     * @var array|null
+     */
+    public $corporationIds;
+
+    /**
+     * @var int|null
+     */
+    public $sortOrder;
+
+    /**
+     * @var string|null
+     */
+    public $uid;
 }

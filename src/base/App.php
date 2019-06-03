@@ -8,36 +8,39 @@
 
 namespace panlatent\craft\dingtalk\base;
 
-use craft\base\SavableComponentInterface;
+use craft\base\SavableComponent;
 
 /**
- * Interface MessageInterface
+ * Class App
  *
  * @package panlatent\craft\dingtalk\base
  * @author Panlatent <panlatent@gmail.com>
  */
-interface MessageInterface extends SavableComponentInterface
+abstract class App extends SavableComponent implements AppInterface
 {
-    // Static Methods
+    // Traits
     // =========================================================================
 
-    public static function hasContent(): bool;
-
-    public static function hasTitle(): bool;
-
-    public static function hasAts(): bool;
+    use AppTrait;
 
     // Public Methods
     // =========================================================================
 
     /**
-     * @return mixed
+     * @inheritdoc
      */
-    public function getRequestPayload();
+    public function __toString()
+    {
+        return (string)$this->name;
+    }
 
-    public function getSender();
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        $rules = parent::rules();
 
-    public function getTarget();
-
-    public function getChannel();
+        return $rules;
+    }
 }

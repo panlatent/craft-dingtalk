@@ -108,7 +108,7 @@ abstract class Robot extends SavableComponent implements RobotInterface
         $urls = $this->getUrls();
         foreach ($urls as $url) {
             $this->getClient()->post($url, [
-                'json' => $message->getRequestBody(),
+                'json' => $message->getRequestPayload(),
             ]);
         }
 

@@ -13,7 +13,7 @@ use panlatent\craft\dingtalk\errors\MessageException;
 
 class MissingMessage extends Message
 {
-    public function getRequestBody()
+    public function getRequestPayload()
     {
         throw new MessageException('Missing message type');
     }
