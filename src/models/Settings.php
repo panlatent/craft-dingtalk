@@ -18,30 +18,5 @@ use craft\base\Model;
  */
 class Settings extends Model
 {
-    /**
-     * @var string|null
-     * @deprecated
-     */
-    public $corpId;
 
-    /**
-     * @var string|null
-     * @deprecated
-     */
-    public $corpSecret;
-
-    /**
-     * @var string|null
-     */
-    public $callbackUrlRule;
-
-    /**
-     * @var string|null
-     */
-    public $callbackToken;
-
-    /**
-     * @var string|null
-     */
-    public $callbackEncodingAesKey;
 }
