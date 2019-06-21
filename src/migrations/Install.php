@@ -51,8 +51,19 @@ class Install extends Migration
         // Corporations
         // ---------------------------------------------------------------------
 
+        $this->createTable(Table::CORPORATIONGROUPS, [
+            'id' => $this->primaryKey(),
+            'name' => $this->string()->notNull(),
+            'handle' => $this->string()->notNull(),
+            'fieldLayoutId' => $this->integer(),
+            'dateCreated' => $this->dateTime()->notNull(),
+            'dateUpdated' => $this->dateTime()->notNull(),
+            'uid' => $this->uid(),
+        ]);
+
         $this->createTable(Table::CORPORATIONS, [
             'id' => $this->primaryKey(),
+            'groupId' => $this->integer(),
             'primary' => $this->boolean()->notNull(),
             'name' => $this->string()->notNull(),
             'handle' => $this->string()->notNull(),
@@ -388,6 +399,10 @@ class Install extends Migration
         $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, 'contactId');
         $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, 'departmentId');
         $this->createIndex(null, Table::CONTACTSHARES_DEPARTMENTS, ['contactId', 'departmentId'], true);
+        $this->createIndex(null, Table::CORPORATIONGROUPS, 'name');
+        $this->createIndex(null, Table::CORPORATIONGROUPS, 'handle', true);
+        $this->createIndex(null, Table::CORPORATIONGROUPS, 'fieldLayoutId');
+        $this->createIndex(null, Table::CORPORATIONS, 'groupId');
         $this->createIndex(null, Table::CORPORATIONS, 'name');
         $this->createIndex(null, Table::CORPORATIONS, 'handle', true);
         $this->createIndex(null, Table::CORPORATIONS, 'corpId', true);
@@ -451,6 +466,8 @@ class Install extends Migration
         $this->addForeignKey(null, Table::CONTACTSHARES_EMPLOYEES, 'employeeId', Table::EMPLOYEES, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CONTACTSHARES_DEPARTMENTS, 'contactId', Table::CONTACTS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CONTACTSHARES_DEPARTMENTS, 'departmentId', Table::DEPARTMENTS, 'id', 'CASCADE');
+        $this->addForeignKey(null, Table::CORPORATIONGROUPS, 'fieldLayoutId', CraftTable::FIELDLAYOUTS, 'id', 'SET NULL');
+        $this->addForeignKey(null, Table::CORPORATIONS, 'groupId', Table::CORPORATIONGROUPS, 'id', 'SET NULL');
         $this->addForeignKey(null, Table::CORPORATIONAPPS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CORPORATIONCALLBACKSETTINGS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
         $this->addForeignKey(null, Table::CORPORATIONCALLBACKS, 'corporationId', Table::CORPORATIONS, 'id', 'CASCADE');
@@ -491,5 +508,6 @@ class Install extends Migration
         $this->dropTableIfExists(Table::CORPORATIONCALLBACKSETTINGS);
         $this->dropTableIfExists(Table::CORPORATIONAPPS);
         $this->dropTableIfExists(Table::CORPORATIONS);
+        $this->dropTableIfExists(Table::CORPORATIONGROUPS);
     }
 }

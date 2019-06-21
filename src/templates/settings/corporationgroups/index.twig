@@ -1,0 +1,36 @@
+{% extends "dingtalk/_layouts/settings" %}
+
+{% set title = 'Corporation Groups'|t('dingtalk') %}
+{% set selectedSubnavItem = "corporationgroups" %}
+{% set groups = craft.dingtalk.corporations.getAllGroups() %}
+
+{% block actionButton %}
+    <a href="{{ url('dingtalk/settings/corporationgroups/new') }}" class="btn submit icon add">{{ 'New group'|t('dingtalk') }}</a>
+{% endblock %}
+
+{% block content %}
+    <h2>{{ 'Corporation Groups'|t('dingtalk') }}</h2>
+
+    <div id="nogroups"{% if groups %} class="hidden"{% endif %}></div>
+
+    {% if groups|length %}
+        <table id="groups" class="data fullwidth collapsible">
+            <thead>
+                <tr>
+                    <th>{{ 'Name'|t('app') }}</th>
+                    <th>{{ 'Handle'|t('app') }}</th>
+                    <th>{{ 'Manage Group'|t('app') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in groups %}
+                    <tr data-id="{{ group.id }}" data-name="{{ group.name }}">
+                        <th><a href="{{ url('dingtalk/settings/corporationgroups/' ~ group.id) }}">{{ group.name }}</a></th>
+                        <td>{{ group.handle }}</td>
+                        <td></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

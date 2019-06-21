@@ -14,6 +14,7 @@ use craft\helpers\Json;
 use craft\helpers\UrlHelper;
 use craft\web\Controller;
 use panlatent\craft\dingtalk\models\Corporation;
+use panlatent\craft\dingtalk\models\CorporationGroup;
 use panlatent\craft\dingtalk\Plugin;
 use yii\base\InvalidConfigException;
 use yii\web\NotFoundHttpException;
@@ -27,25 +28,120 @@ use yii\web\Response;
  */
 class CorporationsController extends Controller
 {
-    /**
-     * @inheritdoc
-     */
-    public function init()
-    {
-        $this->requireAdmin(false);
+    // Public Methods
+    // =========================================================================
 
-        return parent::init();
+    // Groups
+    // -------------------------------------------------------------------------
+
+    /**
+     * @param int|null $groupId
+     * @param CorporationGroup|null $group
+     * @return Response
+     */
+    public function actionEditGroup(int $groupId = null, CorporationGroup $group = null): Response
+    {
+        if ($group === null) {
+            if ($groupId !== null) {
+                $group = Plugin::$dingtalk->getCorporations()->getGroupById($groupId);
+                if (!$group) {
+                    throw new NotFoundHttpException();
+                }
+            } else {
+                $group = new CorporationGroup();
+            }
+        }
+
+        $isNewGroup = !$group->id;
+
+        if ($isNewGroup) {
+            $title = Craft::t('dingtalk', 'Craft a new group');
+        } else {
+            $title = $group->name;
+        }
+
+        $crumbs = [
+            [
+                'label' => Craft::t('dingtalk', 'Settings'),
+                'url' => UrlHelper::url('dingtalk/settings'),
+            ],
+            [
+                'label' => Craft::t('dingtalk', 'Corporation Groups'),
+                'url' => UrlHelper::url('dingtalk/settings/corporationgroups'),
+            ]
+        ];
+
+        $tabs = [
+            [
+                'label' => Craft::t('dingtalk', 'Settings'),
+                'url' => '#settings',
+            ],
+            [
+                'label' => Craft::t('app', 'Field Layout'),
+                'url' => '#fieldlayout',
+            ],
+        ];
+
+        return $this->renderTemplate('dingtalk/settings/corporationgroups/_edit', [
+            'group' => $group,
+            'title' => $title,
+            'crumbs' => $crumbs,
+            'tabs' => $tabs,
+        ]);
     }
 
     /**
+     * @return Response|null
+     */
+    public function actionSaveGroup()
+    {
+        $this->requirePostRequest();
+
+        $request = Craft::$app->getRequest();
+
+
+
+        $group = new CorporationGroup([
+            'id' => $request->getBodyParam('groupId'),
+            'name' => $request->getBodyParam('name'),
+            'handle' => $request->getBodyParam('handle'),
+        ]);
+
+        $fieldLayout = Craft::$app->getFields()->assembleLayoutFromPost();
+        $fieldLayout->type = Corporation::class;
+        $group->setFieldLayout($fieldLayout);
+
+        if (!Plugin::$dingtalk->getCorporations()->saveGroup($group)) {
+            Craft::$app->getSession()->setError(Craft::t('dingtalk', 'Couldn’t save group.'));
+
+            Craft::$app->getUrlManager()->setRouteParams([
+                'group' => $group
+            ]);
+
+            return null;
+        }
+
+        Craft::$app->getSession()->setNotice(Craft::t('dingtalk', 'Group saved.'));
+
+        return $this->redirectToPostedUrl($group);
+    }
+
+    // Corporations
+    // -------------------------------------------------------------------------
+
+    /**
+     * @param string $groupHandle
      * @param int|null $corporationId
      * @param Corporation|null $corporation
      * @return Response
+     * @throws NotFoundHttpException
      */
-    public function actionEditCorporation(int $corporationId = null, Corporation $corporation = null): Response
+    public function actionEditCorporation(string $groupHandle, int $corporationId = null, Corporation $corporation = null): Response
     {
         $corporations = Plugin::$dingtalk->getCorporations();
         $callbacks = Plugin::$dingtalk->getCallbacks();
+
+        $group = $corporations->getGroupByHandle($groupHandle);
 
         if ($corporation === null) {
             if ($corporationId !== null) {
@@ -54,11 +150,21 @@ class CorporationsController extends Controller
                     throw new NotFoundHttpException();
                 }
             } else {
-                $corporation = $corporations->createCorporation([]);
+                $corporation = new Corporation([
+                    'groupId' => $group->id
+                ]);
             }
         }
 
         $isNewCorporation = !$corporation->id;
+
+        $groupOptions = [];
+        foreach ($corporations->getAllGroups() as $group) {
+            $groupOptions[] = [
+                'label' => $group->name,
+                'value' => $group->id,
+            ];
+        }
 
         $callbackGroupOptions = [];
         foreach ($callbacks->getAllGroups() as $group) {
@@ -102,12 +208,8 @@ class CorporationsController extends Controller
                 'url' => UrlHelper::url('dingtalk'),
             ],
             [
-                'label' => Craft::t('dingtalk', 'Settings'),
-                'url' => UrlHelper::url('dingtalk/settings'),
-            ],
-            [
                 'label' => Craft::t('dingtalk', 'Corporations'),
-                'url' => UrlHelper::url('dingtalk/settings/corporations'),
+                'url' => UrlHelper::url('dingtalk/corporations'),
             ],
         ];
 
@@ -122,9 +224,20 @@ class CorporationsController extends Controller
             ],
         ];
 
-        return $this->renderTemplate('dingtalk/settings/corporations/_edit', [
+        $fieldLayout = $corporation->getGroup()->getFieldLayout();
+        if ($fieldLayout) {
+            foreach ($corporation->getGroup()->getFieldLayout()->getTabs() as $tab) {
+                $tabs[] = [
+                    'label' => $tab->name,
+                    'url' => '#' . $tab->getHtmlId(),
+                ];
+            }
+        }
+
+        return $this->renderTemplate('dingtalk/corporations/_edit', [
             'isNewCorporation' => $isNewCorporation,
             'corporation' => $corporation,
+            'groupOptions' => $groupOptions,
             'callbackGroupOptions' => $callbackGroupOptions,
             'title' => $title,
             'crumbs' => $crumbs,
@@ -156,8 +269,9 @@ class CorporationsController extends Controller
             }
         }
 
-        $corporation = $corporations->createCorporation([
+        $corporation = new Corporation([
             'id' => $request->getBodyParam('corporationId'),
+            'groupId' => $request->getBodyParam('groupId'),
             'primary' => $request->getBodyParam('primary'),
             'name' => $request->getBodyParam('name'),
             'handle' => $request->getBodyParam('handle'),

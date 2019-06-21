@@ -20,7 +20,7 @@ use panlatent\craft\dingtalk\elements\Contact;
  */
 class Contacts extends BaseRelationField
 {
-    // Static
+    // Static Methods
     // =========================================================================
 
     /**
@@ -34,16 +34,17 @@ class Contacts extends BaseRelationField
     /**
      * @inheritdoc
      */
-    protected static function elementType(): string
+    public static function defaultSelectionLabel(): string
     {
-        return Contact::class;
+        return Craft::t('dingtalk', 'Add a contact');
     }
 
     /**
      * @inheritdoc
      */
-    public static function defaultSelectionLabel(): string
+    protected static function elementType(): string
     {
-        return Craft::t('dingtalk', 'Add a contact');
+        return Contact::class;
     }
+
 }

@@ -1,0 +1,39 @@
+{% extends "_layouts/cp" %}
+
+{% set fullPageForm = true %}
+{% set selectedSubnavItem = 'settings' %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <input type="hidden" name="action" value="dingtalk/corporations/save-group">
+    <input type="hidden" name="groupId" value="{{ group.id }}">
+    {{ redirectInput('dingtalk/settings/corporationgroups') }}
+
+    <div id="settings">
+        {{ forms.textField({
+            label: 'Name'|t('app'),
+            required: true,
+            id: 'name',
+            name: 'name',
+            value: group.name,
+            errors: group.getErrors('name'),
+        }) }}
+
+        {{ forms.textField({
+            label: 'Handle'|t('app'),
+            required: true,
+            id: 'handle',
+            name: 'handle',
+            value: group.handle,
+            errors: group.getErrors('handle'),
+        }) }}
+    </div>
+
+    <div id="fieldlayout" class="hidden">
+        {% include "_includes/fieldlayoutdesigner" with {
+            fieldLayout: group.fieldLayout
+        } %}
+    </div>
+
+{% endblock %}

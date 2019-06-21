@@ -12,9 +12,13 @@ use Craft;
 use craft\helpers\ArrayHelper;
 use panlatent\craft\dingtalk\db\Table;
 use panlatent\craft\dingtalk\errors\CorporationException;
+use panlatent\craft\dingtalk\errors\CorporationGroupNotFoundException;
 use panlatent\craft\dingtalk\events\CorporationEvent;
+use panlatent\craft\dingtalk\events\CorporationGroupEvent;
 use panlatent\craft\dingtalk\models\Corporation;
+use panlatent\craft\dingtalk\models\CorporationGroup;
 use panlatent\craft\dingtalk\records\Corporation as CorporationRecord;
+use panlatent\craft\dingtalk\records\CorporationGroup as CorporationGroupRecord;
 use Throwable;
 use yii\base\Component;
 use yii\db\Query;
@@ -32,6 +36,26 @@ class Corporations extends Component
 
     // Events
     // -------------------------------------------------------------------------
+
+    /**
+     * @event CorporationGroupEvent The event that is triggered before a group is saved.
+     */
+    const EVENT_BEFORE_SAVE_GROUP = 'beforeSaveGroup';
+
+    /**
+     * @event CorporationGroupEvent The event that is triggered after a group is saved.
+     */
+    const EVENT_AFTER_SAVE_GROUP = 'afterSaveGroup';
+
+    /**
+     * @event CorporationGroupEvent The event that is triggered before a group is deleted.
+     */
+    const EVENT_BEFORE_DELETE_GROUP = 'beforeDeleteGroup';
+
+    /**
+     * @event CorporationGroupEvent The event that is triggered after a group is deleted.
+     */
+    const EVENT_AFTER_DELETE_GROUP = 'afterDeleteGroup';
 
     /**
      * @event CorporationEvent The event that is triggered before a corporation is saved.
@@ -57,12 +81,133 @@ class Corporations extends Component
     // =========================================================================
 
     /**
+     * @var CorporationGroup[]|null
+     */
+    private $_groups;
+
+    /**
      * @var Corporation[]|null
      */
     private $_corporations;
 
     // Public Methods
     // =========================================================================
+
+    /**
+     * @return CorporationGroup[]
+     */
+    public function getAllGroups(): array
+    {
+        if ($this->_groups !== null) {
+            return $this->_groups;
+        }
+
+        $this->_groups = [];
+
+        $results = (new Query())
+            ->select([
+                'groups.id',
+                'groups.name',
+                'groups.handle',
+                'groups.fieldLayoutId',
+                'groups.uid',
+            ])
+            ->from(['groups' => Table::CORPORATIONGROUPS])
+            ->all();
+
+        foreach ($results as $result) {
+            $this->_groups[] = new CorporationGroup($result);
+        }
+
+        return $this->_groups;
+    }
+
+    /**
+     * @param int $groupId
+     * @return CorporationGroup|null
+     */
+    public function getGroupById(int $groupId)
+    {
+        return ArrayHelper::firstWhere($this->getAllGroups(), 'id', $groupId);
+    }
+
+    /**
+     * @param string $handle
+     * @return CorporationGroup|null
+     */
+    public function getGroupByHandle(string $handle)
+    {
+        return ArrayHelper::firstWhere($this->getAllGroups(), 'handle', $handle);
+    }
+
+    /**
+     * @param CorporationGroup $group
+     * @param bool $runValidation
+     * @return bool
+     */
+    public function saveGroup(CorporationGroup $group, bool $runValidation = true): bool
+    {
+        $isNewGroup = !$group->id;
+
+        if ($this->hasEventHandlers(self::EVENT_BEFORE_SAVE_GROUP)) {
+            $this->trigger(self::EVENT_BEFORE_SAVE_GROUP, new CorporationGroupEvent([
+                'group' => $group,
+                'isNew' => $isNewGroup,
+            ]));
+        }
+
+        if ($runValidation && !$group->validate()) {
+            Craft::info("Group not saved due to validation error.", __METHOD__);
+            return false;
+        }
+
+        $transaction = Craft::$app->getDb()->beginTransaction();
+        try {
+            if (!$isNewGroup) {
+                $record = CorporationGroupRecord::findOne(['id' => $group->id]);
+                if (!$group) {
+                    throw new CorporationGroupNotFoundException("No group exists with the ID: “{$group->id}“.");
+                }
+            } else {
+                $record = new CorporationGroupRecord();
+            }
+
+            $layout = $group->getFieldLayout();
+            if ($layout) {
+                Craft::$app->getFields()->saveLayout($layout);
+            }
+
+            $record->name = $group->name;
+            $record->handle = $group->handle;
+            $record->fieldLayoutId = $layout ? $layout->id : null;
+            $record->save(false);
+
+            if ($isNewGroup) {
+                $group->id = $record->id;
+            }
+
+            $transaction->commit();
+        } catch (Throwable $exception) {
+            $transaction->rollBack();
+
+            throw $exception;
+        }
+
+        $this->_groups = null;
+        $this->getAllGroups();
+
+        if ($this->hasEventHandlers(self::EVENT_AFTER_SAVE_GROUP)) {
+            $this->trigger(self::EVENT_AFTER_SAVE_GROUP, new CorporationGroupEvent([
+                'group' => $group,
+                'isNew' => $isNewGroup,
+            ]));
+        }
+
+        return true;
+    }
+
+    // Corporations
+    // -------------------------------------------------------------------------
 
     /**
      * @return int
@@ -122,6 +267,15 @@ class Corporations extends Component
     }
 
     /**
+     * @param int $groupId
+     * @return Corporation[]
+     */
+    public function getCorporationsByGroupId(int $groupId): array
+    {
+        return ArrayHelper::filterByValue($this->getAllCorporations(), 'groupId', $groupId);
+    }
+
+    /**
      * @param int $corporationId
      * @return Corporation|null
      */
@@ -154,21 +308,6 @@ class Corporations extends Component
     public function getPrimaryCorporation()
     {
         return ArrayHelper::firstWhere($this->getAllCorporations(), 'primary', true);
-    }
-
-    /**
-     * Create a corporation.
-     *
-     * @param mixed $config
-     * @return Corporation
-     */
-    public function createCorporation($config): Corporation
-    {
-        if (is_string($config)) {
-            $config = ['name' => $config];
-        }
-
-        return new Corporation($config);
     }
 
     /**
@@ -378,6 +517,7 @@ class Corporations extends Component
         return (new Query())
             ->select([
                 'corporations.id',
+                'corporations.groupId',
                 'corporations.primary',
                 'corporations.name',
                 'corporations.handle',

@@ -22,6 +22,7 @@ use panlatent\craft\dingtalk\elements\db\ContactQuery;
 use panlatent\craft\dingtalk\elements\db\EmployeeQuery;
 use panlatent\craft\dingtalk\elements\Employee;
 use panlatent\craft\dingtalk\Plugin;
+use panlatent\craft\dingtalk\records\CorporationGroup as GroupRecord;
 use panlatent\craft\dingtalk\supports\Remote;
 use Throwable;
 
@@ -29,6 +30,7 @@ use Throwable;
  * Class Corporation
  *
  * @package panlatent\craft\dingtalk\models
+ * @property-read CorporationGroup|null $group
  * @property-read bool $isRegisteredCallback
  * @property-read Department[] $departments
  * @property-read Department $rootDepartment
@@ -41,9 +43,6 @@ use Throwable;
  */
 class Corporation extends Model
 {
-    // Traits
-    // =========================================================================
-
     // Properties
     // =========================================================================
 
@@ -51,6 +50,11 @@ class Corporation extends Model
      * @var int|null
      */
     public $id;
+
+    /**
+     * @var int|null
+     */
+    public $groupId;
 
     /**
      * @var bool
@@ -98,6 +102,11 @@ class Corporation extends Model
     public $uid;
 
     /**
+     * @var CorporationGroup|null
+     */
+    private $_group;
+
+    /**
      * @var Remote
      */
     private $_remote;
@@ -130,8 +139,10 @@ class Corporation extends Model
     {
         $rules = parent::rules();
         $rules[] = [['name', 'handle', 'corpId', 'corpSecret', 'hasUrls'], 'required'];
+        $rules[] = [['groupId'], 'integer'];
         $rules[] = [['name', 'corpId', 'corpSecret'], 'string'];
         $rules[] = [['primary', 'hasUrls'], 'boolean'];
+        $rules[] = [['groupId'], 'exist', 'targetClass' => GroupRecord::class, 'targetAttribute' => 'id'];
         $rules[] = [['handle'], HandleValidator::class];
         $rules[] = [['corpId', 'corpSecret'], function($attribute) {
             if (!$this->getRemote()->validateAuth()) {
@@ -160,11 +171,27 @@ class Corporation extends Model
     {
         return [
             'name' => Craft::t('dingtalk', 'Corporation Name'),
-            'handle' => Craft::t('app', 'handle'),
+            'handle' => Craft::t('app', 'Handle'),
             'corpId' => Craft::t('dingtalk', 'Corp ID'),
             'corpSecret' => Craft::t('dingtalk', 'Corp Secret'),
             'primary' => Craft::t('dingtalk', 'Primary'),
         ];
+    }
+
+    /**
+     * @return CorporationGroup|null
+     */
+    public function getGroup()
+    {
+        if ($this->_group !== null) {
+            return $this->_group;
+        }
+
+        if (!$this->groupId) {
+            return null;
+        }
+
+        return $this->_group = Plugin::$dingtalk->getCorporations()->getGroupById($this->groupId);
     }
 
     /**

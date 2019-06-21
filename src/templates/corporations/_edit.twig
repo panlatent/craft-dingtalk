@@ -1,0 +1,159 @@
+{% extends "_layouts/cp" %}
+
+{% set selectedSubnavItem = "settings" %}
+{% set fullPageForm = true %}
+
+{% import "_includes/forms" as forms %}
+
+{% block content %}
+    <input type="hidden" name="action" value="dingtalk/corporations/save-corporation">
+    <input type="hidden" name="corporationId" value="{{ corporation.id }}">
+    {{ redirectInput('dingtalk/corporations') }}
+
+    <div id="settings">
+        {{ forms.selectField({
+            label: 'Group'|t('app'),
+            id: 'groupId',
+            name: 'groupId',
+            value: corporation.groupId,
+            options: groupOptions,
+        }) }}
+
+        {{ forms.textField({
+            label: "Corporation Name"|t('dingtalk'),
+            required: true,
+            id: 'name',
+            name: 'name',
+            value: corporation.name,
+            errors: corporation.getErrors('name'),
+        }) }}
+
+        {{ forms.textField({
+            label: "Handle"|t('app'),
+            required: true,
+            id: 'handle',
+            name: 'handle',
+            value: corporation.handle,
+            errors: corporation.getErrors('handle'),
+        }) }}
+
+        {{ forms.autosuggestField({
+            label: "Corp Id"|t('dingtalk'),
+            required: true,
+            id: 'corpId',
+            name: 'corpId',
+            value: corporation.corpId,
+            errors: corporation.getErrors('corpId'),
+            suggestEnvVars: true,
+        }) }}
+
+        {{ forms.autosuggestField({
+            label: "Corp Secret"|t('dingtalk'),
+            required: true,
+            id: 'corpSecret',
+            name: 'corpSecret',
+            value: corporation.corpSecret,
+            errors: corporation.getErrors('corpSecret'),
+            suggestEnvVars: true,
+        }) }}
+
+        {{ forms.lightSwitchField({
+            label: "This the primary corporation?"|t('dingtalk'),
+            id: "primary",
+            name: "primary",
+            on: corporation.primary,
+            errors: corporation.getErrors('primary'),
+        }) }}
+
+        <hr>
+
+        {{ forms.lightSwitchField({
+            label: "Has Urls?"|t('dingtalk'),
+            id: 'hasUrls',
+            name: 'hasUrls',
+            on: corporation.hasUrls,
+            errors: corporation.getErrors('hasUrls'),
+            toggle: 'url'
+        }) }}
+
+        <div id="url"{% if not corporation.hasUrls %} class="hidden"{% endif %}>
+            {{ forms.autosuggestField({
+                label: "URL"|t('dingtalk'),
+                id: 'url',
+                name: 'url',
+                value: corporation.url,
+                errors: corporation.getErrors('url'),
+                suggestEnvVars: true,
+            }) }}
+        </div>
+
+    </div>
+
+    <div id="callbacks" class="hidden">
+        {% namespace 'callbacks' %}
+            {% set callbackSettings = corporation.callbackSettings %}
+
+            {{ forms.lightSwitchField({
+                label: "Enable Callback"|t('dingtalk'),
+                id: 'enabled',
+                name: 'enabled',
+                on: callbackSettings.enabled,
+                errors: callbackSettings.getErrors('enabled'),
+            }) }}
+
+            {{ forms.autosuggestField({
+                label: "URL"|t('dingtalk'),
+                id: 'url',
+                name: 'url',
+                value: callbackSettings.url,
+                errors: callbackSettings.getErrors('url'),
+                suggestEnvVars: true,
+            }) }}
+
+            {{ forms.autosuggestField({
+                label: 'Token'|t('dingtalk'),
+                id: 'token',
+                name: 'token',
+                value: callbackSettings.token,
+                errors: callbackSettings.getErrors('token'),
+                suggestEnvVars: true,
+            }) }}
+
+            {{ forms.autosuggestField({
+                label: 'AES Key'|t('dingtalk'),
+                id: 'aesKey',
+                name: 'aesKey',
+                value: callbackSettings.aesKey,
+                errors: callbackSettings.getErrors('aesKey'),
+                suggestEnvVars: true,
+            }) }}
+
+            <hr>
+
+            <h3>{{ 'Events'|t('dingtalk') }}</h3>
+
+            {% for groupOption in callbackGroupOptions %}
+
+                {{ forms.checkboxSelectField({
+                    label: groupOption.label,
+                    name: 'groups[' ~ groupOption.value ~ ']',
+                    values: groupOption.values,
+                    options: groupOption.options,
+                    showAllOption: true,
+                }) }}
+
+            {% endfor %}
+
+        {% endnamespace %}
+    </div>
+
+    <div>
+        {% for tab in corporation.group.getFieldLayout().getTabs() %}
+            <div id="{{ tab.getHtmlId() }}" class="hidden">
+                {% include "_includes/fields" with {
+                    fields:  tab.getFields(),
+                } only %}
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

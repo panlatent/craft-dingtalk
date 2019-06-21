@@ -20,7 +20,7 @@ use panlatent\craft\dingtalk\elements\Employee;
  */
 class Employees extends BaseRelationField
 {
-    // Static
+    // Static Methods
     // =========================================================================
 
     /**
@@ -34,16 +34,16 @@ class Employees extends BaseRelationField
     /**
      * @inheritdoc
      */
-    protected static function elementType(): string
+    public static function defaultSelectionLabel(): string
     {
-        return Employee::class;
+        return Craft::t('dingtalk', 'Add a employees');
     }
 
     /**
      * @inheritdoc
      */
-    public static function defaultSelectionLabel(): string
+    protected static function elementType(): string
     {
-        return Craft::t('dingtalk', 'Add a employees');
+        return Employee::class;
     }
 }
