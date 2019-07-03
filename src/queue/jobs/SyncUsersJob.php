@@ -181,7 +181,12 @@ class SyncUsersJob extends BaseJob
         $handledDingUserIds = [];
 
         foreach ($departments as $department) {
-            $results = $this->getCorporation()->getRemote()->getUsersByDepartmentId($department->dingDepartmentId);
+            try {
+                $results = $this->getCorporation()->getRemote()->getUsersByDepartmentId($department->dingDepartmentId);
+            } catch (\Throwable $exception) {
+                Craft::warning($exception->getMessage(), __METHOD__);
+                continue;
+            }
             $results = array_filter($results, function ($result) use ($handledDingUserIds) {
                 return !in_array($result['userid'], $handledDingUserIds);
             });
