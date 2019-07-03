@@ -53,7 +53,7 @@ class Plugin extends \craft\base\Plugin
     /**
      * @var string
      */
-    public $schemaVersion = '0.2.0-alpha.11';
+    public $schemaVersion = '0.2.0-alpha.12';
 
     /**
      * @inheritdoc
@@ -87,7 +87,6 @@ class Plugin extends \craft\base\Plugin
         $this->_registerElementTypes();
         $this->_registerFieldTypes();
         $this->_registerPermissions();
-        $this->_registerSiteRoutes();
         $this->_registerUtilities();
         $this->_registerVariables();
         $this->_registerWidgets();

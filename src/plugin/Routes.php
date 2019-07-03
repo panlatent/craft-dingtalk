@@ -42,13 +42,4 @@ trait Routes
             ]);
         });
     }
-
-    private function _registerSiteRoutes()
-    {
-        Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_SITE_URL_RULES, function (RegisterUrlRulesEvent $event) {
-            if ($this->getSettings()->callbackUrlRule !== null) {
-                $event->rules[$this->getSettings()->callbackUrlRule] = 'dingtalk/callbacks/receive-event';
-            }
-        });
-    }
 }
