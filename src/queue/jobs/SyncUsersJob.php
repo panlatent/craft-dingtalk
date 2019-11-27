@@ -181,6 +181,9 @@ class SyncUsersJob extends BaseJob
         $handledDingUserIds = [];
 
         foreach ($departments as $department) {
+            if ($department->archived) {
+                continue;
+            }
             try {
                 $results = $this->getCorporation()->getRemote()->getUsersByDepartmentId($department->dingDepartmentId);
             } catch (\Throwable $exception) {
